@@ -66,15 +66,10 @@ public:
     p->setBrush(hover || selected ? Theme::color("cardHover") : Theme::color("card"));
     p->drawRoundedRect(card, 8, 8);
 
-    // icon tile
+    // service tile
     const QRectF tile(card.center().x() - 22, card.top() + 14, 44, 44);
-    QColor tint = Theme::color("accentText");
-    tint.setAlpha(Theme::isDark() ? 40 : 26);
-    p->setPen(Qt::NoPen);
-    p->setBrush(tint);
-    p->drawRoundedRect(tile, 8, 8);
     const QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
-    icon.paint(p, tile.adjusted(10, 10, -10, -10).toRect());
+    icon.paint(p, tile.toRect());
 
     // name + type
     QFont f = opt.font;
@@ -128,7 +123,7 @@ void MainWindow::buildShell() {
   at->setContentsMargins(14, 0, 8, 6);
   at->setSpacing(10);
   auto *appIcon = new QLabel;
-  appIcon->setPixmap(qApp->windowIcon().pixmap(18, 18));
+  appIcon->setPixmap(qApp->windowIcon().pixmap(20, 20));
   at->addWidget(appIcon);
   auto *appName = new QLabel(tr("Rclone Browser"));
   appName->setProperty("secondary", true);
@@ -209,8 +204,31 @@ void MainWindow::buildShell() {
   cl->setSpacing(0);
 
   ui.tabs->setParent(content);
-  ui.tabs->tabBar()->hide();
   ui.tabs->setDocumentMode(true);
+  ui.tabs->setTabsClosable(true);
+  ui.tabs->setMovable(true);
+  ui.tabs->setElideMode(Qt::ElideRight);
+  ui.tabs->setUsesScrollButtons(true);
+  ui.tabs->tabBar()->setExpanding(false);
+  ui.tabs->tabBar()->setIconSize(QSize(18, 18));
+  // Home / Transfers / Tasks are pages, not tabs; only remotes show as tabs
+  for (int i = HomePage; i <= TasksPage; ++i) {
+    ui.tabs->tabBar()->setTabVisible(i, false);
+  }
+  ui.tabs->tabBar()->hide();
+
+  auto *newTab = new QToolButton;
+  newTab->setIcon(Theme::icon("add"));
+  newTab->setToolTip(tr("New tab (Ctrl+T)"));
+  QObject::connect(newTab, &QToolButton::clicked, this, [this]() {
+    QWidget *w = ui.tabs->currentWidget();
+    if (w && w->property("remoteName").isValid()) {
+      openRemote(w->property("remoteName").toString(),
+                 w->property("remoteType").toString(), true);
+    }
+  });
+  ui.tabs->setCornerWidget(newTab, Qt::TopRightCorner);
+  newTab->hide();
   cl->addWidget(ui.tabs);
 
   auto *central = new QWidget;
@@ -279,6 +297,7 @@ void MainWindow::buildShell() {
                                          "mounts and streams."),
                                       nullptr, {}));
     ui.jobsArea->setFrameShape(QFrame::NoFrame);
+    ui.jobsArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui.jobs->setSpacing(8);
     ui.noJobsAvailable->setText(tr("No transfers yet.\n\nUploads, downloads, "
                                    "mounts and tasks you run will appear here."));
@@ -322,8 +341,19 @@ void MainWindow::buildShell() {
                                   item->data(TypeRole).toString());
                      }
                    });
-  QObject::connect(ui.tabs, &QTabWidget::currentChanged, this,
-                   [this](int) { syncNavToCurrentPage(); });
+  QObject::connect(ui.tabs, &QTabWidget::currentChanged, this, [this, newTab](int i) {
+    const bool browsing = i > TasksPage;
+    ui.tabs->tabBar()->setVisible(browsing);
+    newTab->setVisible(browsing);
+    syncNavToCurrentPage();
+  });
+  QObject::connect(ui.tabs, &QTabWidget::tabCloseRequested, this, [this](int i) {
+    if (i > TasksPage) {
+      closeRemoteWidget(ui.tabs->widget(i));
+    }
+  });
+  // middle-click closes a tab, as in File Explorer and browsers
+  ui.tabs->tabBar()->installEventFilter(this);
 
   QObject::connect(mNav, &QWidget::customContextMenuRequested, this,
                    [this](const QPoint &pos) {
@@ -336,7 +366,10 @@ void MainWindow::buildShell() {
                      menu.addAction(Theme::icon("open"), tr("Open"), this, [=]() {
                        openRemote(name, item->data(TypeRole).toString());
                      });
-                     QAction *close = menu.addAction(Theme::icon("close"), tr("Close"), this,
+                     menu.addAction(Theme::icon("new_tab"), tr("Open in new tab"), this, [=]() {
+                       openRemote(name, item->data(TypeRole).toString(), true);
+                     });
+                     QAction *close = menu.addAction(Theme::icon("close"), tr("Close all tabs"), this,
                                                      [=]() { closeRemote(name); });
                      close->setEnabled(remoteTab(name) >= 0);
                      menu.addSeparator();
@@ -357,37 +390,64 @@ int MainWindow::remoteTab(const QString &name) const {
   return -1;
 }
 
-void MainWindow::openRemote(const QString &name, const QString &type) {
-  int index = remoteTab(name);
+void MainWindow::openRemote(const QString &name, const QString &type,
+                            bool newTab) {
+  int index = newTab ? -1 : remoteTab(name);
   if (index < 0) {
     const bool isLocal = type == "local";
     const bool isGoogle = type == "drive";
     auto *remote = new RemoteWidget(&mIcons, name, isLocal, isGoogle, ui.tabs);
     remote->setProperty("remoteName", name);
+    remote->setProperty("remoteType", type);
     remote->setRemoteType(type);
     QObject::connect(remote, &RemoteWidget::addMount, this, &MainWindow::addMount);
     QObject::connect(remote, &RemoteWidget::addStream, this, &MainWindow::addStream);
     QObject::connect(remote, &RemoteWidget::addTransfer, this, &MainWindow::addTransfer);
     QObject::connect(remote, &RemoteWidget::closeRequested, this,
-                     [this, name]() { closeRemote(name); });
-    index = ui.tabs->addTab(remote, name);
+                     [this, remote]() { closeRemoteWidget(remote); });
+    QObject::connect(remote, &RemoteWidget::newTabRequested, this,
+                     [this, name, type]() { openRemote(name, type, true); });
+    index = ui.tabs->addTab(remote, Theme::remoteIcon(type), name);
+    ui.tabs->setTabToolTip(index, QString("%1 · %2").arg(name, type));
   }
   ui.tabs->setCurrentIndex(index);
 }
 
-void MainWindow::closeRemote(const QString &name) {
-  int index = remoteTab(name);
-  if (index < 0) {
+void MainWindow::closeRemoteWidget(QWidget *w) {
+  const int index = ui.tabs->indexOf(w);
+  if (index <= TasksPage) {
     return;
   }
-  QWidget *w = ui.tabs->widget(index);
   const bool wasCurrent = ui.tabs->currentIndex() == index;
   ui.tabs->removeTab(index);
   w->deleteLater();
   if (wasCurrent) {
-    ui.tabs->setCurrentIndex(HomePage);
+    // like a browser: go to the neighbouring tab, or Home if none is left
+    int next = qMin(index, ui.tabs->count() - 1);
+    ui.tabs->setCurrentIndex(next > TasksPage ? next : int(HomePage));
   }
   syncNavToCurrentPage();
+}
+
+void MainWindow::closeRemote(const QString &name) {
+  int index;
+  while ((index = remoteTab(name)) >= 0) {
+    closeRemoteWidget(ui.tabs->widget(index));
+  }
+}
+
+bool MainWindow::eventFilter(QObject *o, QEvent *e) {
+  if (o == ui.tabs->tabBar() && e->type() == QEvent::MouseButtonRelease) {
+    auto *me = static_cast<QMouseEvent *>(e);
+    if (me->button() == Qt::MiddleButton) {
+      const int i = ui.tabs->tabBar()->tabAt(me->position().toPoint());
+      if (i > TasksPage) {
+        closeRemoteWidget(ui.tabs->widget(i));
+        return true;
+      }
+    }
+  }
+  return QMainWindow::eventFilter(o, e);
 }
 
 void MainWindow::syncNavToCurrentPage() {

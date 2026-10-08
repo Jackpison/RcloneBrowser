@@ -22,6 +22,7 @@ signals:
   void addMount(const QString &remote, const QString &folder);
   void addStream(const QString &remote, const QString &stream);
   void closeRequested();
+  void newTabRequested();
 
 private:
   Ui::RemoteWidget ui;

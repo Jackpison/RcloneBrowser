@@ -1,8 +1,7 @@
 #include "icon_cache.h"
 #include "item_model.h"
-#if defined(Q_OS_MACOS)
-#include "osx_helper.h"
-#elif defined(Q_OS_WIN)
+#include "theme.h"
+#if defined(Q_OS_WIN)
 #include <windows.h>
 #include <objbase.h>
 #include <shellapi.h>
@@ -29,35 +28,7 @@ IconCache::~IconCache() {
 }
 
 void IconCache::getIcon(Item *item, const QPersistentModelIndex &parent) {
-  QString ext = QFileInfo(item->name).suffix();
-  QIcon icon;
-  auto it = mIcons.find(ext);
-  if (it == mIcons.end()) {
-#if defined(Q_OS_WIN32)
-    SHFILEINFOW info;
-    if (SHGetFileInfoW(reinterpret_cast<LPCWSTR>(("dummy." + ext).utf16()),
-                       FILE_ATTRIBUTE_NORMAL, &info, sizeof(info),
-                       SHGFI_ICON | SHGFI_USEFILEATTRIBUTES) &&
-        info.hIcon) {
-      icon = QIcon(QPixmap::fromImage(QImage::fromHICON(info.hIcon)));
-      DestroyIcon(info.hIcon);
-    }
-#elif defined(Q_OS_MACOS)
-    icon = osxGetIcon(ext.toUtf8().constData());
-#else
-    QMimeType mime = mMimeDatabase.mimeTypeForFile(
-        item->name, QMimeDatabase::MatchExtension);
-    if (mime.isValid()) {
-      icon = QIcon::fromTheme(mime.iconName());
-    }
-#endif
-    if (icon.isNull()) {
-      icon = mFileIcon;
-    }
-    mIcons.insert(ext, icon);
-  } else {
-    icon = it.value();
-  }
-
-  emit iconReady(item, parent, icon);
+  // Colour-coded Fluent file type icons (same look on every PC, sharp at any
+  // display scale) instead of the old shell / theme icons.
+  emit iconReady(item, parent, Theme::fileIcon(item->name, false));
 }

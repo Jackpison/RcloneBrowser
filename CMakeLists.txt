@@ -4,9 +4,6 @@ file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" RCLONE_BROWSER_VERSION LIMIT_
 string(STRIP "${RCLONE_BROWSER_VERSION}" RCLONE_BROWSER_VERSION)
 
 project(rclone-browser VERSION ${RCLONE_BROWSER_VERSION} LANGUAGES CXX)
-if(APPLE)
-  enable_language(OBJCXX)
-endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,8 +13,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-# Qt 6 is preferred; Qt 5.15 is still accepted so distro packagers on older
-# LTS releases are not left behind. Force one with -DRB_QT_MAJOR=5 or 6.
+# Rclone Browser targets Windows with Qt 6. Other platforms are only used
+# for development builds and unit tests.
 set(RB_QT_MAJOR "" CACHE STRING "Force Qt major version (5 or 6); empty = auto")
 if(RB_QT_MAJOR)
   find_package(Qt${RB_QT_MAJOR} REQUIRED COMPONENTS Core Gui Widgets Network Svg)

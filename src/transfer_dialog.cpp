@@ -23,7 +23,9 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
   if (!mIsEditMode) {
     QPushButton *dryRun =
         ui.buttonBox->addButton("&Dry run", QDialogButtonBox::AcceptRole);
-    ui.buttonBox->addButton("&Run", QDialogButtonBox::AcceptRole);
+    QPushButton *runButton =
+        ui.buttonBox->addButton("&Run", QDialogButtonBox::AcceptRole);
+    runButton->setDefault(true); // Enter runs the transfer, not a dry run
     QObject::connect(dryRun, &QPushButton::clicked, this,
                      [=]() { mDryRun = true; });
   }

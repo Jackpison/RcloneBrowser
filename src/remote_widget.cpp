@@ -700,12 +700,9 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
                          "contains this text (Ctrl+F)"));
   hh->addWidget(mFilter, 0, Qt::AlignVCenter);
 
-  auto *close = new QToolButton;
-  close->setIcon(Theme::icon("close"));
-  close->setToolTip(tr("Close %1 (Ctrl+W)").arg(remote));
-  QObject::connect(close, &QToolButton::clicked, this,
-                   &RemoteWidget::closeRequested);
-  hh->addWidget(close, 0, Qt::AlignVCenter);
+  auto *newTab = new QShortcut(QKeySequence::AddTab, this);
+  QObject::connect(newTab, &QShortcut::activated, this,
+                   &RemoteWidget::newTabRequested);
   v->insertWidget(0, header);
 
   // ---- command bar
@@ -831,8 +828,23 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   ui.path->hide(); // still updated by the existing code; used for "Copy path"
   v->insertWidget(v->indexOf(ui.path), address);
 
+  // boxed sections: command bar and file list sit on their own cards
+  ui.buttons->setProperty("card", true);
+  ui.buttons->setAttribute(Qt::WA_StyledBackground);
+  bar->setContentsMargins(6, 4, 6, 4);
+
+  auto *listCard = new QWidget;
+  listCard->setProperty("card", true);
+  listCard->setAttribute(Qt::WA_StyledBackground);
+  auto *lc = new QVBoxLayout(listCard);
+  lc->setContentsMargins(1, 1, 1, 4);
+  const int treePos = v->indexOf(ui.tree);
+  v->removeWidget(ui.tree);
+  lc->addWidget(ui.tree);
+  v->insertWidget(treePos, listCard, 1);
+
   ui.tree->setAnimated(true);
-  ui.tree->setIconSize(QSize(20, 20));
+  ui.tree->setIconSize(QSize(22, 22));
   ui.tree->setFrameShape(QFrame::NoFrame);
   ui.tree->header()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   ui.tree->header()->setHighlightSections(false);

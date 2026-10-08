@@ -13,9 +13,6 @@
 #include "stream_widget.h"
 #include "transfer_dialog.h"
 #include "utils.h"
-#ifdef Q_OS_MACOS
-#include "osx_helper.h"
-#endif
 
 MainWindow::MainWindow() {
   ui.setupUi(this);
@@ -195,8 +192,6 @@ MainWindow::MainWindow() {
     openRemote(items.front()->text(), items.front()->data(Qt::UserRole).toString());
   });
 
-  QObject::connect(ui.tabs, &QTabWidget::tabCloseRequested, ui.tabs,
-                   &QTabWidget::removeTab);
 
   QObject::connect(ui.tasksListWidget, &QListWidget::currentItemChanged, this,
                    [=](QListWidgetItem *current) {
@@ -254,18 +249,12 @@ MainWindow::MainWindow() {
                          reason == QSystemTrayIcon::Trigger) {
                        showNormal();
                        mSystemTray.setVisible(mAlwaysShowInTray);
-#ifdef Q_OS_MACOS
-                       osxShowDockIcon();
-#endif
                      }
                    });
 
   QObject::connect(&mSystemTray, &QSystemTrayIcon::messageClicked, this, [=]() {
     showNormal();
     mSystemTray.setVisible(mAlwaysShowInTray);
-#ifdef Q_OS_MACOS
-    osxShowDockIcon();
-#endif
 
     ui.tabs->setCurrentIndex(1);
     if (mLastFinished) {
@@ -284,9 +273,6 @@ MainWindow::MainWindow() {
         MainWindow::activateWindow(); // bring window to front/unminimize on
                                       // windows
         mSystemTray.setVisible(mAlwaysShowInTray);
-#ifdef Q_OS_MACOS
-        osxShowDockIcon();
-#endif
       });
   QObject::connect(trayMenu->addAction("&Quit"), &QAction::triggered, this,
                    &QWidget::close);
@@ -678,18 +664,7 @@ void MainWindow::rcloneListRemotes() {
 #endif
             Q_UNUSED(size);
 
-            QString path =
-                ":/remotes/images/" + type.replace(' ', '_') + img_add + ".png";
-            QIcon icon;
-            if (QFile(path).exists()) {
-              icon = QIcon(path);
-            } else {
-              // types without a dedicated logo get a Fluent glyph
-              static const QStringList folderLike = {
-                  "alias", "local", "union", "combine", "chunker",
-                  "compress", "hasher", "cache"};
-              icon = Theme::icon(folderLike.contains(type) ? "folder" : "cloud");
-            }
+            QIcon icon = Theme::remoteIcon(type);
 
             QListWidgetItem *item = new QListWidgetItem(icon, name);
             item->setData(Qt::UserRole, type);
@@ -775,9 +750,6 @@ bool MainWindow::canClose() {
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
   if (mCloseToTray && isVisible()) {
-#ifdef Q_OS_MACOS
-    osxHideDockIcon();
-#endif
     mSystemTray.show();
     hide();
     ev->ignore();

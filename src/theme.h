@@ -39,6 +39,13 @@ QIcon icon(const QString &name, const QColor &color = QColor());
 // "cardStroke", "text", "text2", "accentText".
 QColor color(const char *token);
 
+// Colour-coded file type icon (folders, images, video, audio, archives...).
+QIcon fileIcon(const QString &fileName, bool isFolder);
+
+// Colour-coded tile identifying a remote's storage service. Users can
+// override any type with icons\remotes\<type>.png|svg|ico next to the exe.
+QIcon remoteIcon(const QString &type);
+
 // Status text styling for job cards: "running", "done" or "error".
 void setStatus(QWidget *w, const char *status);
 

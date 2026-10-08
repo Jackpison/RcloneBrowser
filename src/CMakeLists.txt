@@ -29,17 +29,11 @@ set(SOURCES
 if(WIN32)
   set(TARGET_NAME RcloneBrowser)
   list(APPEND SOURCES resources.rc)
-elseif(APPLE)
-  set(TARGET_NAME rclone-browser)
-  list(APPEND SOURCES osx_helper.h osx_helper.mm icon.icns)
-  set_source_files_properties(icon.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-  # Objective-C++ file must not use the C++ precompiled header.
-  set_source_files_properties(osx_helper.mm PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 else()
   set(TARGET_NAME rclone-browser)
 endif()
 
-add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE ${SOURCES})
+add_executable(${TARGET_NAME} WIN32 ${SOURCES})
 
 target_compile_definitions(${TARGET_NAME} PRIVATE
   RCLONE_BROWSER_VERSION="${RCLONE_BROWSER_VERSION}"
@@ -72,26 +66,6 @@ target_link_libraries(${TARGET_NAME} PRIVATE
 
 if(WIN32)
   target_link_libraries(${TARGET_NAME} PRIVATE shell32 ole32 dwmapi advapi32)
-elseif(APPLE)
-  find_library(COCOA_LIB Cocoa REQUIRED)
-  target_link_libraries(${TARGET_NAME} PRIVATE ${COCOA_LIB})
-  set_target_properties(${TARGET_NAME} PROPERTIES
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist")
-else()
-  include(GNUInstallDirs)
-  install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-  set(ASSETS "${CMAKE_CURRENT_SOURCE_DIR}/../assets")
-  install(FILES "${ASSETS}/rclone-browser.svg"
-          DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps")
-  foreach(size 32 64 128 256 512)
-    install(FILES "${ASSETS}/rclone-browser-${size}x${size}.png"
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps"
-            RENAME "rclone-browser.png")
-  endforeach()
-  install(FILES "${ASSETS}/rclone-browser.desktop"
-          DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
-  install(FILES "${ASSETS}/rclone-browser.appdata.xml"
-          DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo")
 endif()
 
 # Parser unit tests (no GUI, no rclone needed).

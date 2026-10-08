@@ -77,8 +77,10 @@ private:
   bool mSyncingNav = false;
   void buildShell();
   int remoteTab(const QString &name) const;
-  void openRemote(const QString &name, const QString &type);
+  void openRemote(const QString &name, const QString &type, bool newTab = false);
   void closeRemote(const QString &name);
+  void closeRemoteWidget(QWidget *w);
+  bool eventFilter(QObject *o, QEvent *e) override;
   void syncNavToCurrentPage();
   void rebuildNavRemotes();
   void setJobsTabText(const QString &text);

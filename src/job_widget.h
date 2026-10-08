@@ -31,4 +31,10 @@ private:
   QStringList mArgs;
   QHash<QString, QLabel *> mActive;
   QSet<QLabel *> mUpdated;
+
+  QToolButton *mPause = nullptr;
+  QLabel *mSummary = nullptr;
+  bool mPaused = false;
+  void buildFluentLayout();
+  void setPaused(bool paused);
 };

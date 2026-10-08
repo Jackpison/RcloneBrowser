@@ -1,31 +1,32 @@
-# Rclone Browser for Windows
+<p align="center"><img src="docs/logo.png" width="96" alt="Rclone Browser logo"></p>
 
-A modern Windows 11 style app for browsing and transferring files on all your cloud storage, powered by [rclone](https://rclone.org/).
+<h1 align="center">Rclone Browser for Windows</h1>
 
-Portable, nothing to install: unzip it anywhere (even on a USB stick) and run.
+<p align="center">A modern Windows 11 app for browsing and transferring files on all your cloud storage, powered by <a href="https://rclone.org/">rclone</a>.<br>Portable, nothing to install: unzip it anywhere (even on a USB stick) and run.</p>
 
-![Rclone Browser – remotes](docs/home.png)
-
-![Rclone Browser – browsing a remote in dark mode](docs/browser-dark.png)
+![Browsing a remote, with tabs](docs/browser.png)
 
 ## Features
 
-- Windows 11 design: navigation pane, command bar, breadcrumb address bar, Fluent icons, light and dark themes, follows your Windows accent colour
-- Browse any rclone remote (Google Drive, OneDrive, Dropbox, S3, SFTP, encrypted remotes and 70+ more) using your existing rclone configuration
-- Upload, download, create folders, rename, move and delete
-- Drag and drop files from File Explorer to upload them
-- Filter the current folder by name (Ctrl+F)
-- Mount remotes as drive letters (requires [WinFsp](https://winfsp.dev/))
-- Stream media files to a player such as [VLC](https://www.videolan.org/)
-- Background transfers with live progress, speed and ETA for every file
+- **Windows 11 design**: navigation pane, Explorer-style tabs, command bar, breadcrumb address bar, Fluent icons, light and dark themes, follows your Windows accent colour
+- **All your clouds in one place**: Google Drive, OneDrive, Dropbox, pCloud, S3, SFTP, encrypted remotes and 70+ more, using your existing rclone configuration. Each service gets its own colour-coded tile.
+- **Tabs**: open several remotes, or the same remote several times (Ctrl+T)
+- Upload, download, create folders, rename, move and delete; drag and drop files from File Explorer to upload
+- **Transfers you can pause and resume**, with live progress, speed and time left for every file
 - Saved tasks: store a transfer once, run it again with one click (or as a dry run)
+- Filter the current folder by name (Ctrl+F)
+- Mount remotes as drive letters (requires [WinFsp](https://winfsp.dev/)) and stream media to a player such as [VLC](https://www.videolan.org/)
 - Folder size, folder tree, export of file lists, public links
-- Built-in rclone updater: rclone is bundled, kept up to date from inside the app, and every download is checksum-verified
+- **Built-in rclone updater**: rclone is bundled, kept up to date from inside the app, and every download is checksum-verified
 - Optional minimise to the system tray with notifications when transfers finish
+
+![Remotes on the Home page](docs/home.png)
+
+![Transfers in dark mode](docs/transfers-dark.png)
 
 ## Getting started
 
-1. Download `RcloneBrowser-<version>-windows-x64-portable.zip` from the [Releases](../../releases) page, or from the latest successful run on the [Actions](../../actions) page (under **Artifacts**).
+1. Download `RcloneBrowser-<version>-windows-x64-portable.zip` from the [Releases](../../releases) page.
 2. Extract it to any folder and run `RcloneBrowser.exe`.
 3. Windows may show "Windows protected your PC" because the app is not code-signed. Click **More info → Run anyway**.
 
@@ -46,6 +47,10 @@ Paths in portable mode are relative to the app folder, so it keeps working after
 
 To use the app in non-portable mode instead, delete `RcloneBrowser.ini`. Settings are then stored in the registry under `HKEY_CURRENT_USER\Software\rclone-browser\rclone-browser` and tasks in `%LOCALAPPDATA%\rclone-browser\rclone-browser`.
 
+## Custom service icons
+
+Each remote is shown with a colour-coded tile for its storage type. To use your own picture for a type instead, create a folder `icons\remotes` next to `RcloneBrowser.exe` and put a `.png`, `.svg` or `.ico` file in it, named after the rclone type, for example `drive.png`, `onedrive.png`, `pcloud.png` or `s3.png`. Restart the app (or use **Reload remotes**) to apply.
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |
@@ -57,7 +62,8 @@ To use the app in non-portable mode instead, delete `RcloneBrowser.ini`. Setting
 | Del | Delete |
 | Ctrl+U / Ctrl+D | Upload / Download |
 | Alt+Up | Go to parent folder |
-| Ctrl+W | Close the open remote |
+| Ctrl+T | Open the current remote in a new tab |
+| Ctrl+W | Close the current tab |
 
 ## rclone updates
 
@@ -67,7 +73,7 @@ Each download is verified against rclone's published SHA-256 checksums before it
 
 ## Building from source
 
-The app is built automatically by GitHub Actions (`.github/workflows/windows-portable.yml`) on every push. Pushing a tag such as `v1.9.0` also publishes a release.
+The app is built automatically by GitHub Actions (`.github/workflows/windows-portable.yml`) on every push. Pushing a tag such as `v2.0.0` also publishes a release.
 
 To build locally:
 
@@ -82,4 +88,4 @@ To build locally:
 
 ## Credits
 
-Based on Rclone Browser by [mmozeiko](https://github.com/mmozeiko/RcloneBrowser), [DinCahill](https://github.com/DinCahill/RcloneBrowser) and [kapitainsky](https://github.com/kapitainsky/RcloneBrowser). Icons from [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) by Microsoft (MIT). Licensed under the MIT license.
+Based on Rclone Browser by [mmozeiko](https://github.com/mmozeiko/RcloneBrowser), [DinCahill](https://github.com/DinCahill/RcloneBrowser) and [kapitainsky](https://github.com/kapitainsky/RcloneBrowser). Interface icons from [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) by Microsoft (MIT). Licensed under the MIT license.

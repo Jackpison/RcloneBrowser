@@ -15,6 +15,19 @@
     <file alias="edit.svg">icons/fluent/edit.svg</file>
     <file alias="expand.svg">icons/fluent/expand.svg</file>
     <file alias="export.svg">icons/fluent/export.svg</file>
+    <file alias="f_app.svg">icons/fluent/f_app.svg</file>
+    <file alias="f_archive.svg">icons/fluent/f_archive.svg</file>
+    <file alias="f_audio.svg">icons/fluent/f_audio.svg</file>
+    <file alias="f_code.svg">icons/fluent/f_code.svg</file>
+    <file alias="f_doc.svg">icons/fluent/f_doc.svg</file>
+    <file alias="f_drive.svg">icons/fluent/f_drive.svg</file>
+    <file alias="f_folder.svg">icons/fluent/f_folder.svg</file>
+    <file alias="f_folder_open.svg">icons/fluent/f_folder_open.svg</file>
+    <file alias="f_image.svg">icons/fluent/f_image.svg</file>
+    <file alias="f_sheet.svg">icons/fluent/f_sheet.svg</file>
+    <file alias="f_slides.svg">icons/fluent/f_slides.svg</file>
+    <file alias="f_text.svg">icons/fluent/f_text.svg</file>
+    <file alias="f_video.svg">icons/fluent/f_video.svg</file>
     <file alias="file.svg">icons/fluent/file.svg</file>
     <file alias="folder.svg">icons/fluent/folder.svg</file>
     <file alias="home.svg">icons/fluent/home.svg</file>
@@ -24,10 +37,13 @@
     <file alias="mount.svg">icons/fluent/mount.svg</file>
     <file alias="move.svg">icons/fluent/move.svg</file>
     <file alias="new_folder.svg">icons/fluent/new_folder.svg</file>
+    <file alias="new_tab.svg">icons/fluent/new_tab.svg</file>
     <file alias="open.svg">icons/fluent/open.svg</file>
+    <file alias="pause.svg">icons/fluent/pause.svg</file>
     <file alias="quit.svg">icons/fluent/quit.svg</file>
     <file alias="refresh.svg">icons/fluent/refresh.svg</file>
     <file alias="rename.svg">icons/fluent/rename.svg</file>
+    <file alias="resume.svg">icons/fluent/resume.svg</file>
     <file alias="search.svg">icons/fluent/search.svg</file>
     <file alias="settings.svg">icons/fluent/settings.svg</file>
     <file alias="shared.svg">icons/fluent/shared.svg</file>
@@ -35,6 +51,15 @@
     <file alias="stop.svg">icons/fluent/stop.svg</file>
     <file alias="stream.svg">icons/fluent/stream.svg</file>
     <file alias="subtract.svg">icons/fluent/subtract.svg</file>
+    <file alias="t_archive.svg">icons/fluent/t_archive.svg</file>
+    <file alias="t_bucket.svg">icons/fluent/t_bucket.svg</file>
+    <file alias="t_cloud.svg">icons/fluent/t_cloud.svg</file>
+    <file alias="t_drive.svg">icons/fluent/t_drive.svg</file>
+    <file alias="t_folder.svg">icons/fluent/t_folder.svg</file>
+    <file alias="t_lock.svg">icons/fluent/t_lock.svg</file>
+    <file alias="t_photos.svg">icons/fluent/t_photos.svg</file>
+    <file alias="t_server.svg">icons/fluent/t_server.svg</file>
+    <file alias="t_web.svg">icons/fluent/t_web.svg</file>
     <file alias="tasks.svg">icons/fluent/tasks.svg</file>
     <file alias="transfers.svg">icons/fluent/transfers.svg</file>
     <file alias="tree.svg">icons/fluent/tree.svg</file>
@@ -44,43 +69,5 @@
   </qresource>
   <qresource prefix="icons">
     <file>icon.png</file>
-  </qresource>
-  <qresource prefix="remotes">
-    <file>images/amazon_cloud_drive.png</file>
-    <file>images/b2.png</file>
-    <file>images/crypt.png</file>
-    <file>images/drive.png</file>
-    <file>images/dropbox.png</file>
-    <file>images/google_cloud_storage.png</file>
-    <file>images/hubic.png</file>
-    <file>images/local.png</file>
-    <file>images/mega.png</file>
-    <file>images/onedrive.png</file>
-    <file>images/s3.png</file>
-    <file>images/ftp.png</file>
-    <file>images/sftp.png</file>
-    <file>images/swift.png</file>
-    <file>images/unknown.png</file>
-    <file>images/yandex.png</file>
-    <file>images/azureblob.png</file>
-    <file>images/google_photos.png</file>
-    <file>images/amazon_cloud_drive_inv.png</file>
-    <file>images/b2_inv.png</file>
-    <file>images/crypt_inv.png</file>
-    <file>images/drive_inv.png</file>
-    <file>images/dropbox_inv.png</file>
-    <file>images/google_cloud_storage_inv.png</file>
-    <file>images/hubic_inv.png</file>
-    <file>images/local_inv.png</file>
-    <file>images/mega_inv.png</file>
-    <file>images/onedrive_inv.png</file>
-    <file>images/s3_inv.png</file>
-    <file>images/ftp_inv.png</file>
-    <file>images/sftp_inv.png</file>
-    <file>images/swift_inv.png</file>
-    <file>images/unknown_inv.png</file>
-    <file>images/yandex_inv.png</file>
-    <file>images/azureblob_inv.png</file>
-    <file>images/google_photos_inv.png</file>
   </qresource>
 </RCC>

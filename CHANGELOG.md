@@ -1,27 +1,44 @@
-# Change Log
-## [1.9.0] - 2026-10-08
-Revival release focused on the Windows portable build.
--   NEW: Windows 11 design: navigation pane with all remotes, Home page with remote cards, command bar, breadcrumb address bar, Fluent UI icons, WinUI 3 colours, Windows accent colour, Segoe UI Variable, matching title bar and rounded menus
--   NEW: filter the current folder by name (Ctrl+F), Up button (Alt+Up), copy path, Ctrl+U / Ctrl+D for upload and download
--   FIXED: job status text was invisible in dark mode
--   FIXED: files smaller than 10 bytes showed size 0; sizes now read "6.7 MB"
--   NEW: built-in rclone download and updater. Checks rclone.org (GitHub as fallback) at most once a day, verifies the SHA-256 checksum, and installs into the `rclone` folder next to the app. Safe while jobs or mounts are running.
--   NEW: first run without rclone offers a one-click download instead of an error
--   NEW: status bar shows the rclone version and a one-click update link
--   NEW: Help menu: "Check for rclone updates…" and an auto-check toggle
--   NEW: theme setting (Same as Windows / Light / Dark), applied instantly and following Windows when it switches; native Windows 11 style where available
--   NEW: portable mode picks up `rclone\rclone.conf` automatically so remotes travel with the folder
--   NEW: Windows portable zip built by GitHub Actions, with the VC++ runtime and the latest rclone bundled
--   FIXED: transfer progress (size, speed, ETA, per-file bars), checks and error counts were not shown with rclone 1.56 and newer
--   FIXED: files whose names start or end with a space could not be opened or downloaded
--   FIXED: "Export list of files" could silently drop entries
--   FIXED: startup froze while checking for updates on slow or offline networks
--   FIXED: media streaming with a player path containing spaces
--   CHANGED: ported to Qt 6 (sharp text and icons on high-DPI and mixed-DPI monitors); CMake 3.16+
--   CHANGED: compiler warnings are no longer fatal (`-DRB_WERROR=ON` to opt in)
--   REMOVED: Rclone Browser self-update check (it pointed at the unmaintained upstream repository)
--   REMOVED: Travis CI and AppVeyor configuration
--   DEV: all rclone output parsing moved into `rclone_output.cpp` with unit tests based on real rclone 1.75 output
+# Changelog
+
+## [2.0.0] - 2026-10-08
+First release of the revived, Windows-focused Rclone Browser.
+
+### Design
+-   Windows 11 design: navigation pane with all remotes, Home page with remote cards, command bar, breadcrumb address bar, Explorer-style tabs
+-   Fluent UI icons, WinUI 3 colours in light and dark, Windows accent colour, Segoe UI Variable, tinted title bar, rounded menus
+-   Larger text and higher contrast; boxed sections for the command bar, address bar, file list and transfer details
+-   Colour-coded file type icons (folders, images, video, audio, archives, PDFs, documents, spreadsheets, code)
+-   Colour-coded tile per storage service; custom icons can be placed in `icons\remotes\<type>.png` next to the exe
+-   New app icon
+-   Theme setting: Same as Windows / Light / Dark, applied instantly
+
+### New
+-   Pause and resume transfers
+-   Tabs: open several remotes, or the same remote several times (Ctrl+T, Ctrl+W, middle-click to close)
+-   Transfer cards show progress, speed and time left at a glance; details as labelled tiles
+-   Filter the current folder (Ctrl+F), Up (Alt+Up), copy path, Ctrl+U / Ctrl+D for upload and download
+-   Built-in rclone updater: daily check, SHA-256 verified download, safe while transfers are running
+-   First run without rclone offers a one-click download
+-   Portable mode picks up `rclone\rclone.conf` so remotes travel with the folder
+-   Windows portable zip built by GitHub Actions, with VC++ runtime and the latest rclone bundled
+
+### Fixed
+-   Transfer progress, checks and error counts were not shown with rclone 1.56 and newer
+-   Transfer details could be cut off on the right; status text was invisible in dark mode
+-   Files whose names start or end with a space could not be opened or downloaded
+-   "Export list of files" could silently drop entries
+-   Startup froze while checking for updates on slow or offline networks
+-   Media streaming with a player path containing spaces
+-   Files smaller than 10 bytes showed size 0; sizes now read "6.7 MB"
+-   Enter in the transfer dialog started a dry run instead of the transfer
+
+### Changed
+-   Ported to Qt 6; Windows only (macOS, Linux and BSD packaging removed)
+-   rclone output parsing moved into one module with unit tests
+
+## Earlier versions
+
+The entries below are from the original Rclone Browser project.
 
 ## [1.8.0][1.8.0] - 2020-02-17
 -   NEW: http(s) proxy configuration for rclone

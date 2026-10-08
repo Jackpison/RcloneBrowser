@@ -1,4 +1,5 @@
 #include "item_model.h"
+#include "theme.h"
 #include "rclone_output.h"
 #include "icon_cache.h"
 #include "utils.h"
@@ -78,9 +79,10 @@ ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
     : QAbstractItemModel(parent), mRemote(remote),
       mFixedFont(QFontDatabase::systemFont(QFontDatabase::FixedFont)) {
   QStyle *style = qApp->style();
-  mDriveIcon = style->standardIcon(QStyle::SP_DriveNetIcon);
-  mFolderIcon = style->standardIcon(QStyle::SP_DirIcon);
-  mFileIcon = style->standardIcon(QStyle::SP_FileIcon);
+  Q_UNUSED(style);
+  mDriveIcon = Theme::icon("f_drive", QColor("#5E6B78"));
+  mFolderIcon = Theme::fileIcon(QString(), true);
+  mFileIcon = Theme::fileIcon(QString(), false);
 
   auto settings = GetSettings();
   mFolderIcons = settings->value("Settings/showFolderIcons", true).toBool();

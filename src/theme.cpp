@@ -189,17 +189,19 @@ QMap<QString, QString> buildTokens() {
                                   .arg(c.alpha());
   };
   const bool d = gDark;
-  const QColor card = d ? QColor("#2B2B2B") : QColor("#FFFFFF");
-  set("bg", d ? QColor("#202020") : QColor("#F3F3F3"));
-  set("layer", d ? QColor("#272727") : QColor("#F9F9F9"));
+  const QColor card = d ? QColor("#303030") : QColor("#FFFFFF");
+  set("bg", d ? QColor("#1F1F1F") : QColor("#EEEEEE"));
+  set("layer", d ? QColor("#272727") : QColor("#F8F8F8"));
   set("card", card);
-  set("cardHover", d ? QColor("#323232") : QColor("#F6F6F6"));
+  set("cardHover", d ? QColor("#383838") : QColor("#F4F4F4"));
   set("stroke", d ? QColor("#1C1C1C") : QColor("#E5E5E5"));
-  set("cardStroke", d ? QColor("#363636") : QColor("#E5E5E5"));
+  set("cardStroke", d ? QColor("#424242") : QColor("#D9D9D9"));
+  set("tile", d ? QColor("#3A3A3A") : QColor("#F3F3F3"));
+  set("headerBg", d ? QColor("#363636") : QColor("#F6F6F6"));
   set("divider", d ? QColor("#383838") : QColor("#E5E5E5"));
-  set("text", d ? QColor("#FFFFFF") : QColor("#1B1B1B"));
-  set("text2", d ? QColor("#CFCFCF") : QColor("#5F5F5F"));
-  set("text3", d ? QColor("#8A8A8A") : QColor("#9E9E9E"));
+  set("text", d ? QColor("#FFFFFF") : QColor("#141414"));
+  set("text2", d ? QColor("#D8D8D8") : QColor("#474747"));
+  set("text3", d ? QColor("#A0A0A0") : QColor("#8A8A8A"));
   set("ctrl", d ? QColor("#2D2D2D") : QColor("#FFFFFF"));
   set("ctrlHover", d ? QColor("#323232") : QColor("#F9F9F9"));
   set("ctrlPressed", d ? QColor("#272727") : QColor("#F5F5F5"));
@@ -208,7 +210,7 @@ QMap<QString, QString> buildTokens() {
   set("ctrlStrokeBottom", d ? QColor("#353535") : QColor("#CCCCCC"));
   set("inputBottom", d ? QColor("#9A9A9A") : QColor("#868686"));
   set("inputFocus", d ? QColor("#1F1F1F") : QColor("#FFFFFF"));
-  set("subtleHover", d ? QColor(255, 255, 255, 15) : QColor(0, 0, 0, 10));
+  set("subtleHover", d ? QColor(255, 255, 255, 20) : QColor(0, 0, 0, 13));
   set("subtlePressed", d ? QColor(255, 255, 255, 10) : QColor(0, 0, 0, 6));
   set("flyout", d ? QColor("#2C2C2C") : QColor("#F9F9F9"));
   set("flyoutStroke", d ? QColor("#1A1A1A") : QColor("#D8D8D8"));
@@ -223,6 +225,12 @@ QMap<QString, QString> buildTokens() {
   set("selHover", mix(gAccentText, card, d ? 0.28 : 0.20));
   set("success", d ? QColor("#6CCB5F") : QColor("#0F7B0F"));
   set("critical", d ? QColor("#FF99A4") : QColor("#C42B1C"));
+  {
+    QColor a = gAccentText; a.setAlpha(d ? 46 : 30);
+    set("accentTint", a);
+  }
+  set("successTint", d ? QColor(108, 203, 95, 40) : QColor(15, 123, 15, 26));
+  set("criticalTint", d ? QColor(255, 153, 164, 40) : QColor(196, 43, 28, 24));
   set("checkStroke", d ? QColor("#9A9A9A") : QColor("#878787"));
 
   const QColor iconC = d ? QColor(255, 255, 255, 200) : QColor(0, 0, 0, 170);
@@ -230,6 +238,7 @@ QMap<QString, QString> buildTokens() {
   t["imgRight"] = iconFile("chevron", iconC, 12);
   t["imgDown"] = iconFile("expand", iconC, 12);
   t["imgUp"] = iconFile("collapse", iconC, 12);
+  t["imgClose"] = iconFile("close", iconC, 12);
   t["imgDownDisabled"] = iconFile("expand", d ? QColor(255, 255, 255, 80) : QColor(0, 0, 0, 70), 12);
   return t;
 }
@@ -249,7 +258,7 @@ QTabWidget#tabs::pane { border: none; background: transparent; }
 QTabWidget#tabs > QStackedWidget > QWidget,
 QScrollArea, QScrollArea > QWidget > QWidget { background: transparent; border: none; }
 
-QLabel#PageTitle { font-size: 20pt; font-weight: 600; padding: 0; }
+QLabel#PageTitle { font-size: 22pt; font-weight: 600; padding: 0; }
 QLabel#PageSubtitle, QLabel[secondary="true"] { color: @text2; }
 QDialogButtonBox { dialogbuttonbox-buttons-have-icons: 0; }
 QLabel#noJobsAvailable { color: @text2; }
@@ -261,10 +270,34 @@ QWidget[card="true"], JobWidget, MountWidget, StreamWidget {
   border-radius: 8px;
 }
 JobWidget QLineEdit, MountWidget QLineEdit, StreamWidget QLineEdit { background: transparent; border: none; padding: 1px 0; }
-QToolButton[status] { border: none; font-weight: 600; padding: 2px 6px; }
-QToolButton[status="running"] { color: @accentText; }
-QToolButton[status="done"] { color: @success; }
-QToolButton[status="error"] { color: @critical; }
+JobWidget QLabel, MountWidget QLabel, StreamWidget QLabel { background: transparent; border: none; }
+QToolButton[status] { border: none; font-weight: 600; padding: 4px 12px; border-radius: 6px; }
+QToolButton[status="running"] { color: @accentText; background: @accentTint; }
+QToolButton[status="paused"] { color: @text2; background: @tile; }
+QToolButton[status="done"] { color: @success; background: @successTint; }
+QToolButton[status="error"] { color: @critical; background: @criticalTint; }
+
+/* ---------- boxed sections ---------- */
+QWidget#StatTile { background: @tile; border: none; border-radius: 6px; }
+QLabel#JobSummary { color: @text2; background: transparent; padding: 0 8px; }
+QLabel#StatLabel { color: @text2; font-size: 9.5pt; background: transparent; border: none; }
+QLineEdit[statValue="true"], QLineEdit[statValue="true"]:read-only { background: transparent; border: none; padding: 0; font-weight: 600; font-size: 12pt; }
+QLineEdit[pathValue="true"], QLineEdit[pathValue="true"]:read-only { background: @tile; border: none; border-radius: 5px; padding: 5px 9px; }
+QWidget[card="true"] QHeaderView::section { background: @headerBg; }
+QWidget[card="true"] QHeaderView::section:first { border-top-left-radius: 7px; }
+QWidget[card="true"] QHeaderView::section:last { border-top-right-radius: 7px; }
+
+/* ---------- remote tabs (Explorer style) ---------- */
+QTabWidget#tabs > QTabBar { background: transparent; }
+QTabWidget#tabs > QTabBar::tab {
+  background: transparent; color: @text2; border: 1px solid transparent; border-bottom: none;
+  border-top-left-radius: 7px; border-top-right-radius: 7px;
+  padding: 8px 10px 8px 14px; margin: 8px 0 0 4px; min-width: 120px; max-width: 240px;
+}
+QTabWidget#tabs > QTabBar::tab:hover { background: @subtleHover; color: @text; }
+QTabWidget#tabs > QTabBar::tab:selected { background: @card; color: @text; border-color: @cardStroke; }
+QTabWidget#tabs > QTabBar::close-button { image: url(@imgClose); subcontrol-position: right; margin: 2px; }
+QTabWidget#tabs > QTabBar::close-button:hover { background: @subtleHover; border-radius: 4px; }
 QWidget#jobsArea QFrame[frameShape="4"] { border: none; background: transparent; max-height: 2px; }
 
 /* ---------- navigation pane ---------- */
@@ -551,7 +584,7 @@ QFont fluentFont() {
   // Windows 11 UI font, with fallbacks for Windows 10 and other systems.
   f.setFamilies({"Segoe UI Variable Text", "Segoe UI", "Selawik", "Noto Sans",
                  "Sans Serif"});
-  f.setPointSizeF(10);
+  f.setPointSizeF(11);
   f.setHintingPreference(QFont::PreferNoHinting);
   return f;
 }
@@ -615,6 +648,154 @@ QColor accent() { return gAccentText; }
 
 QIcon icon(const QString &name, const QColor &color) {
   return QIcon(new FluentIconEngine(name, color));
+}
+
+// ------------------------------------------------- file type icons ----
+
+QIcon fileIcon(const QString &fileName, bool isFolder) {
+  static QHash<QString, QIcon> cache;
+  struct T { const char *icon; const char *color; };
+  static const QHash<QString, T> byExt = [] {
+    QHash<QString, T> m;
+    auto add = [&](std::initializer_list<const char *> exts, T t) {
+      for (auto e : exts) m.insert(e, t);
+    };
+    add({"jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif",
+         "tiff", "svg", "raw", "cr2", "nef", "arw", "dng", "ico", "avif"},
+        {"f_image", "#0E9F8F"});
+    add({"mp4", "mkv", "mov", "avi", "wmv", "webm", "m4v", "mpg", "mpeg",
+         "flv", "3gp", "ts"},
+        {"f_video", "#8E44C9"});
+    add({"mp3", "flac", "wav", "aac", "ogg", "m4a", "wma", "opus", "aiff"},
+        {"f_audio", "#E3711B"});
+    add({"zip", "7z", "rar", "tar", "gz", "bz2", "xz", "zst", "iso", "cab",
+         "tgz"},
+        {"f_archive", "#B8862B"});
+    add({"pdf"}, {"f_doc", "#D13438"});
+    add({"xls", "xlsx", "xlsm", "csv", "ods", "tsv"}, {"f_sheet", "#108A48"});
+    add({"ppt", "pptx", "odp", "key"}, {"f_slides", "#D0522B"});
+    add({"doc", "docx", "odt", "rtf", "pages"}, {"f_text", "#2B6CD8"});
+    add({"txt", "md", "log", "ini", "cfg", "conf", "nfo"}, {"f_text", "#7A8594"});
+    add({"c", "cpp", "h", "hpp", "cs", "py", "js", "ts", "tsx", "jsx", "java",
+         "go", "rs", "rb", "php", "html", "css", "json", "xml", "yml", "yaml",
+         "sh", "ps1", "bat", "cmd", "sql", "kt", "swift", "lua"},
+        {"f_code", "#5C6BC0"});
+    add({"exe", "msi", "msix", "appx", "apk", "dmg", "deb", "rpm"},
+        {"f_app", "#3F6FD8"});
+    return m;
+  }();
+
+  const QString key = isFolder ? QString("/folder")
+                               : QFileInfo(fileName).suffix().toLower();
+  auto it = cache.find(key);
+  if (it != cache.end()) {
+    return it.value();
+  }
+  QIcon result;
+  if (isFolder) {
+    result = icon("f_folder", QColor("#E9A93A"));
+  } else {
+    auto t = byExt.value(key, {"f_doc", "#8592A3"});
+    result = icon(t.icon, QColor(t.color));
+  }
+  cache.insert(key, result);
+  return result;
+}
+
+// ------------------------------------------------- remote type tiles ----
+
+namespace {
+class TileIconEngine : public QIconEngine {
+public:
+  TileIconEngine(const QString &glyph, const QColor &bg) : mGlyph(glyph), mBg(bg) {}
+  void paint(QPainter *p, const QRect &r, QIcon::Mode mode, QIcon::State) override {
+    p->save();
+    p->setRenderHint(QPainter::Antialiasing);
+    QColor bg = mBg;
+    if (mode == QIcon::Disabled) bg.setAlpha(110);
+    p->setPen(Qt::NoPen);
+    p->setBrush(bg);
+    const QRectF rf = QRectF(r).adjusted(0.5, 0.5, -0.5, -0.5);
+    const qreal radius = rf.width() * 0.24;
+    p->drawRoundedRect(rf, radius, radius);
+    const qreal inset = rf.width() * 0.2;
+    renderSvg(p, rf.adjusted(inset, inset, -inset, -inset), mGlyph, Qt::white);
+    p->restore();
+  }
+  QPixmap pixmap(const QSize &s, QIcon::Mode m, QIcon::State st) override {
+    return scaledPixmap(s, m, st, 1.0);
+  }
+  QPixmap scaledPixmap(const QSize &s, QIcon::Mode m, QIcon::State st, qreal scale) override {
+    QPixmap pm(s * scale);
+    pm.fill(Qt::transparent);
+    pm.setDevicePixelRatio(scale);
+    QPainter p(&pm);
+    paint(&p, QRect(QPoint(0, 0), s), m, st);
+    return pm;
+  }
+  QIconEngine *clone() const override { return new TileIconEngine(mGlyph, mBg); }
+  QString key() const override { return "fluent-tile"; }
+private:
+  QString mGlyph;
+  QColor mBg;
+};
+} // namespace
+
+QIcon remoteIcon(const QString &type) {
+  // User override: <app folder>\icons\remotes\<type>.png / .svg / .ico
+  const QDir dir(QDir(qApp->applicationDirPath()).filePath("icons/remotes"));
+  for (const char *ext : {"png", "svg", "ico"}) {
+    const QString f = dir.filePath(type + "." + ext);
+    if (QFileInfo::exists(f)) {
+      return QIcon(f);
+    }
+  }
+
+  struct T { const char *glyph; const char *color; };
+  static const QHash<QString, T> known = {
+      // personal cloud drives: each with its own colour
+      {"drive", {"t_cloud", "#1E8E3E"}},      {"onedrive", {"t_cloud", "#0F6CBD"}},
+      {"dropbox", {"t_cloud", "#2D5BE3"}},    {"box", {"t_cloud", "#1A73C7"}},
+      {"pcloud", {"t_cloud", "#139C9C"}},     {"mega", {"t_cloud", "#D9272E"}},
+      {"jottacloud", {"t_cloud", "#6A4FB8"}}, {"koofr", {"t_cloud", "#2F9E6E"}},
+      {"yandex", {"t_cloud", "#E0A100"}},     {"mailru", {"t_cloud", "#1D6FD8"}},
+      {"pikpak", {"t_cloud", "#3D7BE0"}},     {"protondrive", {"t_cloud", "#6D4AFF"}},
+      {"iclouddrive", {"t_cloud", "#3A8EE6"}}, {"seafile", {"t_cloud", "#E06C16"}},
+      {"opendrive", {"t_cloud", "#3E82C4"}},  {"hidrive", {"t_cloud", "#E2001A"}},
+      {"zoho", {"t_cloud", "#C8312B"}},       {"sharefile", {"t_cloud", "#4C6A8E"}},
+      {"putio", {"t_cloud", "#E3A72A"}},      {"premiumizeme", {"t_cloud", "#E0632A"}},
+      {"filefabric", {"t_cloud", "#4A5D7A"}}, {"linkbox", {"t_cloud", "#3BA7C9"}},
+      {"internetarchive", {"t_archive", "#555D66"}},
+      {"google photos", {"t_photos", "#C2185B"}},
+      {"googlephotos", {"t_photos", "#C2185B"}},
+      // object storage
+      {"s3", {"t_bucket", "#D9822B"}},        {"b2", {"t_bucket", "#C8312B"}},
+      {"azureblob", {"t_bucket", "#0F78D4"}}, {"azurefiles", {"t_bucket", "#0F78D4"}},
+      {"google cloud storage", {"t_bucket", "#3367D6"}},
+      {"swift", {"t_bucket", "#B85C1E"}},     {"oracleobjectstorage", {"t_bucket", "#C74634"}},
+      {"storj", {"t_bucket", "#2683FF"}},     {"qingstor", {"t_bucket", "#2D8CF0"}},
+      {"sia", {"t_bucket", "#1ED660"}},       {"netstorage", {"t_bucket", "#0096D6"}},
+      // servers & protocols
+      {"sftp", {"t_server", "#0E7C86"}},      {"ftp", {"t_server", "#3B7E5B"}},
+      {"smb", {"t_server", "#4E6A92"}},       {"webdav", {"t_server", "#7553C0"}},
+      {"http", {"t_web", "#4E6A92"}},         {"hdfs", {"t_server", "#5E6B78"}},
+      // local & virtual
+      {"local", {"t_drive", "#5E6B78"}},      {"crypt", {"t_lock", "#5B5FC7"}},
+  };
+  static const QStringList folderLike = {"alias", "union", "combine", "chunker",
+                                         "compress", "hasher", "cache"};
+  T t{"t_cloud", "#5E6B78"};
+  if (known.contains(type)) {
+    t = known.value(type);
+  } else if (folderLike.contains(type)) {
+    t = {"t_folder", "#C98B1E"};
+  } else {
+    // unknown types: stable colour derived from the name
+    static const char *palette[] = {"#2B6CD8", "#108A48", "#8E44C9", "#D0522B",
+                                    "#0E9F8F", "#C2185B", "#5C6BC0", "#B8862B"};
+    t = {"t_cloud", palette[qHash(type) % 8]};
+  }
+  return QIcon(new TileIconEngine(t.glyph, QColor(t.color)));
 }
 
 QColor color(const char *token) {
