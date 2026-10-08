@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
 #else
     // not macOS
 #ifdef Q_OS_WIN
-    applicationPath = qApp->applicationFilePath();
+    applicationPath = QFileInfo(qApp->applicationFilePath());
     tmpDir = applicationPath.absolutePath();
 #else
     QString xdg_config_home = qgetenv("XDG_CONFIG_HOME");

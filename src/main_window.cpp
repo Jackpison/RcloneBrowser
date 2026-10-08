@@ -1,5 +1,8 @@
 #include "main_window.h"
 #include "theme.h"
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 #include "rclone_updater.h"
 #include "job_options.h"
 #include "job_widget.h"
@@ -23,8 +26,8 @@ MainWindow::MainWindow() {
     this->setWindowTitle("Rclone Browser");
   }
 
-#if defined(Q_OS_WIN)
-  // disable "?" WindowContextHelpButton
+#if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  // disable "?" WindowContextHelpButton (Qt 6 never shows it)
   QApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 #endif
 

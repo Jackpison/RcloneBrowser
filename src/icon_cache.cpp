@@ -2,6 +2,10 @@
 #include "item_model.h"
 #if defined(Q_OS_MACOS)
 #include "osx_helper.h"
+#elif defined(Q_OS_WIN)
+#include <windows.h>
+#include <objbase.h>
+#include <shellapi.h>
 #endif
 
 IconCache::IconCache(QObject *parent) : QObject(parent) {

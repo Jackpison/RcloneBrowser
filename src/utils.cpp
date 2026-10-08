@@ -66,7 +66,7 @@ static QString GetIniFilename() {
   return appBundlePath.dir().filePath(appBundlePath.baseName() + ".ini");
 #else
 #ifdef Q_OS_WIN
-  QFileInfo applicationPath = qApp->applicationFilePath();
+  QFileInfo applicationPath(qApp->applicationFilePath());
   return applicationPath.dir().filePath(applicationPath.baseName() + ".ini");
 #else
   QString xdg_config_home = qgetenv("XDG_CONFIG_HOME");

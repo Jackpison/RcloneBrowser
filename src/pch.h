@@ -12,6 +12,14 @@
 #include <QtNetwork>
 #include <QtWidgets>
 
+#ifdef Q_OS_WIN
+// Win32 API used directly (file icons, COM, console for "rclone config").
+// Qt 5 pulled these in through QtWinExtras, which no longer exists in Qt 6.
+#include <windows.h>
+#include <objbase.h>
+#include <shellapi.h>
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
