@@ -18,6 +18,10 @@
 #include <windows.h>
 #include <objbase.h>
 #include <shellapi.h>
+// rpcndr.h defines "small" as "char", which breaks ordinary C++ code.
+#ifdef small
+#undef small
+#endif
 #endif
 
 #ifdef _MSC_VER

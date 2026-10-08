@@ -86,9 +86,9 @@ public:
                                                     Qt::ElideRight, int(nameRect.width()));
     p->drawText(nameRect, Qt::AlignHCenter | Qt::AlignVCenter, name);
 
-    QFont small = opt.font;
-    small.setPointSizeF(small.pointSizeF() * 0.9);
-    p->setFont(small);
+    QFont typeFont = opt.font;
+    typeFont.setPointSizeF(typeFont.pointSizeF() * 0.9);
+    p->setFont(typeFont);
     p->setPen(Theme::color("text2"));
     p->drawText(QRectF(nameRect.left(), nameRect.bottom(), nameRect.width(), 18),
                 Qt::AlignHCenter | Qt::AlignVCenter,
