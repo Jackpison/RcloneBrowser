@@ -32,6 +32,7 @@ MainWindow::MainWindow() {
 #endif
 
   Theme::apply();
+  buildShell();
 
   mSystemTray.setIcon(qApp->windowIcon());
   {
@@ -131,6 +132,7 @@ MainWindow::MainWindow() {
       settings->setValue("Settings/showHidden", dialog.getShowHidden());
       Theme::save(dialog.getTheme());
       Theme::apply();
+      rcloneListRemotes(); // remote logos have light and dark variants
       settings->setValue("Settings/iconSize", dialog.getIconSize().trimmed());
 
       settings->setValue("Settings/useProxy", dialog.getUseProxy());
@@ -186,22 +188,11 @@ MainWindow::MainWindow() {
                    &MainWindow::rcloneListRemotes);
 
   QObject::connect(ui.open, &QPushButton::clicked, this, [=]() {
-    auto item = ui.remotes->selectedItems().front();
-    QString type = item->data(Qt::UserRole).toString();
-    QString name = item->text();
-    bool isLocal = type == "local";
-    bool isGoogle = type == "drive";
-
-    auto remote = new RemoteWidget(&mIcons, name, isLocal, isGoogle, ui.tabs);
-    QObject::connect(remote, &RemoteWidget::addMount, this,
-                     &MainWindow::addMount);
-    QObject::connect(remote, &RemoteWidget::addStream, this,
-                     &MainWindow::addStream);
-    QObject::connect(remote, &RemoteWidget::addTransfer, this,
-                     &MainWindow::addTransfer);
-
-    int index = ui.tabs->addTab(remote, name);
-    ui.tabs->setCurrentIndex(index);
+    auto items = ui.remotes->selectedItems();
+    if (items.isEmpty()) {
+      return;
+    }
+    openRemote(items.front()->text(), items.front()->data(Qt::UserRole).toString());
   });
 
   QObject::connect(ui.tabs, &QTabWidget::tabCloseRequested, ui.tabs,
@@ -246,12 +237,6 @@ MainWindow::MainWindow() {
                    &ListOfJobOptions::tasksListUpdated, this,
                    &MainWindow::listTasks);
 
-  QStyle *style = QApplication::style();
-  ui.buttonDeleteTask->setIcon(style->standardIcon(QStyle::SP_TrashIcon));
-  ui.buttonEditTask->setIcon(style->standardIcon(QStyle::SP_FileIcon));
-  ui.buttonRunTask->setIcon(style->standardIcon(QStyle::SP_CommandLink));
-  mUploadIcon = style->standardIcon(QStyle::SP_ArrowUp);
-  mDownloadIcon = style->standardIcon(QStyle::SP_ArrowDown);
 
   ui.tabs->tabBar()->setTabButton(0, QTabBar::RightSide, nullptr);
   ui.tabs->tabBar()->setTabButton(0, QTabBar::LeftSide, nullptr);
@@ -477,6 +462,11 @@ void MainWindow::rcloneGetVersion() {
 
         if (code == 0) {
           updateRcloneStatus();
+          // the full version details go into the tooltip, not the status bar
+          if (mRcloneStatus && !mStatusMessage->text().isEmpty()) {
+            mRcloneStatus->setToolTip(mStatusMessage->text());
+            mStatusMessage->clear();
+          }
           maybeAutoCheckRclone();
         }
 
@@ -686,19 +676,27 @@ void MainWindow::rcloneListRemotes() {
                size = 1.5 * lightModeiconScale * style->pixelMetric(QStyle::PM_ListViewIconSize);
              }
 #endif
-            ui.remotes->setIconSize(QSize(size, size));
+            Q_UNUSED(size);
 
             QString path =
                 ":/remotes/images/" + type.replace(' ', '_') + img_add + ".png";
-            QIcon icon(QFile(path).exists()
-                           ? path
-                           : ":/remotes/images/unknown" + img_add + ".png");
+            QIcon icon;
+            if (QFile(path).exists()) {
+              icon = QIcon(path);
+            } else {
+              // types without a dedicated logo get a Fluent glyph
+              static const QStringList folderLike = {
+                  "alias", "local", "union", "combine", "chunker",
+                  "compress", "hasher", "cache"};
+              icon = Theme::icon(folderLike.contains(type) ? "folder" : "cloud");
+            }
 
             QListWidgetItem *item = new QListWidgetItem(icon, name);
             item->setData(Qt::UserRole, type);
             item->setToolTip(tooltip);
             ui.remotes->addItem(item);
           }
+          rebuildNavRemotes();
         } else {
           if (p->error() != QProcess::FailedToStart) {
             if (getConfigPassword(p)) {
@@ -858,9 +856,9 @@ void MainWindow::addTransfer(const QString &message, const QString &source,
         }
 
         if (--mJobCount == 0) {
-          ui.tabs->setTabText(1, "Jobs");
+          setJobsTabText("Jobs");
         } else {
-          ui.tabs->setTabText(1, QString("Jobs (%1)").arg(mJobCount));
+          setJobsTabText(QString("Jobs (%1)").arg(mJobCount));
         }
       });
 
@@ -883,7 +881,7 @@ void MainWindow::addTransfer(const QString &message, const QString &source,
 
   ui.jobs->insertWidget(0, widget);
   ui.jobs->insertWidget(1, line);
-  ui.tabs->setTabText(1, QString("Jobs (%1)").arg(++mJobCount));
+  setJobsTabText(QString("Jobs (%1)").arg(++mJobCount));
 
   UseRclonePassword(transfer);
   transfer->start(GetRclone(), GetRcloneConf() + args, QIODevice::ReadOnly);
@@ -901,9 +899,9 @@ void MainWindow::addMount(const QString &remote, const QString &folder) {
 
   QObject::connect(widget, &MountWidget::finished, this, [=]() {
     if (--mJobCount == 0) {
-      ui.tabs->setTabText(1, "Jobs");
+      setJobsTabText("Jobs");
     } else {
-      ui.tabs->setTabText(1, QString("Jobs (%1)").arg(mJobCount));
+      setJobsTabText(QString("Jobs (%1)").arg(mJobCount));
     }
   });
 
@@ -923,7 +921,7 @@ void MainWindow::addMount(const QString &remote, const QString &folder) {
 
   ui.jobs->insertWidget(0, widget);
   ui.jobs->insertWidget(1, line);
-  ui.tabs->setTabText(1, QString("Jobs (%1)").arg(++mJobCount));
+  setJobsTabText(QString("Jobs (%1)").arg(++mJobCount));
 
   auto settings = GetSettings();
   QString opt = settings->value("Settings/mount").toString();
@@ -995,9 +993,9 @@ void MainWindow::addStream(const QString &remote, const QString &stream) {
 
   QObject::connect(widget, &StreamWidget::finished, this, [=]() {
     if (--mJobCount == 0) {
-      ui.tabs->setTabText(1, "Jobs");
+      setJobsTabText("Jobs");
     } else {
-      ui.tabs->setTabText(1, QString("Jobs (%1)").arg(mJobCount));
+      setJobsTabText(QString("Jobs (%1)").arg(mJobCount));
     }
   });
 
@@ -1017,7 +1015,7 @@ void MainWindow::addStream(const QString &remote, const QString &stream) {
 
   ui.jobs->insertWidget(0, widget);
   ui.jobs->insertWidget(1, line);
-  ui.tabs->setTabText(1, QString("Jobs (%1)").arg(++mJobCount));
+  setJobsTabText(QString("Jobs (%1)").arg(++mJobCount));
 
   {
     // "stream" is a full command line, e.g. "C:\Program Files\VLC\vlc.exe" -

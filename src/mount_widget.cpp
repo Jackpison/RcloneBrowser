@@ -1,10 +1,12 @@
 #include "mount_widget.h"
+#include "theme.h"
 #include "utils.h"
 
 MountWidget::MountWidget(QProcess *process, const QString &remote,
                          const QString &folder, QWidget *parent)
     : QWidget(parent), mProcess(process) {
   ui.setupUi(this);
+  setAttribute(Qt::WA_StyledBackground);
 
   ui.remote->setText(remote);
   ui.folder->setText(folder);
@@ -28,7 +30,7 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
       });
 
   ui.cancel->setIcon(
-      QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton));
+      Theme::icon("close"));
 
   QObject::connect(ui.cancel, &QToolButton::clicked, this, [=]() {
     if (mRunning) {
@@ -61,19 +63,17 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
                      mProcess->deleteLater();
                      mRunning = false;
                      if (status == 0) {
-                       ui.showDetails->setStyleSheet(
-                           "QToolButton { border: 0; color: black; }");
+                       Theme::setStatus(ui.showDetails, "done");
                        ui.showDetails->setText("Finished");
                      } else {
-                       ui.showDetails->setStyleSheet(
-                           "QToolButton { border: 0; color: red; }");
+                       Theme::setStatus(ui.showDetails, "error");
                        ui.showDetails->setText("Error");
                      }
                      ui.cancel->setToolTip("Close");
                      emit finished();
                    });
 
-  ui.showDetails->setStyleSheet("QToolButton { border: 0; color: green; }");
+  Theme::setStatus(ui.showDetails, "running");
   ui.showDetails->setText("Mounted");
 }
 

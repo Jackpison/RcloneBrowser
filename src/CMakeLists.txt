@@ -5,7 +5,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(SOURCES
   main.cpp
-  main_window.cpp main_window.h main_window.ui
+  main_window.cpp main_window_shell.cpp main_window.h main_window.ui
   remote_widget.cpp remote_widget.h remote_widget.ui
   transfer_dialog.cpp transfer_dialog.h transfer_dialog.ui
   export_dialog.cpp export_dialog.h export_dialog.ui
@@ -68,10 +68,10 @@ else()
 endif()
 
 target_link_libraries(${TARGET_NAME} PRIVATE
-  Qt::Core Qt::Gui Qt::Widgets Qt::Network)
+  Qt::Core Qt::Gui Qt::Widgets Qt::Network Qt::Svg)
 
 if(WIN32)
-  target_link_libraries(${TARGET_NAME} PRIVATE shell32 ole32)
+  target_link_libraries(${TARGET_NAME} PRIVATE shell32 ole32 dwmapi advapi32)
 elseif(APPLE)
   find_library(COCOA_LIB Cocoa REQUIRED)
   target_link_libraries(${TARGET_NAME} PRIVATE ${COCOA_LIB})

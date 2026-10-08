@@ -1,5 +1,6 @@
 #include "job_widget.h"
 #include "rclone_output.h"
+#include "theme.h"
 #include "utils.h"
 
 JobWidget::JobWidget(QProcess *process, const QString &info,
@@ -7,6 +8,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
                      const QString &dest, QWidget *parent)
     : QWidget(parent), mProcess(process) {
   ui.setupUi(this);
+  setAttribute(Qt::WA_StyledBackground);
 
   mArgs.append(QDir::toNativeSeparators(GetRclone()));
   mArgs.append(GetRcloneConf());
@@ -34,7 +36,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
       });
 
   ui.cancel->setIcon(
-      QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton));
+      Theme::icon("close"));
 
   QObject::connect(ui.cancel, &QToolButton::clicked, this, [=]() {
     if (mRunning) {
@@ -51,7 +53,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
   });
 
   ui.copy->setIcon(
-      QApplication::style()->standardIcon(QStyle::SP_FileLinkIcon));
+      Theme::icon("copy"));
 
   QObject::connect(ui.copy, &QToolButton::clicked, this, [=]() {
     QClipboard *clipboard = QGuiApplication::clipboard();
@@ -118,9 +120,10 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
         auto it = mActive.find(s.name);
         if (it == mActive.end()) {
           label = new QLabel();
-          label->setText(s.name.length() > 47
-                             ? s.name.left(25) + "..." + s.name.right(19)
-                             : s.name);
+          label->setProperty("shortName",
+                             s.name.length() > 47
+                                 ? s.name.left(25) + "..." + s.name.right(19)
+                                 : s.name);
           bar = new QProgressBar();
           bar->setMinimum(0);
           bar->setMaximum(100);
@@ -133,6 +136,8 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
           bar = static_cast<QProgressBar *>(label->buddy());
         }
         bar->setValue(s.filePercent);
+        label->setText(QString("%1  ·  %2%").arg(label->property("shortName").toString())
+                           .arg(s.filePercent));
         bar->setToolTip("File name: " + s.name + "\n" + s.detail);
         mUpdated.insert(label);
         break;
@@ -157,12 +162,10 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
 
                      mRunning = false;
                      if (status == 0) {
-                       ui.showDetails->setStyleSheet(
-                           "QToolButton { border: 0; color: black; }");
+                       Theme::setStatus(ui.showDetails, "done");
                        ui.showDetails->setText("Finished");
                      } else {
-                       ui.showDetails->setStyleSheet(
-                           "QToolButton { border: 0; color: red; }");
+                       Theme::setStatus(ui.showDetails, "error");
                        ui.showDetails->setText("Error");
                      }
 
@@ -171,7 +174,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
                      emit finished(ui.info->text());
                    });
 
-  ui.showDetails->setStyleSheet("QToolButton { border: 0; color: green; }");
+  Theme::setStatus(ui.showDetails, "running");
   ui.showDetails->setText("Running");
 }
 

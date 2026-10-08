@@ -1,6 +1,10 @@
 # Change Log
 ## [1.9.0] - 2026-10-08
 Revival release focused on the Windows portable build.
+-   NEW: Windows 11 design: navigation pane with all remotes, Home page with remote cards, command bar, breadcrumb address bar, Fluent UI icons, WinUI 3 colours, Windows accent colour, Segoe UI Variable, matching title bar and rounded menus
+-   NEW: filter the current folder by name (Ctrl+F), Up button (Alt+Up), copy path, Ctrl+U / Ctrl+D for upload and download
+-   FIXED: job status text was invisible in dark mode
+-   FIXED: files smaller than 10 bytes showed size 0; sizes now read "6.7 MB"
 -   NEW: built-in rclone download and updater. Checks rclone.org (GitHub as fallback) at most once a day, verifies the SHA-256 checksum, and installs into the `rclone` folder next to the app. Safe while jobs or mounts are running.
 -   NEW: first run without rclone offers a one-click download instead of an error
 -   NEW: status bar shows the rclone version and a one-click update link

@@ -1,10 +1,12 @@
 #include "stream_widget.h"
+#include "theme.h"
 
 StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
                            const QString &remote, const QString &stream,
                            QWidget *parent)
     : QWidget(parent), mRclone(rclone), mPlayer(player) {
   ui.setupUi(this);
+  setAttribute(Qt::WA_StyledBackground);
 
   ui.remote->setText(remote);
   ui.stream->setText(stream);
@@ -28,7 +30,7 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
       });
 
   ui.cancel->setIcon(
-      QApplication::style()->standardIcon(QStyle::SP_DialogCloseButton));
+      Theme::icon("close"));
 
   QObject::connect(ui.cancel, &QToolButton::clicked, this, [=]() {
     if (mRunning) {
@@ -59,7 +61,7 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
                      emit closed();
                    });
 
-  ui.showDetails->setStyleSheet("QToolButton { border: 0; color: green; }");
+  Theme::setStatus(ui.showDetails, "running");
   ui.showDetails->setText("Streaming");
 }
 

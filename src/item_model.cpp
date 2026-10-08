@@ -17,14 +17,9 @@ static void advanceSpinner(QString &text) {
 }
 
 QString getNiceSize(quint64 size) {
-  static const char prefix[] = " KMGTPE";
-  for (int i = sizeof(prefix) - 2; i >= 0; i--) {
-    quint64 base = quint64(1) << (i * 10);
-    if (size >= 10 * base) {
-      return QString("%1 %2").arg(size / base).arg(QChar(prefix[i])).trimmed();
-    }
-  }
-  return "0";
+  // "6.7 MB" style, as in Windows 11 File Explorer details view
+  return QLocale().formattedDataSize(qint64(size), 1,
+                                     QLocale::DataSizeTraditionalFormat);
 }
 } // namespace
 

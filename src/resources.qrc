@@ -1,4 +1,47 @@
 <RCC>
+  <qresource prefix="fluent">
+    <file alias="add.svg">icons/fluent/add.svg</file>
+    <file alias="checkmark.svg">icons/fluent/checkmark.svg</file>
+    <file alias="chevron.svg">icons/fluent/chevron.svg</file>
+    <file alias="close.svg">icons/fluent/close.svg</file>
+    <file alias="cloud.svg">icons/fluent/cloud.svg</file>
+    <file alias="cloud_add.svg">icons/fluent/cloud_add.svg</file>
+    <file alias="collapse.svg">icons/fluent/collapse.svg</file>
+    <file alias="connected.svg">icons/fluent/connected.svg</file>
+    <file alias="copy.svg">icons/fluent/copy.svg</file>
+    <file alias="delete.svg">icons/fluent/delete.svg</file>
+    <file alias="download.svg">icons/fluent/download.svg</file>
+    <file alias="dryrun.svg">icons/fluent/dryrun.svg</file>
+    <file alias="edit.svg">icons/fluent/edit.svg</file>
+    <file alias="expand.svg">icons/fluent/expand.svg</file>
+    <file alias="export.svg">icons/fluent/export.svg</file>
+    <file alias="file.svg">icons/fluent/file.svg</file>
+    <file alias="folder.svg">icons/fluent/folder.svg</file>
+    <file alias="home.svg">icons/fluent/home.svg</file>
+    <file alias="info.svg">icons/fluent/info.svg</file>
+    <file alias="link.svg">icons/fluent/link.svg</file>
+    <file alias="more.svg">icons/fluent/more.svg</file>
+    <file alias="mount.svg">icons/fluent/mount.svg</file>
+    <file alias="move.svg">icons/fluent/move.svg</file>
+    <file alias="new_folder.svg">icons/fluent/new_folder.svg</file>
+    <file alias="open.svg">icons/fluent/open.svg</file>
+    <file alias="quit.svg">icons/fluent/quit.svg</file>
+    <file alias="refresh.svg">icons/fluent/refresh.svg</file>
+    <file alias="rename.svg">icons/fluent/rename.svg</file>
+    <file alias="search.svg">icons/fluent/search.svg</file>
+    <file alias="settings.svg">icons/fluent/settings.svg</file>
+    <file alias="shared.svg">icons/fluent/shared.svg</file>
+    <file alias="size.svg">icons/fluent/size.svg</file>
+    <file alias="stop.svg">icons/fluent/stop.svg</file>
+    <file alias="stream.svg">icons/fluent/stream.svg</file>
+    <file alias="subtract.svg">icons/fluent/subtract.svg</file>
+    <file alias="tasks.svg">icons/fluent/tasks.svg</file>
+    <file alias="transfers.svg">icons/fluent/transfers.svg</file>
+    <file alias="tree.svg">icons/fluent/tree.svg</file>
+    <file alias="up.svg">icons/fluent/up.svg</file>
+    <file alias="update.svg">icons/fluent/update.svg</file>
+    <file alias="upload.svg">icons/fluent/upload.svg</file>
+  </qresource>
   <qresource prefix="icons">
     <file>icon.png</file>
   </qresource>

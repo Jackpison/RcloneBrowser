@@ -1,4 +1,5 @@
 #include "remote_widget.h"
+#include "theme.h"
 #include "rclone_output.h"
 #include "export_dialog.h"
 #include "icon_cache.h"
@@ -31,22 +32,6 @@ QString root = isLocal ? "/" : QString();
     ui.checkBoxShared->hide();
   }
 
-  QStyle *style = QApplication::style();
-  ui.refresh->setIcon(style->standardIcon(QStyle::SP_BrowserReload));
-  ui.mkdir->setIcon(style->standardIcon(QStyle::SP_FileDialogNewFolder));
-  ui.rename->setIcon(style->standardIcon(QStyle::SP_FileIcon));
-  ui.move->setIcon(style->standardIcon(QStyle::SP_DirOpenIcon));
-  ui.purge->setIcon(style->standardIcon(QStyle::SP_TrashIcon));
-  ui.mount->setIcon(style->standardIcon(QStyle::SP_DriveNetIcon));
-  ui.stream->setIcon(style->standardIcon(QStyle::SP_MediaPlay));
-  ui.upload->setIcon(style->standardIcon(QStyle::SP_ArrowUp));
-  ui.download->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
-  ui.download->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
-  ui.getSize->setIcon(style->standardIcon(QStyle::SP_FileDialogInfoView));
-  ui.getTree->setIcon(style->standardIcon(QStyle::SP_FileDialogListView));
-  ui.export_->setIcon(style->standardIcon(QStyle::SP_FileDialogDetailedView));
-  ui.link->setIcon(style->standardIcon(QStyle::SP_FileLinkIcon));
-
   ui.buttonRefresh->setDefaultAction(ui.refresh);
   ui.buttonMkdir->setDefaultAction(ui.mkdir);
   ui.buttonRename->setDefaultAction(ui.rename);
@@ -67,6 +52,7 @@ QString root = isLocal ? "/" : QString();
   ItemModel *model = new ItemModel(iconCache, remote, this);
   ui.tree->setModel(model);
   QTimer::singleShot(0, ui.tree, SLOT(setFocus()));
+  buildFluentUi(model, remote);
 
   QObject::connect(model, &QAbstractItemModel::layoutChanged, this, [=]() {
     ui.tree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -77,7 +63,10 @@ QString root = isLocal ? "/" : QString();
   QObject::connect(
       ui.tree->selectionModel(), &QItemSelectionModel::selectionChanged, this,
       [=](const QItemSelection &selection) {
-        for (auto child : findChildren<QAction *>()) {
+        // only this widget's own actions, not those inside child widgets
+        // (e.g. the filter box's clear button)
+        for (auto child :
+             findChildren<QAction *>(QString(), Qt::FindDirectChildrenOnly)) {
           child->setDisabled(selection.isEmpty());
         }
 
@@ -658,17 +647,330 @@ QString root = isLocal ? "/" : QString();
     ui.tree->selectionModel()->selectionChanged(QItemSelection(),
                                                 QItemSelection());
   } else {
-    QModelIndex index = model->addRoot("/", root);
+    QModelIndex index = model->addRoot(remote, root);
     ui.tree->selectionModel()->select(
         index, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
     ui.tree->expand(index);
   }
 
   QShortcut *close = new QShortcut(QKeySequence::Close, this);
-  QObject::connect(close, &QShortcut::activated, this, [=]() {
-    auto tabs = qobject_cast<QTabWidget *>(parent);
-    tabs->removeTab(tabs->indexOf(this));
-  });
+  QObject::connect(close, &QShortcut::activated, this,
+                   &RemoteWidget::closeRequested);
 }
 
 RemoteWidget::~RemoteWidget() {}
+
+// ---------------------------------------------------------------------------
+// Windows 11 style page: header, command bar, breadcrumb bar, filter
+// ---------------------------------------------------------------------------
+
+void RemoteWidget::setRemoteType(const QString &type) {
+  if (mTypeLabel) {
+    mTypeLabel->setText(type);
+  }
+}
+
+void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
+  auto *v = qobject_cast<QVBoxLayout *>(ui.layout->layout());
+  v->setContentsMargins(24, 20, 24, 8);
+  v->setSpacing(8);
+  layout()->setContentsMargins(0, 0, 0, 0);
+
+  // ---- header: name, type, filter box, close
+  auto *header = new QWidget;
+  auto *hh = new QHBoxLayout(header);
+  hh->setContentsMargins(4, 0, 0, 4);
+  hh->setSpacing(10);
+  auto *titles = new QVBoxLayout;
+  titles->setSpacing(0);
+  auto *title = new QLabel(remote);
+  title->setObjectName("PageTitle");
+  titles->addWidget(title);
+  mTypeLabel = new QLabel;
+  mTypeLabel->setProperty("secondary", true);
+  titles->addWidget(mTypeLabel);
+  hh->addLayout(titles, 1);
+
+  mFilter = new QLineEdit;
+  mFilter->setPlaceholderText(tr("Filter this folder"));
+  mFilter->setClearButtonEnabled(true);
+  mFilter->addAction(Theme::icon("search"), QLineEdit::LeadingPosition);
+  mFilter->setFixedWidth(260);
+  mFilter->setToolTip(tr("Show only items in the current folder whose name "
+                         "contains this text (Ctrl+F)"));
+  hh->addWidget(mFilter, 0, Qt::AlignVCenter);
+
+  auto *close = new QToolButton;
+  close->setIcon(Theme::icon("close"));
+  close->setToolTip(tr("Close %1 (Ctrl+W)").arg(remote));
+  QObject::connect(close, &QToolButton::clicked, this,
+                   &RemoteWidget::closeRequested);
+  hh->addWidget(close, 0, Qt::AlignVCenter);
+  v->insertWidget(0, header);
+
+  // ---- command bar
+  struct A { QAction *a; const char *icon; QString text; };
+  const QList<A> actions = {
+      {ui.mkdir, "new_folder", tr("New folder")},
+      {ui.upload, "upload", tr("Upload")},
+      {ui.download, "download", tr("Download")},
+      {ui.rename, "rename", tr("Rename")},
+      {ui.move, "move", tr("Move")},
+      {ui.purge, "delete", tr("Delete")},
+      {ui.mount, "mount", tr("Mount")},
+      {ui.stream, "stream", tr("Stream")},
+      {ui.refresh, "refresh", tr("Refresh")},
+      {ui.getSize, "size", tr("Folder size")},
+      {ui.getTree, "tree", tr("Folder tree")},
+      {ui.export_, "export", tr("Export file list")},
+      {ui.link, "link", tr("Copy public link")},
+  };
+  for (const A &x : actions) {
+    x.a->setIcon(Theme::icon(x.icon));
+    x.a->setText(x.text);
+    x.a->setIconText(x.text);
+    if (!x.a->shortcut().isEmpty()) {
+      x.a->setToolTip(QString("%1 (%2)").arg(x.text, x.a->shortcut().toString(
+                                                    QKeySequence::NativeText)));
+    } else {
+      x.a->setToolTip(x.text);
+    }
+  }
+  ui.upload->setShortcut(QKeySequence(tr("Ctrl+U")));
+  ui.download->setShortcut(QKeySequence(tr("Ctrl+D")));
+
+  auto *bar = qobject_cast<QHBoxLayout *>(ui.buttons->layout());
+  // take everything out and lay it out again in command-bar order
+  while (QLayoutItem *it = bar->takeAt(0)) {
+    delete it;
+  }
+  bar->setContentsMargins(0, 0, 0, 0);
+  bar->setSpacing(2);
+
+  auto separator = [&]() {
+    auto *f = new QFrame;
+    f->setFrameShape(QFrame::NoFrame);
+    f->setFixedSize(1, 20);
+    f->setAutoFillBackground(true);
+    f->setStyleSheet("background: palette(mid);");
+    bar->addSpacing(4);
+    bar->addWidget(f, 0, Qt::AlignVCenter);
+    bar->addSpacing(4);
+  };
+  auto primary = [&](QToolButton *b) {
+    b->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    b->setIconSize(QSize(18, 18));
+    bar->addWidget(b);
+  };
+  primary(ui.buttonMkdir);
+  primary(ui.buttonUpload);
+  primary(ui.buttonDownload);
+  separator();
+  primary(ui.buttonRename);
+  primary(ui.buttonMove);
+  primary(ui.buttonPurge);
+  separator();
+  primary(ui.buttonMount);
+  bar->addStretch(1);
+  bar->addWidget(ui.checkBoxShared);
+  ui.checkBoxShared->setText(tr("Shared with me"));
+
+  ui.buttonRefresh->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  ui.buttonRefresh->setIconSize(QSize(18, 18));
+  bar->addWidget(ui.buttonRefresh);
+
+  auto *more = new QToolButton;
+  more->setIcon(Theme::icon("more"));
+  more->setIconSize(QSize(18, 18));
+  more->setToolTip(tr("More options"));
+  more->setPopupMode(QToolButton::InstantPopup);
+  auto *moreMenu = new QMenu(more);
+  moreMenu->addAction(ui.stream);
+  moreMenu->addSeparator();
+  moreMenu->addAction(ui.getSize);
+  moreMenu->addAction(ui.getTree);
+  moreMenu->addAction(ui.export_);
+  moreMenu->addSeparator();
+  moreMenu->addAction(ui.link);
+  more->setMenu(moreMenu);
+  bar->addWidget(more);
+
+  for (QToolButton *b : {ui.buttonStream, ui.buttonSize, ui.buttonTree,
+                         ui.buttonExport, ui.buttonLink}) {
+    b->hide();
+  }
+
+  // ---- breadcrumb address bar (replaces the plain path text box)
+  auto *address = new QWidget;
+  address->setProperty("card", true);
+  address->setAttribute(Qt::WA_StyledBackground);
+  auto *ah = new QHBoxLayout(address);
+  ah->setContentsMargins(4, 2, 8, 2);
+  ah->setSpacing(2);
+
+  mUp = new QToolButton;
+  mUp->setIcon(Theme::icon("up"));
+  mUp->setToolTip(tr("Up to parent folder (Alt+Up)"));
+  mUp->setShortcut(QKeySequence(Qt::ALT | Qt::Key_Up));
+  ah->addWidget(mUp);
+
+  mCrumbs = new QWidget;
+  auto *ch = new QHBoxLayout(mCrumbs);
+  ch->setContentsMargins(0, 0, 0, 0);
+  ch->setSpacing(0);
+  ah->addWidget(mCrumbs, 1);
+
+  auto *copyPath = new QToolButton;
+  copyPath->setIcon(Theme::icon("copy"));
+  copyPath->setToolTip(tr("Copy path"));
+  QObject::connect(copyPath, &QToolButton::clicked, this, [this]() {
+    QGuiApplication::clipboard()->setText(ui.path->text());
+  });
+  ah->addWidget(copyPath);
+
+  ui.path->hide(); // still updated by the existing code; used for "Copy path"
+  v->insertWidget(v->indexOf(ui.path), address);
+
+  ui.tree->setAnimated(true);
+  ui.tree->setIconSize(QSize(20, 20));
+  ui.tree->setFrameShape(QFrame::NoFrame);
+  ui.tree->header()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  ui.tree->header()->setHighlightSections(false);
+
+  // ---- behaviour
+  QObject::connect(mUp, &QToolButton::clicked, this, [this]() {
+    QModelIndex cur = ui.tree->currentIndex();
+    if (!cur.isValid()) {
+      return;
+    }
+    QModelIndex parent = cur.parent();
+    if (parent.isValid()) {
+      ui.tree->setCurrentIndex(parent);
+      ui.tree->scrollTo(parent);
+    }
+  });
+
+  QObject::connect(ui.tree->selectionModel(),
+                   &QItemSelectionModel::currentChanged, this,
+                   [this, model, remote]() {
+                     updateBreadcrumbs(model, remote);
+                     applyFilter(model);
+                   });
+  QObject::connect(mFilter, &QLineEdit::textChanged, this,
+                   [this, model]() { applyFilter(model); });
+  QObject::connect(model, &QAbstractItemModel::rowsInserted, this,
+                   [this, model](const QModelIndex &parent) {
+                     if (!mFilter->text().isEmpty() && parent == mFilterFolder) {
+                       applyFilter(model);
+                     }
+                   });
+  QObject::connect(model, &QAbstractItemModel::layoutChanged, this,
+                   [this, model]() {
+                     if (!mFilter->text().isEmpty()) {
+                       applyFilter(model);
+                     }
+                   });
+
+  auto *find = new QShortcut(QKeySequence::Find, this);
+  QObject::connect(find, &QShortcut::activated, this, [this]() {
+    mFilter->setFocus();
+    mFilter->selectAll();
+  });
+  auto *escape = new QShortcut(QKeySequence(Qt::Key_Escape), mFilter);
+  escape->setContext(Qt::WidgetShortcut);
+  QObject::connect(escape, &QShortcut::activated, this, [this]() {
+    mFilter->clear();
+    ui.tree->setFocus();
+  });
+
+  updateBreadcrumbs(model, remote);
+}
+
+void RemoteWidget::updateBreadcrumbs(ItemModel *model, const QString &remote) {
+  QLayout *l = mCrumbs->layout();
+  while (QLayoutItem *it = l->takeAt(0)) {
+    delete it->widget();
+    delete it;
+  }
+
+  // folder chain of the current item (a file shows its containing folder)
+  QModelIndex cur = ui.tree->currentIndex().siblingAtColumn(0);
+  if (cur.isValid() && !model->isFolder(cur)) {
+    cur = cur.parent();
+  }
+  QList<QPersistentModelIndex> chain;
+  for (QModelIndex i = cur; i.isValid(); i = i.parent()) {
+    chain.prepend(i);
+  }
+  mUp->setEnabled(ui.tree->currentIndex().parent().isValid());
+
+  auto *h = qobject_cast<QHBoxLayout *>(l);
+  if (chain.isEmpty()) {
+    auto *b = new QToolButton;
+    b->setText(remote);
+    h->addWidget(b);
+  }
+  for (int i = 0; i < chain.size(); ++i) {
+    const QPersistentModelIndex idx = chain[i];
+    QString text = model->data(idx, Qt::DisplayRole).toString();
+    if (i == 0 && (text == "/" || text.isEmpty())) {
+      text = remote;
+    }
+    if (i > 0) {
+      auto *sep = new QLabel;
+      sep->setPixmap(Theme::icon("chevron").pixmap(12, 12));
+      h->addWidget(sep);
+    }
+    auto *b = new QToolButton;
+    b->setText(text);
+    b->setCursor(Qt::PointingHandCursor);
+    if (i == chain.size() - 1) {
+      QFont f = b->font();
+      f.setWeight(QFont::DemiBold);
+      b->setFont(f);
+    }
+    QObject::connect(b, &QToolButton::clicked, this, [this, idx]() {
+      if (idx.isValid()) {
+        ui.tree->setCurrentIndex(idx);
+        ui.tree->expand(idx);
+        ui.tree->scrollTo(idx);
+        ui.tree->setFocus();
+      }
+    });
+    h->addWidget(b);
+  }
+  h->addStretch(1);
+}
+
+void RemoteWidget::applyFilter(ItemModel *model) {
+  // the folder being filtered: the current folder, or a file's parent
+  QModelIndex folder = ui.tree->currentIndex().siblingAtColumn(0);
+  if (folder.isValid() && !model->isFolder(folder)) {
+    folder = folder.parent();
+  }
+
+  // un-hide everything in the previously filtered folder
+  if (mFilterFolder.isValid() && mFilterFolder != folder) {
+    for (int r = 0; r < model->rowCount(mFilterFolder); ++r) {
+      ui.tree->setRowHidden(r, mFilterFolder, false);
+    }
+  }
+  mFilterFolder = folder;
+  if (!folder.isValid()) {
+    return;
+  }
+
+  const QString text = mFilter->text().trimmed();
+  const QModelIndex current = ui.tree->currentIndex();
+  for (int r = 0; r < model->rowCount(folder); ++r) {
+    const QModelIndex child = model->index(r, 0, folder);
+    const QString name = model->data(child, Qt::DisplayRole).toString();
+    const bool hide = !text.isEmpty() && child != current.siblingAtColumn(0) &&
+                      !name.contains(text, Qt::CaseInsensitive) &&
+                      !model->isLoading(child);
+    ui.tree->setRowHidden(r, folder, hide);
+  }
+  if (!text.isEmpty()) {
+    ui.tree->expand(folder);
+  }
+}

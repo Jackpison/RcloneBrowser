@@ -67,4 +67,19 @@ private:
   void editSelectedTask();
   QIcon mUploadIcon;
   QIcon mDownloadIcon;
+
+  // Windows 11 shell (main_window_shell.cpp)
+  QListWidget *mNav = nullptr;
+  QListWidgetItem *mNavTransfers = nullptr;
+  QListWidgetItem *mNavRemotesHeader = nullptr;
+  QLabel *mHomeSubtitle = nullptr;
+  QLabel *mHomeEmpty = nullptr;
+  bool mSyncingNav = false;
+  void buildShell();
+  int remoteTab(const QString &name) const;
+  void openRemote(const QString &name, const QString &type);
+  void closeRemote(const QString &name);
+  void syncNavToCurrentPage();
+  void rebuildNavRemotes();
+  void setJobsTabText(const QString &text);
 };
