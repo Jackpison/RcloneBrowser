@@ -24,6 +24,49 @@ QString getNiceSize(quint64 size) {
 }
 } // namespace
 
+// Friendly type name, as in File Explorer's "Type" column.
+QString typeName(const Item *item) {
+  if (item->isFolder) {
+    return QObject::tr("Folder");
+  }
+  static const QHash<QString, const char *> names = [] {
+    QHash<QString, const char *> m;
+    auto add = [&](std::initializer_list<const char *> exts, const char *name) {
+      for (auto e : exts) m.insert(e, name);
+    };
+    add({"jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "tif", "tiff",
+         "avif", "ico", "svg", "raw", "cr2", "nef", "arw", "dng"}, "Image");
+    add({"mp4", "mkv", "mov", "avi", "wmv", "webm", "m4v", "mpg", "mpeg", "flv",
+         "3gp", "ts"}, "Video");
+    add({"mp3", "flac", "wav", "aac", "ogg", "m4a", "wma", "opus", "aiff"}, "Audio");
+    add({"zip", "7z", "rar", "tar", "gz", "bz2", "xz", "zst", "tgz", "cab"}, "Archive");
+    add({"iso", "img", "vhd", "vhdx", "vmdk"}, "Disk image");
+    add({"pdf"}, "PDF document");
+    add({"doc", "docx", "odt", "rtf", "pages"}, "Document");
+    add({"xls", "xlsx", "xlsm", "ods", "csv", "tsv"}, "Spreadsheet");
+    add({"ppt", "pptx", "odp", "key"}, "Presentation");
+    add({"txt", "md", "log", "nfo"}, "Text");
+    add({"ini", "cfg", "conf", "json", "xml", "yml", "yaml", "toml"}, "Settings / data");
+    add({"c", "cpp", "h", "hpp", "cs", "py", "js", "ts", "tsx", "jsx", "java", "go",
+         "rs", "rb", "php", "html", "css", "sh", "ps1", "bat", "cmd", "sql", "kt",
+         "swift", "lua"}, "Source code");
+    add({"exe", "msi", "msix", "appx", "apk", "dmg", "deb", "rpm", "appimage"}, "Program / installer");
+    add({"ttf", "otf", "woff", "woff2"}, "Font");
+    return m;
+  }();
+  const QString ext = QFileInfo(item->name).suffix().toLower();
+  if (ext.isEmpty()) {
+    return QObject::tr("File");
+  }
+  auto it = names.find(ext);
+  return it != names.end() ? QObject::tr(it.value())
+                           : QObject::tr("%1 file").arg(ext.toUpper());
+}
+
+QString extensionOf(const Item *item) {
+  return item->isFolder ? QString() : QFileInfo(item->name).suffix().toLower();
+}
+
 class ItemSorter {
 public:
   inline ItemSorter(int column, Qt::SortOrder order)
@@ -64,8 +107,23 @@ public:
       }
       return mOrder == Qt::AscendingOrder ? a->modified < b->modified
                                           : b->modified < a->modified;
+
+    case 3: // type
+    case 4: // extension
+    case 5: { // path
+      if (a->isFolder != b->isFolder) {
+        return a->isFolder;
+      }
+      const QString ka = mColumn == 3 ? typeName(a) : mColumn == 4 ? extensionOf(a) : (a->parent ? a->parent->path.path() : QString());
+      const QString kb = mColumn == 3 ? typeName(b) : mColumn == 4 ? extensionOf(b) : (b->parent ? b->parent->path.path() : QString());
+      if (ka == kb) {
+        return mOrder == Qt::AscendingOrder ? mCompare.compare(a->name, b->name) < 0
+                                            : mCompare.compare(b->name, a->name) < 0;
+      }
+      return mOrder == Qt::AscendingOrder ? mCompare.compare(ka, kb) < 0
+                                          : mCompare.compare(kb, ka) < 0;
     }
-    Q_ASSERT(false);
+    }
     return false;
   }
 
@@ -80,7 +138,9 @@ ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
       mFixedFont(Theme::uiFont()) {
   QStyle *style = qApp->style();
   Q_UNUSED(style);
-  mDriveIcon = Theme::icon("f_drive", QColor("#5E6B78"));
+  for (int px : {16, 20, 24, 32, 40, 48, 64, 96, 128, 256}) {
+    mDriveIcon.addFile(QString(":/drive/drive-%1.png").arg(px), QSize(px, px));
+  }
   mFolderIcon = Theme::fileIcon(QString(), true);
   mFileIcon = Theme::fileIcon(QString(), false);
 
@@ -209,7 +269,7 @@ int ItemModel::rowCount(const QModelIndex &parent) const {
 
 int ItemModel::columnCount(const QModelIndex &parent) const {
   Q_UNUSED(parent);
-  return 3;
+  return 6; // Name, Size, Modified, Type, Extension, Path
 }
 
 void ItemModel::sort(int column, Qt::SortOrder order) {
@@ -269,8 +329,18 @@ QVariant ItemModel::data(const QModelIndex &index, int role) const {
       }
     case 2:
       return item->modified;
+    case 3:
+      return item->state == Item::Special ? QString() : typeName(item);
+    case 4:
+      return item->state == Item::Special ? QString() : extensionOf(item);
+    case 5: {
+      if (item->state == Item::Special) {
+        return QString();
+      }
+      QString folder = item->parent ? item->parent->path.path() : QString();
+      return folder.isEmpty() ? QStringLiteral("/") : folder;
     }
-    Q_ASSERT(false);
+    }
   }
   return QVariant();
 }
@@ -280,11 +350,17 @@ QVariant ItemModel::headerData(int section, Qt::Orientation orientation,
   if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
     switch (section) {
     case 0:
-      return "Name";
+      return tr("Name");
     case 1:
-      return "Size";
+      return tr("Size");
     case 2:
-      return "Modified";
+      return tr("Modified");
+    case 3:
+      return tr("Type");
+    case 4:
+      return tr("Extension");
+    case 5:
+      return tr("Path");
     }
   }
 

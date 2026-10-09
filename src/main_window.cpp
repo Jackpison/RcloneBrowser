@@ -167,7 +167,8 @@ MainWindow::MainWindow() {
         R"(<p>Copyright &copy; 2026 <a href="https://github.com/Jackpison">Jackpison</a></p>)"
         R"(<p>Development and maintenance<br /><a href="https://github.com/Jackpison/RcloneBrowser">github.com/Jackpison/RcloneBrowser</a></p>)"
         R"(<p>Based on the original version by<br /><a href="https://github.com/mmozeiko/RcloneBrowser">Martins Mozeiko</a></p>)"
-        R"(<p>Released under the MIT License.</p>)"));
+        R"(<p>Released under the MIT License.</p>)"
+        R"(<p><b>Feedback and bug reports are welcome!</b><br /><a href="https://github.com/Jackpison/RcloneBrowser/issues">Open an issue on GitHub</a></p>)"));
     box.exec();
   });
   QObject::connect(ui.aboutQt, &QAction::triggered, qApp,
@@ -282,10 +283,23 @@ MainWindow::MainWindow() {
   setupRcloneUpdater();
 
   QString rclone = GetRclone();
+  // A saved path that no longer exists (e.g. an old AppImage mount point)
+  // is treated like no setting at all.
+  if (!rclone.isEmpty() && !QFileInfo::exists(rclone) &&
+      QStandardPaths::findExecutable(rclone).isEmpty()) {
+    rclone.clear();
+  }
   if (rclone.isEmpty()) {
-    // Prefer our own managed copy, then anything on PATH.
+    // Prefer our own updated copy, then rclone bundled in the AppImage
+    // (used for this session only: its path changes on every start), then
+    // anything installed on the system.
+    const QString bundled = RcloneUpdater::bundledPath();
     if (QFileInfo::exists(RcloneUpdater::managedPath())) {
       rclone = RcloneUpdater::managedSettingValue();
+    } else if (!bundled.isEmpty()) {
+      SetRclone(bundled);
+      rcloneGetVersion();
+      return;
     } else {
       rclone = QStandardPaths::findExecutable("rclone");
     }
@@ -1006,7 +1020,7 @@ void MainWindow::setupRcloneUpdater() {
   mRcloneStatus = new QLabel(this);
   mRcloneStatus->setTextFormat(Qt::RichText);
   mRcloneStatus->setContentsMargins(6, 0, 6, 0);
-  ui.statusBar->addPermanentWidget(mRcloneStatus);
+  ui.statusBar->insertWidget(0, mRcloneStatus); // left side, before messages
   QObject::connect(mRcloneStatus, &QLabel::linkActivated, this,
                    [this](const QString &link) {
                      if (link == "update" && !mLatestRclone.isEmpty()) {
@@ -1124,10 +1138,16 @@ void MainWindow::checkRcloneUpdate(bool interactive) {
                                RcloneUpdater::managedPath()));
         if (QDir::cleanPath(GetRclone()) !=
             QDir::cleanPath(RcloneUpdater::managedPath())) {
-          info += tr("<br><br>Rclone Browser will switch from your current "
-                     "rclone (%1) to this copy. Your remotes and settings are "
-                     "not affected.")
-                      .arg(QDir::toNativeSeparators(GetRclone()));
+          const bool bundled = !RcloneUpdater::bundledPath().isEmpty() &&
+                               GetRclone() == RcloneUpdater::bundledPath();
+          info += bundled
+                      ? tr("<br><br>Rclone Browser will use this copy instead of the "
+                           "rclone included in the app. Your remotes and settings "
+                           "are not affected.")
+                      : tr("<br><br>Rclone Browser will switch from your current "
+                           "rclone (%1) to this copy. Your remotes and settings are "
+                           "not affected.")
+                            .arg(QDir::toNativeSeparators(GetRclone()));
         }
         info += tr("<br><br><a href=\"https://rclone.org/changelog/\">What's "
                    "new in rclone</a>");

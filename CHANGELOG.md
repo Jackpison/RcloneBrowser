@@ -1,5 +1,28 @@
 # Changelog
 
+## [4.0.0] - 2026-10-09
+
+### New
+-   **Linux version**: a portable AppImage for x86_64 (Ubuntu, Fedora, Debian, Mint, Arch and more) with rclone included, built and self-tested alongside the Windows version
+-   Details view: new Type, Extension and Path columns; right-click the column header to choose which are shown
+-   Sort remotes in the sidebar by name, type or your own drag-and-drop order
+-   GitHub link in the sidebar
+-   Logos for 34 services included (new: Azure Blob, Backblaze B2, 1Fichier, FileLu, Files.com, Google Cloud Storage, Gofile, Google Photos, HiDrive, iCloud Drive, Internxt, Jottacloud, Mail.ru, OpenDrive, PikPak, Pixeldrain, premiumize.me, put.io, Seafile, Storj, Uloz.to, Zoho WorkDrive)
+
+### Changed
+-   Trebuchet MS as the interface font (on Linux when installed; otherwise a similar font)
+-   New hard-disk icon for remote roots; larger text in the file list
+-   "Help & about" is now "Update & About"; the rclone version is shown on the left of the status bar
+-   Tab close button sits lower and turns red on hover
+-   Brighter placeholder text in the search box
+-   The build workflow is now called "Update" and builds Windows and Linux; releases include both packages and one checksum file
+
+### Fixed
+-   "Show Output" in the Folder size and Folder tree windows squeezed the log into a tiny window
+-   On Linux, the settings path was wrong when XDG_CONFIG_HOME was not set
+-   A saved rclone path that no longer exists is ignored instead of failing
+-   Custom remote logos could not be added on Linux (the app folder of an AppImage is read-only)
+
 ## [3.7.0] - 2026-10-09
 
 ### New

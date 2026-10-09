@@ -1,4 +1,4 @@
-name: Windows
+name: Update
 
 on:
   push:
@@ -16,11 +16,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  windows:
+    name: Windows
     runs-on: windows-2025
     timeout-minutes: 45
-    permissions:
-      contents: write # publishing the release on version tags
     steps:
       # Actions are pinned to full commit SHAs (tags can be moved).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -116,13 +115,6 @@ jobs:
           Get-Content selftest.txt
           if ($p.ExitCode -ne 0) { throw "self-test failed with exit code $($p.ExitCode)" }
           Compress-Archive "$dir" "dist\RcloneBrowser-$ver-windows-x64.zip"
-          (Get-FileHash "dist\RcloneBrowser-$ver-windows-x64.zip" -Algorithm SHA256).Hash.ToLower() + "  RcloneBrowser-$ver-windows-x64.zip" | Set-Content -Encoding ascii "dist\SHA256SUMS.txt"
-          # Release notes: this version's section of CHANGELOG.md
-          $log = Get-Content CHANGELOG.md -Raw
-          $m = [regex]::Match($log, "(?ms)^## \[$([regex]::Escape($ver))\][^\n]*\n(.*?)(?=^## |\z)")
-          $notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "See CHANGELOG.md for details." }
-          $notes += "`n`n---`n**Download** ``RcloneBrowser-$ver-windows-x64.zip``, extract it anywhere and run ``RcloneBrowser.exe``. SHA-256 checksums are in ``SHA256SUMS.txt``."
-          Set-Content -Encoding utf8 dist\release-notes.md $notes
           "VERSION=$ver" | Out-File -Append $env:GITHUB_ENV
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -130,12 +122,145 @@ jobs:
           name: RcloneBrowser-${{ env.VERSION }}-windows-x64
           path: dist/RcloneBrowser
 
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-windows
+          path: dist/*.zip
+          if-no-files-found: error
+
+  linux:
+    name: Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
+        with:
+          version: "6.10.3"
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          setup-python: false
+          cache: true
+
+      - name: Build dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ninja-build libgl1-mesa-dev libegl1 libxkbcommon-x11-0 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libfontconfig1 \
+            libdbus-1-3 xvfb file
+
+      - name: Configure, build and test
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+          ctest --test-dir build --output-on-failure
+
+      - name: Build AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: |
+          set -euo pipefail
+          ver=$(head -1 VERSION | tr -d '[:space:]')
+          echo "VERSION=$ver" >> "$GITHUB_ENV"
+
+          # AppImage tooling, pinned to releases and verified by checksum
+          curl -fsSLo linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+          curl -fsSLo linuxdeploy-plugin-qt https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-qt-x86_64.AppImage
+          echo "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d  linuxdeploy" | sha256sum -c -
+          echo "15106be885c1c48a021198e7e1e9a48ce9d02a86dd0a1848f00bdbf3c1c92724  linuxdeploy-plugin-qt" | sha256sum -c -
+          mv linuxdeploy linuxdeploy-x86_64.AppImage
+          mv linuxdeploy-plugin-qt linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
+
+          # app files
+          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/metainfo \
+                   AppDir/usr/share/icons/hicolor/256x256/apps AppDir/usr/share/rclone-browser
+          cp build/build/rclone-browser AppDir/usr/bin/
+          cp packaging/linux/rclone-browser.desktop AppDir/usr/share/applications/
+          cp packaging/linux/rclone-browser.png AppDir/usr/share/icons/hicolor/256x256/apps/
+          cp packaging/linux/io.github.jackpison.RcloneBrowser.metainfo.xml AppDir/usr/share/metainfo/
+          mkdir -p AppDir/usr/share/rclone-browser/icons/remotes
+          cp icons/remotes/*.png AppDir/usr/share/rclone-browser/icons/remotes/
+
+          # latest official rclone, checksum-verified
+          tag=$(curl -fsSL https://downloads.rclone.org/version.txt | sed 's/^rclone //' | tr -d '[:space:]')
+          zip="rclone-$tag-linux-amd64.zip"
+          curl -fsSLO "https://downloads.rclone.org/$tag/$zip"
+          curl -fsSLO "https://downloads.rclone.org/$tag/SHA256SUMS"
+          grep -E "^[0-9a-f]{64}  $zip\$" SHA256SUMS | sha256sum -c -
+          python3 -m zipfile -e "$zip" rclone-x
+          install -m 755 "$(find rclone-x -name rclone -type f | head -1)" AppDir/usr/bin/rclone
+
+          QMAKE="$QT_ROOT_DIR/bin/qmake" LINUXDEPLOY_OUTPUT_VERSION="$ver" \
+            ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
+          mkdir -p dist
+          mv Rclone_Browser-*-x86_64.AppImage "dist/RcloneBrowser-$ver-linux-x86_64.AppImage"
+          chmod +x dist/*.AppImage
+
+          # smoke test of the finished AppImage on an X11 display
+          xvfb-run -a "dist/RcloneBrowser-$ver-linux-x86_64.AppImage" --selftest
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-linux
+          path: dist/*.AppImage
+          if-no-files-found: error
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write # publish the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums and release notes
+        run: |
+          set -euo pipefail
+          ver=$(head -1 VERSION | tr -d '[:space:]')
+          echo "VERSION=$ver" >> "$GITHUB_ENV"
+          (cd dist && sha256sum *.zip *.AppImage > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          python3 - "$ver" <<'PY'
+          import re, sys
+          ver = sys.argv[1]
+          log = open("CHANGELOG.md", encoding="utf-8").read()
+          m = re.search(r"(?ms)^## \[" + re.escape(ver) + r"\][^\n]*\n(.*?)(?=^## |\Z)", log)
+          notes = m.group(1).strip() if m else "See CHANGELOG.md for details."
+          notes += (
+              "\n\n---\n**Downloads**\n\n"
+              f"- **Windows 10/11:** `RcloneBrowser-{ver}-windows-x64.zip`, extract anywhere and run `RcloneBrowser.exe`.\n"
+              f"- **Linux (x86_64):** `RcloneBrowser-{ver}-linux-x86_64.AppImage`, make it executable (`chmod +x`) and run it.\n\n"
+              "SHA-256 checksums are in `SHA256SUMS.txt`. Feedback and bug reports are welcome!"
+          )
+          open("dist/release-notes.md", "w", encoding="utf-8").write(notes)
+          PY
+
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: Rclone Browser ${{ env.VERSION }}
           body_path: dist/release-notes.md
           files: |
             dist/*.zip
+            dist/*.AppImage
             dist/SHA256SUMS.txt

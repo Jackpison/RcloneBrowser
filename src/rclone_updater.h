@@ -25,6 +25,8 @@ public:
   // Value to store in Settings/rclone for the managed copy (relative in
   // portable mode).
   static QString managedSettingValue();
+  // rclone bundled inside the running AppImage (Linux), or empty.
+  static QString bundledPath();
   // Remove leftovers (rclone.exe.old) from a previous update.
   static void cleanup();
   // -1 if a < b, 0 if equal, 1 if a > b. Accepts "v1.2.3", "1.2.3-beta..."

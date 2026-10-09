@@ -69,7 +69,12 @@ static QString GetIniFilename() {
   QFileInfo applicationPath(qApp->applicationFilePath());
   return applicationPath.dir().filePath(applicationPath.baseName() + ".ini");
 #else
-  QString xdg_config_home = qgetenv("XDG_CONFIG_HOME");
+  // Portable mode on Linux: the AppImage runtime sets XDG_CONFIG_HOME to
+  // "<AppImage>.config" when that folder exists next to the AppImage.
+  const QString xdg_config_home = qEnvironmentVariable("XDG_CONFIG_HOME");
+  if (xdg_config_home.isEmpty()) {
+    return QString(); // not portable (previously pointed at /rclone-browser/)
+  }
   return xdg_config_home + "/rclone-browser/rclone-browser.ini";
 #endif
 #endif

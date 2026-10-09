@@ -65,12 +65,18 @@ void renderSvg(QPainter *p, const QRectF &rect, const QString &name,
 
 class FluentIconEngine : public QIconEngine {
 public:
-  FluentIconEngine(const QString &name, const QColor &color)
-      : mName(name), mColor(color) {}
+  FluentIconEngine(const QString &name, const QColor &color,
+                   const QColor &hover = QColor())
+      : mName(name), mColor(color), mHover(hover) {}
+
+  QColor colorFor(QIcon::Mode mode) const {
+    return (mode == QIcon::Active && mHover.isValid()) ? mHover
+                                                       : iconColor(mColor, mode);
+  }
 
   void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode,
              QIcon::State) override {
-    renderSvg(painter, rect, mName, iconColor(mColor, mode));
+    renderSvg(painter, rect, mName, colorFor(mode));
   }
 
   QPixmap pixmap(const QSize &size, QIcon::Mode mode,
@@ -85,19 +91,19 @@ public:
     pm.setDevicePixelRatio(scale);
     QPainter p(&pm);
     p.setRenderHint(QPainter::Antialiasing);
-    renderSvg(&p, QRectF(QPointF(0, 0), QSizeF(size)), mName,
-              iconColor(mColor, mode));
+    renderSvg(&p, QRectF(QPointF(0, 0), QSizeF(size)), mName, colorFor(mode));
     return pm;
   }
 
   QIconEngine *clone() const override {
-    return new FluentIconEngine(mName, mColor);
+    return new FluentIconEngine(mName, mColor, mHover);
   }
   QString key() const override { return "fluent"; }
 
 private:
   QString mName;
   QColor mColor;
+  QColor mHover;
 };
 
 // Renders an icon into a PNG for use in the style sheet (check marks,
@@ -269,9 +275,9 @@ QTabWidget#tabs > QTabBar::tab:hover:!selected { background: @tabHover; color: @
 QTabWidget#tabs > QTabBar::tab:selected { background: @layer; color: @accentText; border-right-color: transparent; }
 QToolButton#NewTab { border: none; border-radius: 8px; padding: 0; background: transparent; }
 QToolButton#NewTab:hover { background: @tabHover; }
-QToolButton#TabClose { border: none; border-radius: 12px; padding: 0; margin-left: 4px; background: transparent; }
-QToolButton#TabClose:hover { background: @subtleHover; }
-QToolButton#TabClose:pressed { background: @subtlePressed; }
+QToolButton#TabClose { border: none; border-radius: 12px; padding: 4px 0 0 0; margin-left: 4px; background: transparent; }
+QToolButton#TabClose:hover { background: #C42B1C; }
+QToolButton#TabClose:pressed { background: #A1261A; }
 QWidget#jobsArea QFrame[frameShape="4"] { border: none; background: transparent; max-height: 2px; }
 
 /* ---------- navigation pane ---------- */
@@ -466,7 +472,7 @@ QPalette buildPalette() {
   p.setColor(QPalette::ButtonText, c("text"));
   p.setColor(QPalette::ToolTipBase, c("flyout"));
   p.setColor(QPalette::ToolTipText, c("text"));
-  p.setColor(QPalette::PlaceholderText, c("text3"));
+  p.setColor(QPalette::PlaceholderText, c("text2")); // readable search hints
   p.setColor(QPalette::Highlight, gAccentBtn);
   p.setColor(QPalette::HighlightedText, c("onAccent"));
   p.setColor(QPalette::Link, gAccentText);
@@ -556,8 +562,11 @@ QFont fluentFont() {
   // Built from scratch (not from QApplication::font()) so the result never
   // depends on what Windows or a previous call left behind.
   QFont f;
-  f.setFamilies({"Segoe UI Variable Text", "Segoe UI", "Selawik", "Noto Sans",
-                 "Sans Serif"});
+  // Trebuchet MS ships with Windows. Its license does not allow bundling it,
+  // so on Linux it is used when installed (ttf-mscorefonts) and otherwise
+  // falls back to a similar humanist sans.
+  f.setFamilies({"Trebuchet MS", "Ubuntu", "Fira Sans", "Noto Sans",
+                 "DejaVu Sans", "Segoe UI", "Sans Serif"});
   f.setStyleHint(QFont::SansSerif);
   f.setPointSizeF(12);
   f.setHintingPreference(QFont::PreferNoHinting);
@@ -657,6 +666,10 @@ QIcon icon(const QString &name, const QColor &color) {
   return QIcon(new FluentIconEngine(name, color));
 }
 
+QIcon hoverIcon(const QString &name, const QColor &hover) {
+  return QIcon(new FluentIconEngine(name, QColor(), hover));
+}
+
 // ------------------------------------------------- file type icons ----
 
 QIcon fileIcon(const QString &fileName, bool isFolder) {
@@ -751,12 +764,28 @@ private:
 } // namespace
 
 QIcon remoteIcon(const QString &type) {
-  // User override: <app folder>\icons\remotes\<type>.png / .svg / .ico
-  const QDir dir(QDir(qApp->applicationDirPath()).filePath("icons/remotes"));
-  for (const char *ext : {"png", "svg", "ico"}) {
-    const QString f = dir.filePath(type + "." + ext);
-    if (QFileInfo::exists(f)) {
-      return QIcon(f);
+  // Logos: the user's own folder first, then the logos shipped with the app.
+  QStringList dirs;
+#ifdef Q_OS_WIN
+  dirs << QDir(qApp->applicationDirPath()).filePath("icons/remotes");
+#else
+  // An AppImage is read-only, so users add logos in a writable folder:
+  // next to the AppImage in portable mode, else in the user data folder.
+  const QString appImage = qEnvironmentVariable("APPIMAGE");
+  if (!appImage.isEmpty() && IsPortableMode()) {
+    dirs << QDir(QFileInfo(appImage).absolutePath()).filePath("icons/remotes");
+  }
+  dirs << QDir(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
+              .filePath("icons/remotes");
+  dirs << QDir(qApp->applicationDirPath()).filePath("../share/rclone-browser/icons/remotes");
+  dirs << QDir(qApp->applicationDirPath()).filePath("icons/remotes");
+#endif
+  for (const QString &d : dirs) {
+    for (const char *ext : {"png", "svg", "ico"}) {
+      const QString f = QDir(d).filePath(type + "." + ext);
+      if (QFileInfo::exists(f)) {
+        return QIcon(f);
+      }
     }
   }
 

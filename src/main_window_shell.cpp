@@ -247,6 +247,32 @@ void MainWindow::buildShell() {
   mNavRemoteCount->setObjectName("NavCount");
   rh->addWidget(mNavRemoteCount);
   rh->addStretch(1);
+  auto *sortRemotes = new QToolButton;
+  sortRemotes->setObjectName("NavAdd");
+  sortRemotes->setIcon(Theme::icon("sort"));
+  sortRemotes->setToolTip(tr("Sort remotes"));
+  sortRemotes->setPopupMode(QToolButton::InstantPopup);
+  {
+    auto *menu = new QMenu(sortRemotes);
+    auto *group = new QActionGroup(menu);
+    const QList<QPair<QString, QString>> modes = {
+        {"config", tr("Configuration order")}, {"az", tr("Name A–Z")},
+        {"za", tr("Name Z–A")}, {"type", tr("Type")},
+        {"custom", tr("Custom (drag to reorder)")}};
+    const QString current = GetSettings()->value("Settings/remoteSort", "config").toString();
+    for (const auto &m : modes) {
+      QAction *a = menu->addAction(m.second);
+      a->setCheckable(true);
+      a->setChecked(m.first == current);
+      group->addAction(a);
+      QObject::connect(a, &QAction::triggered, this, [this, id = m.first]() {
+        GetSettings()->setValue("Settings/remoteSort", id);
+        rebuildNavRemotes();
+      });
+    }
+    sortRemotes->setMenu(menu);
+  }
+  rh->addWidget(sortRemotes);
   auto *addRemote = new QToolButton;
   addRemote->setObjectName("NavAdd");
   addRemote->setIcon(Theme::icon("add"));
@@ -258,6 +284,14 @@ void MainWindow::buildShell() {
   mNavRemotes = new QListWidget;
   setupList(mNavRemotes, "NavRemotes");
   mNavRemotes->setContextMenuPolicy(Qt::CustomContextMenu);
+  mNavRemotes->setDefaultDropAction(Qt::MoveAction);
+  QObject::connect(mNavRemotes->model(), &QAbstractItemModel::rowsMoved, this, [this]() {
+    QStringList order;
+    for (int i = 0; i < mNavRemotes->count(); ++i) {
+      order << mNavRemotes->item(i)->data(TargetRole).toString();
+    }
+    GetSettings()->setValue("Settings/remoteOrder", order);
+  });
   navLayout->addWidget(mNavRemotes, 1);
 
   // footer
@@ -277,9 +311,10 @@ void MainWindow::buildShell() {
     it->setData(TargetRole, id);
     it->setData(FilledIconRole, Theme::icon(icon + "_filled"));
   };
+  addAction("github", tr("GitHub"), "github");
   addAction("settings", tr("Settings"), "settings");
-  addAction("help", tr("Help & about"), "help");
-  footer->setFixedHeight(2 * 42 + 4);
+  addAction("update", tr("Update & About"), "help");
+  footer->setFixedHeight(3 * 42 + 4);
   navLayout->addWidget(footer);
 
   auto *helpMenu = new QMenu(this);
@@ -299,6 +334,9 @@ void MainWindow::buildShell() {
                      footer->setCurrentItem(nullptr);
                      if (id == "settings") {
                        ui.preferences->trigger();
+                     } else if (id == "github") {
+                       QDesktopServices::openUrl(
+                           QUrl("https://github.com/Jackpison/RcloneBrowser"));
                      } else {
                        helpMenu->exec(footer->viewport()->mapToGlobal(r.topRight()));
                      }
@@ -545,7 +583,7 @@ void MainWindow::openRemote(const QString &name, const QString &type,
     // outer margin box and ends up above the text line.
     auto *close = new QToolButton;
     close->setObjectName("TabClose");
-    close->setIcon(Theme::icon("close"));
+    close->setIcon(Theme::hoverIcon("close", Qt::white)); // white on red hover
     close->setIconSize(QSize(14, 14));
     close->setFixedSize(24, 24);
     close->setCursor(Qt::PointingHandCursor);
@@ -664,8 +702,38 @@ void MainWindow::rebuildNavRemotes() {
   mNavRemotes->clear();
   mSyncingNav = false;
   const int n = ui.remotes->count();
+  QList<QListWidgetItem *> sources;
   for (int i = 0; i < n; ++i) {
-    QListWidgetItem *src = ui.remotes->item(i);
+    sources << ui.remotes->item(i);
+  }
+  const QString sortMode = GetSettings()->value("Settings/remoteSort", "config").toString();
+  QCollator collator;
+  collator.setNumericMode(true);
+  collator.setCaseSensitivity(Qt::CaseInsensitive);
+  if (sortMode == "az" || sortMode == "za") {
+    std::stable_sort(sources.begin(), sources.end(), [&](auto *a, auto *b) {
+      const int c = collator.compare(a->text(), b->text());
+      return sortMode == "az" ? c < 0 : c > 0;
+    });
+  } else if (sortMode == "type") {
+    std::stable_sort(sources.begin(), sources.end(), [&](auto *a, auto *b) {
+      const int c = collator.compare(a->data(Qt::UserRole).toString(),
+                                     b->data(Qt::UserRole).toString());
+      return c != 0 ? c < 0 : collator.compare(a->text(), b->text()) < 0;
+    });
+  } else if (sortMode == "custom") {
+    const QStringList order = GetSettings()->value("Settings/remoteOrder").toStringList();
+    std::stable_sort(sources.begin(), sources.end(), [&](auto *a, auto *b) {
+      auto rank = [&](QListWidgetItem *x) {
+        const int i = order.indexOf(x->text());
+        return i < 0 ? int(order.size()) : i; // new remotes go last
+      };
+      return rank(a) < rank(b);
+    });
+  }
+  mNavRemotes->setDragDropMode(sortMode == "custom" ? QAbstractItemView::InternalMove
+                                                    : QAbstractItemView::NoDragDrop);
+  for (QListWidgetItem *src : sources) {
     auto *it = new QListWidgetItem(src->icon(), src->text(), mNavRemotes);
     it->setData(KindRole, "remote");
     it->setData(TargetRole, src->text());

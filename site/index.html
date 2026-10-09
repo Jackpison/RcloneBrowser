@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rclone Browser – the rclone GUI for Windows | Free, portable cloud file manager</title>
-<meta name="description" content="Rclone Browser is a free, open-source rclone GUI for Windows 10 and 11: browse, upload, download and sync files on Google Drive, OneDrive, Dropbox, pCloud, S3 and 70+ cloud services. Portable, no install.">
-<meta name="keywords" content="rclone gui, rclone browser, rclone gui windows, rclone frontend, rclone graphical interface, cloud file manager, google drive, onedrive, dropbox, pcloud, s3">
+<title>Rclone Browser – the rclone GUI for Windows and Linux | Free, portable cloud file manager</title>
+<meta name="description" content="Rclone Browser is a free, open-source rclone GUI for Windows and Linux: browse, upload, download and sync files on Google Drive, OneDrive, Dropbox, pCloud, S3 and 70+ cloud services. Portable, no install.">
+<meta name="keywords" content="rclone gui, rclone browser, rclone gui windows, rclone gui linux, rclone frontend, rclone graphical interface, cloud file manager, google drive, onedrive, dropbox, pcloud, s3">
 <link rel="canonical" href="https://jackpison.github.io/RcloneBrowser/">
-<meta property="og:title" content="Rclone Browser – rclone GUI for Windows">
-<meta property="og:description" content="A modern rclone GUI for Windows: browse, transfer and sync files on all your cloud storage. Portable, free and open source.">
+<meta property="og:title" content="Rclone Browser – rclone GUI for Windows and Linux">
+<meta property="og:description" content="A modern rclone GUI for Windows and Linux: browse, transfer and sync files on all your cloud storage. Portable, free and open source.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://jackpison.github.io/RcloneBrowser/">
 <meta name="twitter:card" content="summary_large_image">
@@ -134,10 +134,10 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Rclone Browser",
-  "alternateName": ["rclone GUI", "Rclone Browser for Windows"],
-  "description": "Free, open-source rclone GUI for Windows: browse, upload, download and sync files on 70+ cloud storage services.",
+  "alternateName": ["rclone GUI", "Rclone Browser for Windows", "Rclone Browser for Linux"],
+  "description": "Free, open-source rclone GUI for Windows and Linux: browse, upload, download and sync files on 70+ cloud storage services.",
   "applicationCategory": "UtilitiesApplication",
-  "operatingSystem": "Windows 10, Windows 11",
+  "operatingSystem": "Windows 10, Windows 11, Linux",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "license": "https://opensource.org/licenses/MIT",
   "url": "https://jackpison.github.io/RcloneBrowser/",
@@ -169,18 +169,23 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
 <main>
   <section class="hero">
     <div class="wrap">
-      <span class="pill">rclone GUI for Windows 10 &amp; 11</span>
+      <span class="pill">rclone GUI for Windows &amp; Linux</span>
       <h1>All your clouds.<br><span>One fast browser.</span></h1>
       <p class="lead">Rclone Browser is a modern rclone GUI: browse, upload, download and sync files on Google Drive, OneDrive, Dropbox, pCloud, S3 and 70+ other services, powered by <a href="https://rclone.org/">rclone</a>. Portable, free and open source.</p>
       <div class="cta">
-        <a class="btn primary" id="download" href="https://github.com/Jackpison/RcloneBrowser/releases/latest">
+        <a class="btn primary" id="dl-win" href="https://github.com/Jackpison/RcloneBrowser/releases/latest">
           <svg class="ic" viewBox="0 0 20 20" aria-hidden="true">
 <path d="M15.5 16.9997C15.7761 16.9997 16 17.2236 16 17.4997C16 17.7452 15.8231 17.9494 15.5899 17.9917L15.5 17.9997H4.5C4.22386 17.9997 4 17.7759 4 17.4997C4 17.2543 4.17688 17.0501 4.41012 17.0078L4.5 16.9997H15.5ZM10.0001 2.00195C10.2456 2.00195 10.4497 2.17896 10.492 2.41222L10.5 2.5021L10.496 14.296L14.1414 10.6476C14.3148 10.4739 14.5842 10.4544 14.7792 10.5892L14.8485 10.647C15.0222 10.8204 15.0418 11.0898 14.907 11.2848L14.8492 11.3541L10.3574 15.8541C10.285 15.9267 10.1957 15.9724 10.1021 15.9911L9.99608 16.0008C9.83511 16.0008 9.69192 15.9247 9.60051 15.8065L5.14386 11.3547C4.94846 11.1595 4.94823 10.8429 5.14336 10.6475C5.3168 10.4739 5.58621 10.4544 5.78117 10.5892L5.85046 10.647L9.496 14.288L9.5 2.50181C9.50008 2.22567 9.724 2.00195 10.0001 2.00195Z" fill="currentColor"/>
-</svg><span id="download-label">Download for Windows</span>
+</svg><span>Download for Windows</span>
         </a>
-        <a class="btn" href="https://github.com/Jackpison/RcloneBrowser">View on GitHub</a>
+        <a class="btn primary" id="dl-linux" href="https://github.com/Jackpison/RcloneBrowser/releases/latest">
+          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true">
+<path d="M15.5 16.9997C15.7761 16.9997 16 17.2236 16 17.4997C16 17.7452 15.8231 17.9494 15.5899 17.9917L15.5 17.9997H4.5C4.22386 17.9997 4 17.7759 4 17.4997C4 17.2543 4.17688 17.0501 4.41012 17.0078L4.5 16.9997H15.5ZM10.0001 2.00195C10.2456 2.00195 10.4497 2.17896 10.492 2.41222L10.5 2.5021L10.496 14.296L14.1414 10.6476C14.3148 10.4739 14.5842 10.4544 14.7792 10.5892L14.8485 10.647C15.0222 10.8204 15.0418 11.0898 14.907 11.2848L14.8492 11.3541L10.3574 15.8541C10.285 15.9267 10.1957 15.9724 10.1021 15.9911L9.99608 16.0008C9.83511 16.0008 9.69192 15.9247 9.60051 15.8065L5.14386 11.3547C4.94846 11.1595 4.94823 10.8429 5.14336 10.6475C5.3168 10.4739 5.58621 10.4544 5.78117 10.5892L5.85046 10.647L9.496 14.288L9.5 2.50181C9.50008 2.22567 9.724 2.00195 10.0001 2.00195Z" fill="currentColor"/>
+</svg><span>Download for Linux</span>
+        </a>
       </div>
-      <div class="meta" id="download-meta">Portable zip · no installation · 64-bit</div>
+      <div class="meta"><a href="https://github.com/Jackpison/RcloneBrowser">View source on GitHub</a></div>
+      <div class="meta" id="download-meta">Windows 10/11: portable zip · Linux: AppImage · no installation · 64-bit</div>
       <div class="shot-hero">
         <img class="only-dark" src="img/browser.png" alt="Rclone Browser, an rclone GUI for Windows, in dark mode" width="1400" height="820">
         <img class="only-light" src="img/browser-light.png" alt="Rclone Browser, an rclone GUI for Windows, in light mode" width="1400" height="820">
@@ -197,8 +202,8 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
         <div class="card-icon"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">
 <path d="M7.5 11C8.32843 11 9 11.6716 9 12.5V16.5C9 17.3284 8.32843 18 7.5 18H3.5C2.67157 18 2 17.3284 2 16.5V12.5C2 11.6716 2.67157 11 3.5 11H7.5ZM16.5 11C17.3284 11 18 11.6716 18 12.5V16.5C18 17.3284 17.3284 18 16.5 18H12.5C11.6716 18 11 17.3284 11 16.5V12.5C11 11.6716 11.6716 11 12.5 11H16.5ZM7.5 12H3.5C3.22386 12 3 12.2239 3 12.5V16.5C3 16.7761 3.22386 17 3.5 17H7.5C7.77614 17 8 16.7761 8 16.5V12.5C8 12.2239 7.77614 12 7.5 12ZM16.5 12H12.5C12.2239 12 12 12.2239 12 12.5V16.5C12 16.7761 12.2239 17 12.5 17H16.5C16.7761 17 17 16.7761 17 16.5V12.5C17 12.2239 16.7761 12 16.5 12ZM7.5 2C8.32843 2 9 2.67157 9 3.5V7.5C9 8.32843 8.32843 9 7.5 9H3.5C2.67157 9 2 8.32843 2 7.5V3.5C2 2.67157 2.67157 2 3.5 2H7.5ZM16.5 2C17.3284 2 18 2.67157 18 3.5V7.5C18 8.32843 17.3284 9 16.5 9H12.5C11.6716 9 11 8.32843 11 7.5V3.5C11 2.67157 11.6716 2 12.5 2H16.5ZM7.5 3H3.5C3.22386 3 3 3.22386 3 3.5V7.5C3 7.77614 3.22386 8 3.5 8H7.5C7.77614 8 8 7.77614 8 7.5V3.5C8 3.22386 7.77614 3 7.5 3ZM16.5 3H12.5C12.2239 3 12 3.22386 12 3.5V7.5C12 7.77614 12.2239 8 12.5 8H16.5C16.7761 8 17 7.77614 17 7.5V3.5C17 3.22386 16.7761 3 16.5 3Z" fill="currentColor"/>
 </svg></div>
-        <h3>Windows 11 design</h3>
-        <p>Navigation pane, File Explorer–style tabs, command bar and breadcrumb address bar. Black and gold, or warm light, switched with one click.</p>
+        <h3>Modern design</h3>
+        <p>Navigation pane, File Explorer–style tabs, command bar and breadcrumb address bar, on Windows and Linux. Black and gold, or warm light, switched with one click.</p>
       </article>
       <article class="card">
         <div class="card-icon"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">
@@ -240,7 +245,7 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
 <path d="M2 12C2 11.6024 2.08076 11.2089 2.23739 10.8435L4.65084 5.21215C4.966 4.47679 5.68907 4 6.48913 4H13.5931C14.335 4 15.0231 4.41071 15.356 5.08776C15.9274 6.25021 16.9887 8.51197 17.8103 10.8618C17.9394 11.2308 18 11.6163 18 12V14C18 15.1046 17.1046 16 16 16H4C2.89543 16 2 15.1046 2 14V12ZM13.5931 5H6.48913C6.0891 5 5.72756 5.2384 5.56998 5.60608L3.67563 10.0262C3.78121 10.009 3.88956 10 4 10H16C16.1535 10 16.303 10.0173 16.4466 10.05C15.7287 8.18365 14.9283 6.48449 14.4586 5.52894C14.2994 5.20511 13.9664 5 13.5931 5ZM16 15C16.5523 15 17 14.5523 17 14V12C17 11.4477 16.5523 11 16 11H4C3.44772 11 3 11.4477 3 12V14C3 14.5523 3.44772 15 4 15H16ZM14.75 13.75C15.1642 13.75 15.5 13.4142 15.5 13C15.5 12.5858 15.1642 12.25 14.75 12.25C14.3358 12.25 14 12.5858 14 13C14 13.4142 14.3358 13.75 14.75 13.75Z" fill="currentColor"/>
 </svg></div>
         <h3>Mount and stream</h3>
-        <p>Mount a remote as a drive letter (with WinFsp) or stream media straight to VLC.</p>
+        <p>Mount a remote as a drive (WinFsp on Windows, FUSE on Linux) or stream media straight to VLC.</p>
       </article>
       <article class="card">
         <div class="card-icon"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">
@@ -254,7 +259,7 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
 <path d="M10 1C12.2091 1 14 2.79086 14 5V7.0498C15.1411 7.28142 16 8.29051 16 9.5V15.5C16 16.8807 14.8807 18 13.5 18H6.5C5.11929 18 4 16.8807 4 15.5V9.5C4 8.29051 4.85886 7.28142 6 7.0498V5C6 2.79086 7.79086 1 10 1ZM10 11.5C9.44772 11.5 9 11.9477 9 12.5C9 13.0523 9.44772 13.5 10 13.5C10.5523 13.5 11 13.0523 11 12.5C11 11.9477 10.5523 11.5 10 11.5ZM10 2C8.34315 2 7 3.34315 7 5V7H13V5C13 3.34315 11.6569 2 10 2Z" fill="currentColor"/>
 </svg></div>
         <h3>Private and secure</h3>
-        <p>Your cloud credentials never leave rclone's own configuration. Hardened Windows build, checksums for every release.</p>
+        <p>Your cloud credentials never leave rclone's own configuration. Hardened builds, self-tested packages and checksums for every release.</p>
       </article>
       </div>
     </div>
@@ -262,8 +267,8 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
 
   <section id="screenshots">
     <div class="wrap">
-      <div class="section-title"><span class="pill">Screenshots</span><h2>Made for Windows 11</h2>
-        <p>An rclone GUI that looks at home on Windows 11, in dark or light.</p></div>
+      <div class="section-title"><span class="pill">Screenshots</span><h2>Made for your desktop</h2>
+        <p>An rclone GUI that looks at home on Windows and Linux, in dark or light.</p></div>
       <div class="gallery">
         <figure><img src="img/home.png" alt="Home page with remote cards" loading="lazy"><figcaption>All your remotes at a glance</figcaption></figure>
         <figure><img src="img/transfers-dark.png" alt="A running transfer with progress" loading="lazy"><figcaption>Transfers with live progress, pause and resume</figcaption></figure>
@@ -277,9 +282,9 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
     <div class="wrap">
       <div class="section-title"><span class="pill">Get started</span><h2>Up and running in a minute</h2></div>
       <div class="steps">
-        <div class="step"><h3>Download</h3><p>Get the latest zip from the <a href="https://github.com/Jackpison/RcloneBrowser/releases/latest">releases page</a>.</p></div>
-        <div class="step"><h3>Extract anywhere</h3><p>A folder on your PC or a USB stick. Nothing is installed.</p></div>
-        <div class="step"><h3>Run</h3><p>Start <code>RcloneBrowser.exe</code>. If Windows warns about an unknown app, choose <b>More info</b>, then <b>Run anyway</b>.</p></div>
+        <div class="step"><h3>Download</h3><p>Get the latest version for your system from the <a href="https://github.com/Jackpison/RcloneBrowser/releases/latest">releases page</a>.</p></div>
+        <div class="step"><h3>Windows</h3><p>Extract the zip anywhere and run <code>RcloneBrowser.exe</code>. If Windows warns about an unknown app, choose <b>More info</b>, then <b>Run anyway</b>.</p></div>
+        <div class="step"><h3>Linux</h3><p>Make the AppImage executable (<code>chmod +x</code>) and run it. Works on Ubuntu, Fedora, Debian, Mint, Arch and more.</p></div>
         <div class="step"><h3>Connect</h3><p>Your rclone remotes appear automatically, or click <b>New remote</b> to add one.</p></div>
       </div>
     </div>
@@ -292,7 +297,7 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
         <a class="doc" href="Rclone-Browser-Guide.pdf"><strong>User guide (PDF)</strong><span>Every feature explained, with screenshots.</span></a>
         <a class="doc" href="https://github.com/Jackpison/RcloneBrowser/blob/main/CHANGELOG.md"><strong>Changelog</strong><span>What changed in each version.</span></a>
         <a class="doc" href="https://github.com/Jackpison/RcloneBrowser/blob/main/docs/remote-icons.md"><strong>Remote icons</strong><span>Use your own logos for storage services.</span></a>
-        <a class="doc" href="https://github.com/Jackpison/RcloneBrowser/issues"><strong>Report a problem</strong><span>Open an issue on GitHub.</span></a>
+        <a class="doc" href="https://github.com/Jackpison/RcloneBrowser/issues"><strong>Feedback &amp; bug reports</strong><span>Feedback and bug reports are welcome! Open an issue on GitHub.</span></a>
       </div>
     </div>
   </section>
@@ -320,18 +325,21 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
   });
   paintThemeIcon();
 
-  // download button: link straight to the latest release's zip
+  // download buttons: link straight to the latest release's files
   fetch("https://api.github.com/repos/Jackpison/RcloneBrowser/releases/latest")
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (rel) {
       if (!rel) return;
-      var zip = (rel.assets || []).find(function (a) { return /\.zip$/i.test(a.name); });
-      if (!zip) return;
-      var mb = (zip.size / 1048576).toFixed(1);
-      document.getElementById("download").href = zip.browser_download_url;
-      document.getElementById("download-label").textContent = "Download " + rel.tag_name;
-      document.getElementById("download-meta").textContent =
-        "Portable zip · " + mb + " MB · no installation · 64-bit";
+      var assets = rel.assets || [];
+      var win = assets.find(function (a) { return /windows.*\.zip$/i.test(a.name); });
+      var lin = assets.find(function (a) { return /linux.*\.AppImage$/i.test(a.name); });
+      function mb(a) { return (a.size / 1048576).toFixed(0) + " MB"; }
+      if (win) document.getElementById("dl-win").href = win.browser_download_url;
+      if (lin) document.getElementById("dl-linux").href = lin.browser_download_url;
+      var parts = ["Version " + rel.tag_name.replace(/^v/, "")];
+      if (win) parts.push("Windows zip " + mb(win));
+      if (lin) parts.push("Linux AppImage " + mb(lin));
+      document.getElementById("download-meta").textContent = parts.join(" · ");
     })
     .catch(function () {});
 </script>

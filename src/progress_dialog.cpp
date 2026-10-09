@@ -6,6 +6,7 @@ ProgressDialog::ProgressDialog(const QString &title, const QString &operation,
                                QWidget *parent, bool close, bool trim)
     : QDialog(parent) {
   ui.setupUi(this);
+  setMinimumWidth(460);
   resize(width(), 0);
 
   setWindowTitle(title);
@@ -23,7 +24,13 @@ ProgressDialog::ProgressDialog(const QString &title, const QString &operation,
                      ui.output->setVisible(checked);
                      ui.buttonShowOutput->setArrowType(
                          checked ? Qt::DownArrow : Qt::RightArrow);
-                     if (!checked) {
+                     if (checked) {
+                       // the dialog starts at its minimum height; give the
+                       // log real room instead of squeezing it
+                       ui.output->setMinimumHeight(260);
+                       resize(qMax(width(), 680), qMax(height(), 440));
+                     } else {
+                       ui.output->setMinimumHeight(0);
                        adjustSize();
                      }
                    });
@@ -43,7 +50,7 @@ ProgressDialog::ProgressDialog(const QString &title, const QString &operation,
                    });
 
   QObject::connect(process, &QProcess::readyRead, this, [=, this]() {
-    QString output = process->readAll();
+    QString output = QString::fromUtf8(process->readAll());
     if (trim) {
       output = output.trimmed();
     }

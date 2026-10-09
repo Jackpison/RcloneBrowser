@@ -59,6 +59,11 @@ qt_add_resources(${TARGET_NAME} "folder_icons"
   PREFIX "/folder"
   BASE "${CMAKE_CURRENT_SOURCE_DIR}/icons/folder"
   FILES ${FOLDER_ICONS})
+file(GLOB DRIVE_ICONS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/icons/drive/*.png")
+qt_add_resources(${TARGET_NAME} "drive_icons"
+  PREFIX "/drive"
+  BASE "${CMAKE_CURRENT_SOURCE_DIR}/icons/drive"
+  FILES ${DRIVE_ICONS})
 
 # Warnings are on, but never fatal by default: -Werror turned every new
 # compiler release into a build break for packagers. Opt in with RB_WERROR=ON.

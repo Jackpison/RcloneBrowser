@@ -4,11 +4,13 @@ Rclone Browser shows every remote with a colour-coded tile for its storage type.
 
 ## Included logos
 
-The download already contains logos for: `box`, `drime`, `drive`, `dropbox`, `filen`, `koofr`, `mega`, `onedrive`, `pcloud`, `protondrive`, `s3`. They are ordinary files in `icons\remotes` and can be replaced or deleted like your own.
+The download already contains logos for: `azureblob`, `b2`, `box`, `drime`, `drive`, `dropbox`, `fichier`, `filelu`, `filen`, `filescom`, `gcs`, `gofile`, `gphotos`, `hidrive`, `iclouddrive`, `internxt`, `jottacloud`, `koofr`, `mailru`, `mega`, `onedrive`, `opendrive`, `pcloud`, `pikpak`, `pixeldrain`, `premiumizeme`, `protondrive`, `putio`, `s3`, `seafile`, `storj`, `tardigrade`, `ulozto`, `zoho`. They are ordinary files in `icons\remotes` and can be replaced or deleted like your own.
 
 ## How to add your own icon
 
-1. Next to `RcloneBrowser.exe`, open (or create) the folder `icons\remotes`.
+1. Open (or create) the logo folder:
+   - **Windows:** `icons\remotes` next to `RcloneBrowser.exe`
+   - **Linux:** `~/.local/share/rclone-browser/rclone-browser/icons/remotes/`, or `icons/remotes/` next to the AppImage in portable mode
 2. Save the picture as `<type>.png`, `<type>.svg` or `<type>.ico`, using the **file name from the table below** (all lower case). Example: `icons\remotes\drive.png` for Google Drive.
 3. Use a square image. Recommended: SVG, or PNG at 256 × 256 px with a transparent background.
 4. Restart Rclone Browser, or right-click a remote in the sidebar and choose **Reload remotes**.

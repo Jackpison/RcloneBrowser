@@ -45,6 +45,8 @@ QColor accent();
 // re-tinted automatically for light/dark and disabled state. Pass a colour to
 // force one (e.g. on accent-coloured buttons).
 QIcon icon(const QString &name, const QColor &color = QColor());
+// Icon that switches to `hover` while the mouse is over its button.
+QIcon hoverIcon(const QString &name, const QColor &hover);
 
 // A design-token colour for custom painting, e.g. "card", "cardHover",
 // "cardStroke", "text", "text2", "accentText".

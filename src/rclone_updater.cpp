@@ -38,21 +38,49 @@ RcloneUpdater::RcloneUpdater(QObject *parent)
 }
 
 QString RcloneUpdater::managedPath() {
-  QString base = IsPortableMode()
-                     ? qApp->applicationDirPath()
-                     : QStandardPaths::writableLocation(
-                           QStandardPaths::AppLocalDataLocation);
+  QString base = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+  if (IsPortableMode()) {
+#ifdef Q_OS_WIN
+    base = qApp->applicationDirPath();
+#else
+    // An AppImage is read-only: keep rclone next to the .AppImage file.
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    if (!appImage.isEmpty()) {
+      base = QFileInfo(appImage).absolutePath();
+    }
+#endif
+  }
   return QDir(base).filePath("rclone/" + exeName());
 }
 
-QString RcloneUpdater::managedSettingValue() {
+QString RcloneUpdater::bundledPath() {
 #ifdef Q_OS_WIN
-  // GetRclone() resolves relative paths against the exe folder in portable
-  // mode, so the whole folder keeps working after being moved/renamed.
-  if (IsPortableMode()) {
-    return "rclone/" + exeName();
+  return QString(); // the Windows zip ships rclone in the managed location
+#else
+  // Inside an AppImage, rclone is bundled next to the app binary. Its path
+  // changes on every start (temporary mount), so it is never saved.
+  const QString appDir = qEnvironmentVariable("APPDIR");
+  if (appDir.isEmpty()) {
+    return QString();
   }
+  const QString path = QDir(appDir).filePath("usr/bin/rclone");
+  return QFileInfo(path).isExecutable() ? path : QString();
 #endif
+}
+
+QString RcloneUpdater::managedSettingValue() {
+  // GetRclone() resolves relative paths against the app folder (Windows) or
+  // the AppImage's folder (Linux) in portable mode, so the folder keeps
+  // working after being moved or renamed.
+  if (IsPortableMode()) {
+#ifdef Q_OS_WIN
+    return "rclone/" + exeName();
+#else
+    if (!qEnvironmentVariable("APPIMAGE").isEmpty()) {
+      return "rclone/" + exeName();
+    }
+#endif
+  }
   return managedPath();
 }
 
@@ -304,12 +332,16 @@ void RcloneUpdater::extract(const QString &version, const QString &zipPath,
                 " -Force";
   }
 #else
+  // unzip is not installed everywhere; Python's zipfile nearly always is
   if (attempt == 0) {
     program = "unzip";
     args << "-q" << "-o" << zipPath << "-d" << outDir;
   } else if (attempt == 1) {
     program = "bsdtar";
     args << "-xf" << zipPath << "-C" << outDir;
+  } else if (attempt == 2) {
+    program = "python3";
+    args << "-m" << "zipfile" << "-e" << zipPath << outDir;
   }
 #endif
   if (program.isEmpty()) {
@@ -350,6 +382,12 @@ void RcloneUpdater::finishInstall(const QString &version,
     fail(tr("%1 not found in the downloaded archive.").arg(exeName()));
     return;
   }
+
+#ifndef Q_OS_WIN
+  // some extractors (python's zipfile) drop the executable bit
+  QFile::setPermissions(newExe, QFile::permissions(newExe) | QFileDevice::ExeOwner |
+                                    QFileDevice::ExeGroup | QFileDevice::ExeOther);
+#endif
 
   // Sanity check: the new binary must run and report the expected version.
   {

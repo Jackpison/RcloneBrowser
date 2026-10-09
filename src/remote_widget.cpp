@@ -56,8 +56,9 @@ QString root = isLocal ? "/" : QString();
 
   QObject::connect(model, &QAbstractItemModel::layoutChanged, this, [=, this]() {
     ui.tree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    ui.tree->resizeColumnToContents(1);
-    ui.tree->resizeColumnToContents(2);
+    for (int c = 1; c < model->columnCount(QModelIndex()); ++c) {
+      ui.tree->resizeColumnToContents(c);
+    }
   });
 
   QObject::connect(
@@ -957,8 +958,44 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   QTimer::singleShot(0, this, [this]() { updateCommandBar(); });
 
   ui.tree->setUniformRowHeights(true); // much faster with large folders
-  ui.tree->setFont(Theme::uiFont());
+  ui.tree->setFont(Theme::uiFont(1.06));
   ui.tree->header()->setFont(Theme::uiFont());
+
+  // Details columns: right-click the header to choose (as in File Explorer)
+  {
+    QHeaderView *hdr = ui.tree->header();
+    hdr->setMinimumSectionSize(72);
+    hdr->setContextMenuPolicy(Qt::CustomContextMenu);
+    const QStringList hidden =
+        GetSettings()->value("Settings/hiddenColumns", QStringList{"4", "5"}).toStringList();
+    for (int c = 1; c < model->columnCount(QModelIndex()); ++c) {
+      hdr->setSectionHidden(c, hidden.contains(QString::number(c)));
+    }
+    QObject::connect(hdr, &QWidget::customContextMenuRequested, this,
+                     [this, hdr, model](const QPoint &pos) {
+                       QMenu menu;
+                       for (int c = 1; c < model->columnCount(QModelIndex()); ++c) {
+                         QAction *a = menu.addAction(
+                             model->headerData(c, Qt::Horizontal, Qt::DisplayRole).toString());
+                         a->setCheckable(true);
+                         a->setChecked(!hdr->isSectionHidden(c));
+                         QObject::connect(a, &QAction::toggled, this, [this, hdr, c](bool on) {
+                           hdr->setSectionHidden(c, !on);
+                           if (on) {
+                             ui.tree->resizeColumnToContents(c);
+                           }
+                           QStringList hiddenNow;
+                           for (int i = 1; i < hdr->count(); ++i) {
+                             if (hdr->isSectionHidden(i)) {
+                               hiddenNow << QString::number(i);
+                             }
+                           }
+                           GetSettings()->setValue("Settings/hiddenColumns", hiddenNow);
+                         });
+                       }
+                       menu.exec(hdr->mapToGlobal(pos));
+                     });
+  }
   mGrid->setFont(Theme::uiFont());
   ui.tree->setAnimated(true);
   ui.tree->setIconSize(QSize(22, 22));
