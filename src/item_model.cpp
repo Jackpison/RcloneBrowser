@@ -92,7 +92,9 @@ ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
   mRoot->isFolder = true;
   mRoot->state = Item::Ready;
 
-  QObject::connect(this, &ItemModel::getIcon, icons, &IconCache::getIcon);
+  // Queued: the icon must arrive after the new rows have been inserted.
+  QObject::connect(this, &ItemModel::getIcon, icons, &IconCache::getIcon,
+                   Qt::QueuedConnection);
   QObject::connect(
       icons, &IconCache::iconReady, this,
       [=, this](Item *item, const QPersistentModelIndex &parent, const QIcon &icon) {

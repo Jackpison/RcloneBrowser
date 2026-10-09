@@ -53,11 +53,23 @@ qt_add_resources(${TARGET_NAME} "fluent_icons"
   BASE "${CMAKE_CURRENT_SOURCE_DIR}/icons/fluent"
   FILES ${FLUENT_ICONS})
 
+# Folder icon, pre-rendered at each size the app uses (crisp outline)
+file(GLOB FOLDER_ICONS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/icons/folder/*.png")
+qt_add_resources(${TARGET_NAME} "folder_icons"
+  PREFIX "/folder"
+  BASE "${CMAKE_CURRENT_SOURCE_DIR}/icons/folder"
+  FILES ${FOLDER_ICONS})
+
 # Warnings are on, but never fatal by default: -Werror turned every new
 # compiler release into a build break for packagers. Opt in with RB_WERROR=ON.
 option(RB_WERROR "Treat compiler warnings as errors" OFF)
 if(MSVC)
   target_compile_options(${TARGET_NAME} PRIVATE /W4 /wd4100 /wd4189 /utf-8 /MP)
+  # Exploit mitigations: Control Flow Guard, CET shadow-stack compatibility,
+  # high-entropy ASLR and DEP (the last two are MSVC defaults, set explicitly).
+  target_compile_options(${TARGET_NAME} PRIVATE /guard:cf)
+  target_link_options(${TARGET_NAME} PRIVATE /guard:cf /CETCOMPAT /DYNAMICBASE
+                      /HIGHENTROPYVA /NXCOMPAT)
   if(RB_WERROR)
     target_compile_options(${TARGET_NAME} PRIVATE /WX)
   endif()

@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.6.0] - 2026-10-09
+
+### New
+-   Icon sizes for the Icons view: Extra large, Large, Medium, Small (arrow next to the Icons button), and Ctrl + mouse wheel to zoom
+-   New folder icon, pre-rendered at every size for a crisp outline
+
+### Changed
+-   Tab close button: larger, centred on the text line, round hover highlight; tab titles are bold
+-   Download is now named `RcloneBrowser-<version>-windows-x64.zip`
+-   Windows build hardened with Control Flow Guard and CET shadow-stack compatibility (plus ASLR / DEP)
+
+### Fixed
+-   Possible crash while browsing: file icons were created on a background thread while the main thread used the same icon cache (data race)
+-   The new icon size setting clashed with an old setting of the same name, so icons could come out small
+
 ## [3.5.0] - 2026-10-09
 
 ### New

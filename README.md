@@ -13,7 +13,7 @@
 - **Modern design** in black and gold or warm light, with a one-click **light / dark** switch next to the app name
 - **All your clouds in one place**: Google Drive, OneDrive, Dropbox, pCloud, S3, SFTP, encrypted remotes and every other rclone storage type, using your existing rclone configuration. Logos for popular services are included; every other service gets a colour-coded tile, or [your own icon](docs/remote-icons.md).
 - **Tabs**: open several remotes, or the same remote several times (Ctrl+T)
-- **Icons and Details views**: large icons like File Explorer, or a sortable list with sizes and dates
+- **Icons and Details views**: extra large to small icons like File Explorer (Ctrl + mouse wheel to zoom), or a sortable list with sizes and dates
 - Upload, download, create folders, rename, move and delete; drag and drop files from File Explorer to upload
 - **Transfers you can pause and resume**, with live progress, speed and time left
 - Saved **tasks**: store a transfer once, run it again with one click (or as a dry run)
@@ -30,7 +30,7 @@
 
 ## Getting started
 
-1. Download `RcloneBrowser-<version>-windows-x64-portable.zip` from the [latest release](../../releases/latest). The release also lists the file's SHA-256 checksum.
+1. Download `RcloneBrowser-<version>-windows-x64.zip` from the [latest release](../../releases/latest). The release also lists the file's SHA-256 checksum.
 2. Extract it to any folder and run `RcloneBrowser.exe`.
 3. Windows may show "Windows protected your PC" because the app is not code-signed: click **More info**, then **Run anyway**.
 
@@ -59,6 +59,7 @@ Delete `RcloneBrowser.ini` to use non-portable mode (settings in the registry un
 | Ctrl+T / Ctrl+W | New tab / close tab (or middle-click the tab) |
 | Ctrl+F | Filter the current folder |
 | Ctrl+Shift+1 / Ctrl+Shift+2 | Icons view / Details view |
+| Ctrl + mouse wheel | Bigger / smaller icons |
 | Enter, double-click | Open folder |
 | Alt+Up | Parent folder |
 | F5 · F7 · F2 · Del | Refresh · New folder · Rename · Delete |
@@ -69,6 +70,7 @@ Delete `RcloneBrowser.ini` to use non-portable mode (settings in the registry un
 - Cloud credentials stay in rclone's own configuration; the app never stores them. A config password is kept only in memory and passed to rclone via an environment variable.
 - rclone updates are HTTPS-only, verified against rclone's SHA-256 checksums, size-limited and test-run before installation.
 - rclone and media players are started without a shell, so file names cannot inject commands.
+- The Windows build enables Control Flow Guard, CET shadow-stack compatibility, ASLR and DEP.
 - Releases are built by GitHub Actions from this repository with every action pinned to an exact commit; each release publishes the zip's SHA-256.
 
 ## Building from source

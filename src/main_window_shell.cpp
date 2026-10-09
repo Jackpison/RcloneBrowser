@@ -333,7 +333,7 @@ void MainWindow::buildShell() {
 
   ui.tabs->setAttribute(Qt::WA_StyledBackground);
   ui.tabs->setDocumentMode(true);
-  ui.tabs->setTabsClosable(true);
+  ui.tabs->setTabsClosable(false); // own close buttons, see openRemote()
   ui.tabs->setMovable(true);
   ui.tabs->setElideMode(Qt::ElideRight);
   ui.tabs->setUsesScrollButtons(true);
@@ -530,6 +530,20 @@ void MainWindow::openRemote(const QString &name, const QString &type,
                      [this, name, type]() { openRemote(name, type, true); });
     index = ui.tabs->addTab(remote, Theme::remoteIcon(type), name);
     ui.tabs->setTabToolTip(index, QString("%1 · %2").arg(name, type));
+
+    // Own close button: Qt's built-in one is positioned against the tab's
+    // outer margin box and ends up above the text line.
+    auto *close = new QToolButton;
+    close->setObjectName("TabClose");
+    close->setIcon(Theme::icon("close"));
+    close->setIconSize(QSize(14, 14));
+    close->setFixedSize(24, 24);
+    close->setCursor(Qt::PointingHandCursor);
+    close->setToolTip(tr("Close tab (Ctrl+W)"));
+    close->setFocusPolicy(Qt::NoFocus);
+    QObject::connect(close, &QToolButton::clicked, this,
+                     [this, remote]() { closeRemoteWidget(remote); });
+    ui.tabs->tabBar()->setTabButton(index, QTabBar::RightSide, close);
   }
   ui.tabs->setCurrentIndex(index);
   showPage(BrowserPage);

@@ -37,6 +37,9 @@ private:
   bool mSyncingFromGrid = false;
   QList<QToolButton *> mPrimaryButtons;
   bool mCompactBar = false;
+  int mIconPx = 64;
+  QActionGroup *mSizeGroup = nullptr;
+  void applyIconSize(int px);
   void updateCommandBar();
   bool eventFilter(QObject *o, QEvent *e) override;
   void setIconView(bool icons, class ItemModel *model);

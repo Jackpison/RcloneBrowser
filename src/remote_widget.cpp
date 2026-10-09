@@ -860,8 +860,6 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   mGrid->setObjectName("IconGrid");
   mGrid->setModel(model);
   mGrid->setViewMode(QListView::IconMode);
-  mGrid->setIconSize(QSize(56, 56));
-  mGrid->setGridSize(QSize(118, 112));
   mGrid->setSpacing(4);
   mGrid->setResizeMode(QListView::Adjust);
   mGrid->setMovement(QListView::Static);
@@ -900,6 +898,8 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
                          sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
                      mSyncingFromGrid = false;
                    });
+  mGrid->viewport()->installEventFilter(this); // Ctrl+wheel zoom
+  applyIconSize(GetSettings()->value("Settings/gridIconSize", 64).toInt());
   QObject::connect(mGrid, &QListView::activated, this,
                    [this, model](const QModelIndex &index) {
                      if (model->isFolder(index)) {
@@ -923,7 +923,28 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
     bar->insertWidget(bar->indexOf(ui.buttonRefresh), b);
     return b;
   };
-  mViewIcons = viewButton("view_grid", tr("Icons (Ctrl+Shift+1)"));
+  mViewIcons = viewButton("view_grid", tr("Icons (Ctrl+Shift+1) - Ctrl+wheel to zoom"));
+  // icon sizes, as in File Explorer's View menu
+  {
+    auto *sizes = new QMenu(mViewIcons);
+    mSizeGroup = new QActionGroup(sizes);
+    const QList<QPair<QString, int>> options = {
+        {tr("Extra large icons"), 96}, {tr("Large icons"), 64},
+        {tr("Medium icons"), 48}, {tr("Small icons"), 32}};
+    for (const auto &o : options) {
+      QAction *a = sizes->addAction(o.first);
+      a->setCheckable(true);
+      a->setData(o.second);
+      mSizeGroup->addAction(a);
+      QObject::connect(a, &QAction::triggered, this, [this, model, px = o.second]() {
+        applyIconSize(px);
+        setIconView(true, model);
+      });
+    }
+    mViewIcons->setMenu(sizes);
+    mViewIcons->setPopupMode(QToolButton::MenuButtonPopup);
+    applyIconSize(mIconPx); // tick the current size
+  }
   mViewDetails = viewButton("view_list", tr("Details (Ctrl+Shift+2)"));
   mViewIcons->setShortcut(QKeySequence(tr("Ctrl+Shift+1")));
   mViewDetails->setShortcut(QKeySequence(tr("Ctrl+Shift+2")));
@@ -1012,6 +1033,19 @@ bool RemoteWidget::eventFilter(QObject *o, QEvent *e) {
   if (o == ui.buttons && (e->type() == QEvent::Resize || e->type() == QEvent::Show)) {
     updateCommandBar();
   }
+  if (mGrid && o == mGrid->viewport() && e->type() == QEvent::Wheel) {
+    auto *we = static_cast<QWheelEvent *>(e);
+    if (we->modifiers() & Qt::ControlModifier) {
+      static const int steps[] = {32, 48, 64, 96};
+      int i = 0;
+      while (i < 3 && steps[i] < mIconPx) {
+        ++i;
+      }
+      i += we->angleDelta().y() > 0 ? 1 : -1;
+      applyIconSize(steps[qBound(0, i, 3)]);
+      return true;
+    }
+  }
   return QWidget::eventFilter(o, e);
 }
 
@@ -1038,6 +1072,22 @@ void RemoteWidget::updateCommandBar() {
     b->setMinimumWidth(text ? labelWidth(b) : 0);
   }
   mCompactBar = labelled == 0;
+}
+
+void RemoteWidget::applyIconSize(int px) {
+  px = qBound(32, px, 96);
+  mIconPx = px;
+  mGrid->setIconSize(QSize(px, px));
+  // cell: room for two lines of name under the icon
+  const int w = qMax(96, px + 56);
+  const int h = px + (px >= 64 ? 52 : 46);
+  mGrid->setGridSize(QSize(w, h));
+  if (mSizeGroup) {
+    for (QAction *a : mSizeGroup->actions()) {
+      a->setChecked(a->data().toInt() == px);
+    }
+  }
+  GetSettings()->setValue("Settings/gridIconSize", px);
 }
 
 void RemoteWidget::showFolderInGrid(const QModelIndex &folder, ItemModel *model) {

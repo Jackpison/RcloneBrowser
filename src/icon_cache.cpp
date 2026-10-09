@@ -1,31 +1,14 @@
 #include "icon_cache.h"
 #include "item_model.h"
 #include "theme.h"
-#if defined(Q_OS_WIN)
-#include <windows.h>
-#include <objbase.h>
-#include <shellapi.h>
-#endif
 
-IconCache::IconCache(QObject *parent) : QObject(parent) {
-  mFileIcon = QFileIconProvider().icon(QFileIconProvider::File);
+// File type icons are built from bundled SVGs, which is instant, so this now
+// runs on the GUI thread. (It used to run on a worker thread to query the
+// Windows shell; creating QIcons and sharing the icon cache across threads
+// was a data race.)
+IconCache::IconCache(QObject *parent) : QObject(parent) {}
 
-#if defined(Q_OS_WIN32)
-  CoInitializeEx(NULL, COINIT_MULTITHREADED);
-#endif
-
-  mThread.start();
-  moveToThread(&mThread);
-}
-
-IconCache::~IconCache() {
-  mThread.quit();
-  mThread.wait();
-
-#if defined(Q_OS_WIN32)
-  CoUninitialize();
-#endif
-}
+IconCache::~IconCache() = default;
 
 void IconCache::getIcon(Item *item, const QPersistentModelIndex &parent) {
   // Colour-coded Fluent file type icons (same look on every PC, sharp at any

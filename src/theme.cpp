@@ -252,16 +252,15 @@ QWidget[card="true"] QHeaderView::section:last { border-top-right-radius: 11px; 
 /* ---------- remote tabs: rounded chips ---------- */
 QTabWidget#tabs > QTabBar { background: transparent; }
 QTabWidget#tabs > QTabBar::tab {
-  background: @card; color: @text2; border: 1px solid @cardStroke; border-radius: 18px;
-  padding: 7px 6px 7px 14px; margin: 12px 0 4px 8px; min-width: 120px; max-width: 240px;
+  background: @card; color: @text2; border: 1px solid @cardStroke; border-radius: 19px;
+  padding: 8px 6px 8px 14px; margin: 10px 0 10px 8px; min-width: 120px; max-width: 260px;
+  font-weight: 700;
 }
 QTabWidget#tabs > QTabBar::tab:hover { background: @cardHover; color: @text; }
-QTabWidget#tabs > QTabBar::tab:selected { background: @navSel; color: @accentText; border: 1px solid @accentText; font-weight: 600; }
-QTabWidget#tabs > QTabBar::close-button {
-  image: url(@imgClose); subcontrol-position: right;
-  width: 14px; height: 14px; margin-left: 6px; margin-right: 4px; border-radius: 4px;
-}
-QTabWidget#tabs > QTabBar::close-button:hover { background: @subtleHover; }
+QTabWidget#tabs > QTabBar::tab:selected { background: @navSel; color: @accentText; border: 1px solid @accentText; }
+QToolButton#TabClose { border: none; border-radius: 12px; padding: 0; margin-left: 4px; background: transparent; }
+QToolButton#TabClose:hover { background: @subtleHover; }
+QToolButton#TabClose:pressed { background: @subtlePressed; }
 QWidget#jobsArea QFrame[frameShape="4"] { border: none; background: transparent; max-height: 2px; }
 
 /* ---------- navigation pane ---------- */
@@ -689,7 +688,9 @@ QIcon fileIcon(const QString &fileName, bool isFolder) {
   }
   QIcon result;
   if (isFolder) {
-    result = icon("f_folder", QColor("#E9A93A"));
+    for (int px : {16, 20, 24, 32, 40, 48, 64, 96, 128, 256}) {
+      result.addFile(QString(":/folder/folder-%1.png").arg(px), QSize(px, px));
+    }
   } else {
     auto t = byExt.value(key, {"f_doc", "#8592A3"});
     result = icon(t.icon, QColor(t.color));
