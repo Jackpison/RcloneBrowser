@@ -341,17 +341,24 @@ void MainWindow::buildShell() {
   ui.tabs->tabBar()->setIconSize(QSize(18, 18));
   ui.tabs->tabBar()->setFont(Theme::uiFont()); // never inherit a stale font
 
-  auto *newTab = new QToolButton;
-  newTab->setIcon(Theme::icon("add"));
-  newTab->setToolTip(tr("New tab (Ctrl+T)"));
-  QObject::connect(newTab, &QToolButton::clicked, this, [this]() {
+  // "+" right after the last tab, as in File Explorer (Qt only offers a
+  // corner position, so it is placed manually; see updateNewTabButton()).
+  mNewTab = new QToolButton(ui.tabs);
+  mNewTab->setObjectName("NewTab");
+  mNewTab->setIcon(Theme::icon("add"));
+  mNewTab->setIconSize(QSize(16, 16));
+  mNewTab->setFixedSize(32, 32);
+  mNewTab->setCursor(Qt::PointingHandCursor);
+  mNewTab->setToolTip(tr("New tab (Ctrl+T)"));
+  QObject::connect(mNewTab, &QToolButton::clicked, this, [this]() {
     QWidget *w = ui.tabs->currentWidget();
     if (w && w->property("remoteName").isValid()) {
       openRemote(w->property("remoteName").toString(),
                  w->property("remoteType").toString(), true);
     }
   });
-  ui.tabs->setCornerWidget(newTab, Qt::TopRightCorner);
+  QObject::connect(ui.tabs->tabBar(), &QTabBar::tabMoved, this,
+                   [this]() { updateNewTabButton(); });
 
   auto *central = new QWidget;
   auto *hl = new QHBoxLayout(central);
@@ -468,8 +475,10 @@ void MainWindow::buildShell() {
   QObject::connect(mNavRemotes, &QListWidget::itemClicked, this, onNav);
   QObject::connect(mNav, &QListWidget::currentItemChanged, this, onNav);
   QObject::connect(mNavRemotes, &QListWidget::currentItemChanged, this, onNav);
-  QObject::connect(ui.tabs, &QTabWidget::currentChanged, this,
-                   [this](int) { syncNavToCurrentPage(); });
+  QObject::connect(ui.tabs, &QTabWidget::currentChanged, this, [this](int) {
+    syncNavToCurrentPage();
+    updateNewTabButton();
+  });
   QObject::connect(mPages, &QStackedWidget::currentChanged, this,
                    [this](int) { syncNavToCurrentPage(); });
   QObject::connect(ui.tabs, &QTabWidget::tabCloseRequested, this,
@@ -548,6 +557,26 @@ void MainWindow::openRemote(const QString &name, const QString &type,
   }
   ui.tabs->setCurrentIndex(index);
   showPage(BrowserPage);
+  QTimer::singleShot(0, this, [this]() { updateNewTabButton(); });
+}
+
+void MainWindow::updateNewTabButton() {
+  if (!mNewTab) {
+    return;
+  }
+  QTabBar *bar = ui.tabs->tabBar();
+  if (bar->count() == 0) {
+    mNewTab->hide();
+    return;
+  }
+  const QRect last = bar->tabRect(bar->count() - 1);
+  QPoint pos = bar->mapTo(ui.tabs, QPoint(last.right() + 6,
+                                          last.center().y() - mNewTab->height() / 2));
+  // with many tabs (scroll buttons visible) keep it inside the widget
+  pos.setX(qMin(pos.x(), ui.tabs->width() - mNewTab->width() - 4));
+  mNewTab->move(pos);
+  mNewTab->show();
+  mNewTab->raise();
 }
 
 void MainWindow::showPage(int page) {
@@ -568,6 +597,7 @@ void MainWindow::closeRemoteWidget(QWidget *w) {
   }
   ui.tabs->removeTab(index); // Qt selects the neighbouring tab
   w->deleteLater();
+  QTimer::singleShot(0, this, [this]() { updateNewTabButton(); });
   if (ui.tabs->count() == 0 && mPages->currentIndex() == BrowserPage) {
     showPage(HomePage);
   }
@@ -582,6 +612,11 @@ void MainWindow::closeRemote(const QString &name) {
 }
 
 bool MainWindow::eventFilter(QObject *o, QEvent *e) {
+  if (o == ui.tabs->tabBar() &&
+      (e->type() == QEvent::Resize || e->type() == QEvent::LayoutRequest ||
+       e->type() == QEvent::Move || e->type() == QEvent::Show)) {
+    QTimer::singleShot(0, this, [this]() { updateNewTabButton(); });
+  }
   if (o == ui.tabs->tabBar() && e->type() == QEvent::MouseButtonRelease) {
     auto *me = static_cast<QMouseEvent *>(e);
     if (me->button() == Qt::MiddleButton) {

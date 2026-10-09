@@ -77,6 +77,8 @@ private:
   QToolButton *mThemeButton = nullptr;
   QStackedWidget *mPages = nullptr; // Home, Transfers, Tasks, remote tabs
   void showPage(int page);
+  QToolButton *mNewTab = nullptr;
+  void updateNewTabButton();
   void updateThemeButton();
   QLabel *mHomeSubtitle = nullptr;
   QLabel *mHomeEmpty = nullptr;

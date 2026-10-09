@@ -4,7 +4,7 @@
 
 <p align="center">Browse, transfer and sync files on all your cloud storage, powered by <a href="https://rclone.org/">rclone</a>.<br>Portable, nothing to install: unzip it anywhere (even on a USB stick) and run.</p>
 
-<p align="center"><b><a href="../../releases/latest">Download the latest release</a></b> · <a href="docs/Rclone-Browser-Guide.pdf">User guide (PDF)</a> · <a href="docs/remote-icons.md">Remote icons</a> · <a href="CHANGELOG.md">Changelog</a></p>
+<p align="center"><b><a href="../../releases/latest">Download the latest release</a></b> · <a href="https://jackpison.github.io/RcloneBrowser/">Website</a> · <a href="docs/Rclone-Browser-Guide.pdf">User guide (PDF)</a> · <a href="docs/remote-icons.md">Remote icons</a> · <a href="CHANGELOG.md">Changelog</a></p>
 
 ![Browsing a remote with tabs in dark mode](docs/browser.png)
 
@@ -12,7 +12,7 @@
 
 - **Modern design** in black and gold or warm light, with a one-click **light / dark** switch next to the app name
 - **All your clouds in one place**: Google Drive, OneDrive, Dropbox, pCloud, S3, SFTP, encrypted remotes and every other rclone storage type, using your existing rclone configuration. Logos for popular services are included; every other service gets a colour-coded tile, or [your own icon](docs/remote-icons.md).
-- **Tabs**: open several remotes, or the same remote several times (Ctrl+T)
+- **File Explorer–style tabs**: open several remotes, or the same remote several times (Ctrl+T)
 - **Icons and Details views**: extra large to small icons like File Explorer (Ctrl + mouse wheel to zoom), or a sortable list with sizes and dates
 - Upload, download, create folders, rename, move and delete; drag and drop files from File Explorer to upload
 - **Transfers you can pause and resume**, with live progress, speed and time left
@@ -48,6 +48,8 @@ Requires Windows 10 (1809 or newer) or Windows 11, 64-bit. The **[user guide](do
 | rclone configuration | `%APPDATA%\rclone\rclone.conf` by default; copy it to `rclone\rclone.conf` to take your remotes with you |
 | Settings | `RcloneBrowser.ini` |
 | Saved tasks | `tasks.bin` |
+| Documentation | `docs\` (README, changelog, license, PDF guide) |
+| Qt plugins | `qt\plugins` (located via `qt.conf`) |
 | Remote logos | `icons\remotes\<type>.png`: included logos plus your own (see [remote-icons.md](docs/remote-icons.md)) |
 
 Delete `RcloneBrowser.ini` to use non-portable mode (settings in the registry under `HKEY_CURRENT_USER\Software\rclone-browser`, tasks in `%LOCALAPPDATA%\rclone-browser`).
@@ -86,7 +88,7 @@ ctest --test-dir build
 C:\Qt\6.10.3\msvc2022_64\bin\windeployqt.exe --release build\build\RcloneBrowser.exe
 ```
 
-The user guide is generated with `python docs/guide/build_guide.py` (needs `pip install reportlab`).
+The user guide is generated with `python docs/guide/build_guide.py` (needs `pip install reportlab`). The website lives in `site/` and is published to GitHub Pages by `.github/workflows/pages.yml`.
 
 ## Credits
 

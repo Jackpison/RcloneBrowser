@@ -1,3 +1,4 @@
+#include <cstdio>
 #include "main_window.h"
 #include "theme.h"
 #include "utils.h"
@@ -21,6 +22,22 @@ int main(int argc, char *argv[]) {
   app.setApplicationName("rclone-browser");
   app.setOrganizationName("rclone-browser");
   app.setWindowIcon(QIcon(":/icons/icon.png"));
+
+  // Build check used by CI: verifies that the deployed folder layout works
+  // (platform plugin found via qt.conf, SVG/ICO image formats, TLS backend
+  // for the updater) and exits without opening a window.
+  if (app.arguments().contains(QStringLiteral("--selftest"))) {
+    const auto formats = QImageReader::supportedImageFormats();
+    const bool images = formats.contains("svg") && formats.contains("ico");
+    const bool tls = !QSslSocket::availableBackends().isEmpty() &&
+                     QSslSocket::supportsSsl();
+    const bool platform = !QGuiApplication::platformName().isEmpty();
+    std::fprintf(stdout, "platform=%s images=%d tls=%d plugins=%s\n",
+                 qPrintable(QGuiApplication::platformName()), images, tls,
+                 qPrintable(QCoreApplication::libraryPaths().join(';')));
+    std::fflush(stdout);
+    return (platform && images && tls) ? 0 : 1;
+  }
 
 // initialize SSL libraries
 // see: https://github.com/linuxdeploy/linuxdeploy-plugin-qt/issues/57
@@ -200,7 +217,17 @@ int main(int argc, char *argv[]) {
   // qDebug() << QString("main.cpp tmpDir:  " + tmpDir);
 
   // not most elegant as fixed name but in reality not big deal
-  QLockFile lockFile(tmpDir + "/.RcloneBrowser_4q6RgLs2RpbJA.lock");
+  // The single-instance lock lives in the temp folder (not next to the exe,
+  // where it cluttered the portable folder). The name includes a hash of the
+  // install location, so separate portable copies can still run side by side.
+  Q_UNUSED(tmpDir);
+  const QByteArray installId =
+      QCryptographicHash::hash(QCoreApplication::applicationDirPath().toUtf8(),
+                               QCryptographicHash::Sha256)
+          .toHex()
+          .left(16);
+  QLockFile lockFile(QDir::temp().filePath("RcloneBrowser_" +
+                                           QString::fromLatin1(installId) + ".lock"));
 
   if (!lockFile.tryLock(100)) {
     // if already running display warning and quit

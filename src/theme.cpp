@@ -178,6 +178,8 @@ QMap<QString, QString> buildTokens() {
   set("onAccent", QColor("#1A1405"));
   set("sel", d ? QColor(245, 183, 10, 34) : QColor(245, 183, 10, 46));
   set("selHover", d ? QColor(245, 183, 10, 46) : QColor(245, 183, 10, 60));
+  set("tabStrip", d ? QColor("#171717") : QColor("#E9E5DC"));
+  set("tabHover", d ? QColor("#1F1F1F") : QColor("#F1EEE7"));
   set("navSel", d ? QColor("#2A2312") : QColor("#FBEFC9"));
   set("success", d ? QColor("#4ADE80") : QColor("#15803D"));
   set("critical", d ? QColor("#F87171") : QColor("#B91C1C"));
@@ -210,7 +212,7 @@ QWidget#ContentArea {
 QTabWidget#tabs::pane { border: none; background: transparent; }
 /* pages are painted opaque: transparent pages could show stale content of
    the previous page when the tab strip appears or disappears */
-QTabWidget#tabs, QTabWidget#tabs > QStackedWidget,
+QTabWidget#tabs > QStackedWidget,
 QTabWidget#tabs > QStackedWidget > QWidget,
 QStackedWidget#Pages, QStackedWidget#Pages > QWidget { background: @layer; border: none; }
 QScrollArea { background: transparent; border: none; }
@@ -249,15 +251,24 @@ QWidget[card="true"] QHeaderView::section { background: @headerBg; }
 QWidget[card="true"] QHeaderView::section:first { border-top-left-radius: 11px; }
 QWidget[card="true"] QHeaderView::section:last { border-top-right-radius: 11px; }
 
-/* ---------- remote tabs: rounded chips ---------- */
-QTabWidget#tabs > QTabBar { background: transparent; }
+/* ---------- remote tabs: Windows 11 File Explorer style ----------
+   Tabs sit in a strip in the window colour; the selected tab has the
+   content colour and merges into the page below. */
+QTabWidget#tabs { background: @tabStrip; }
+QTabWidget#tabs > QTabBar { background: @tabStrip; }
 QTabWidget#tabs > QTabBar::tab {
-  background: @card; color: @text2; border: 1px solid @cardStroke; border-radius: 19px;
-  padding: 8px 6px 8px 14px; margin: 10px 0 10px 8px; min-width: 120px; max-width: 260px;
-  font-weight: 700;
+  background: transparent; color: @text2; border: none;
+  border-right: 1px solid @divider;
+  border-top-left-radius: 8px; border-top-right-radius: 8px;
+  padding: 9px 10px 9px 12px; margin: 8px 0 0 0; max-width: 260px;
+  font-weight: 600;
 }
-QTabWidget#tabs > QTabBar::tab:hover { background: @cardHover; color: @text; }
-QTabWidget#tabs > QTabBar::tab:selected { background: @navSel; color: @accentText; border: 1px solid @accentText; }
+QTabWidget#tabs > QTabBar::tab:first { margin-left: 8px; }
+QTabWidget#tabs > QTabBar::tab:next-selected { border-right-color: transparent; }
+QTabWidget#tabs > QTabBar::tab:hover:!selected { background: @tabHover; color: @text; }
+QTabWidget#tabs > QTabBar::tab:selected { background: @layer; color: @accentText; border-right-color: transparent; }
+QToolButton#NewTab { border: none; border-radius: 8px; padding: 0; background: transparent; }
+QToolButton#NewTab:hover { background: @tabHover; }
 QToolButton#TabClose { border: none; border-radius: 12px; padding: 0; margin-left: 4px; background: transparent; }
 QToolButton#TabClose:hover { background: @subtleHover; }
 QToolButton#TabClose:pressed { background: @subtlePressed; }

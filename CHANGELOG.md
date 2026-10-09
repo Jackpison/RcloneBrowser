@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.7.0] - 2026-10-09
+
+### New
+-   Website: https://jackpison.github.io/RcloneBrowser/ (source in `site/`, published automatically)
+-   Tabs redesigned like Windows 11 File Explorer: tab strip, selected tab merges into the page, separators, "+" right after the last tab
+
+### Changed
+-   Tidier portable folder: Qt plugins in `qt\plugins` (via `qt.conf`), documents in `docs\`, the single-instance lock file in the temp folder
+-   Unused Qt plugins (styles, generic, networkinformation) are no longer shipped
+-   Every build starts the packaged app in a self-test mode before publishing, so a broken folder layout cannot be released
+
 ## [3.6.2] - 2026-10-09
 
 ### Fixed

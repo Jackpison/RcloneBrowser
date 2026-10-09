@@ -62,8 +62,18 @@ jobs:
           New-Item -ItemType Directory -Force $dir | Out-Null
           Copy-Item build\build\RcloneBrowser.exe $dir
 
+          # Qt plugins go into qt\plugins (found via qt.conf) instead of seven
+          # folders next to the exe; plugin types the app does not use are
+          # skipped. Qt and VC++ DLLs must stay next to the exe: Windows loads
+          # them before any app code runs.
           windeployqt --release --no-translations --no-system-d3d-compiler `
-                      --no-opengl-sw --no-compiler-runtime "$dir\RcloneBrowser.exe"
+                      --no-opengl-sw --no-compiler-runtime `
+                      --skip-plugin-types styles,generic,networkinformation `
+                      --plugindir "$dir\qt\plugins" "$dir\RcloneBrowser.exe"
+          @(
+            "[Paths]"
+            "Plugins = qt/plugins"
+          ) | Set-Content -Encoding ascii "$dir\qt.conf"
 
           # App-local VC++ runtime: the folder runs on a clean Windows install.
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
@@ -95,7 +105,16 @@ jobs:
           New-Item -ItemType Directory -Force "$dir\icons\remotes" | Out-Null
           Copy-Item icons\remotes\*.png "$dir\icons\remotes\"
           Copy-Item docs\remote-icons.md "$dir\icons\remotes\README.md"
-          Copy-Item README.md, LICENSE, CHANGELOG.md, docs\Rclone-Browser-Guide.pdf $dir
+          New-Item -ItemType Directory -Force "$dir\docs" | Out-Null
+          Copy-Item README.md, LICENSE, CHANGELOG.md, docs\Rclone-Browser-Guide.pdf "$dir\docs\"
+
+          # Smoke test of the packaged folder: the app must start with this
+          # layout (platform plugin via qt.conf, image formats, TLS).
+          $p = Start-Process -FilePath "$dir\RcloneBrowser.exe" -ArgumentList "--selftest" `
+                 -PassThru -NoNewWindow -RedirectStandardOutput selftest.txt
+          if (-not $p.WaitForExit(90000)) { $p.Kill(); throw "self-test timed out" }
+          Get-Content selftest.txt
+          if ($p.ExitCode -ne 0) { throw "self-test failed with exit code $($p.ExitCode)" }
           Compress-Archive "$dir" "dist\RcloneBrowser-$ver-windows-x64.zip"
           (Get-FileHash "dist\RcloneBrowser-$ver-windows-x64.zip" -Algorithm SHA256).Hash.ToLower() + "  RcloneBrowser-$ver-windows-x64.zip" | Set-Content -Encoding ascii "dist\SHA256SUMS.txt"
           # Release notes: this version's section of CHANGELOG.md
