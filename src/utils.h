@@ -4,6 +4,13 @@
 
 std::unique_ptr<QSettings> GetSettings();
 
+// Windows portable mode: releases up to 4.x were called "Rclone Browser" and
+// kept their settings in RcloneBrowser.ini next to the exe. Copy such a file
+// to the new name (RcloneExplorer.ini) so portable mode and all settings carry
+// over. A fresh, never-used RcloneExplorer.ini (the one shipped in the zip) is
+// replaced; one that has been used is never touched.
+void MigrateLegacyPortableIni();
+
 void ReadSettings(QSettings *settings, QObject *widget);
 void WriteSettings(QSettings *settings, QObject *widget);
 

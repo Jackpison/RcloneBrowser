@@ -20,7 +20,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) : QDialog(parent) {
 
     if (QFileInfo(rclone) == QFileInfo(qApp->applicationFilePath())) {
       QMessageBox::critical(this, "Error",
-                            "You selected RcloneBrowser executable!\nPlease "
+                            "You selected the Rclone Explorer executable!\nPlease "
                             "select rclone executable instead.");
       return;
     }

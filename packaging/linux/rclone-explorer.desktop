@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Rclone Browser
+Name=Rclone Explorer
 GenericName=Cloud file manager
 Comment=rclone GUI: browse, transfer and sync files on all your cloud storage
-Exec=rclone-browser
-Icon=rclone-browser
+Exec=rclone-explorer
+Icon=rclone-explorer
 Terminal=false
 Categories=Network;FileTransfer;Utility;Qt;
 Keywords=rclone;cloud;sync;backup;google drive;onedrive;dropbox;s3;
-StartupWMClass=rclone-browser
+StartupWMClass=rclone-explorer

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jackpison.github.io/RcloneBrowser/sitemap.xml
+Sitemap: https://jackpison.github.io/RcloneExplorer/sitemap.xml

@@ -1,6 +1,6 @@
 # Remote icons
 
-Rclone Browser shows every remote with a colour-coded tile for its storage type. You can replace any tile with your own picture.
+Rclone Explorer shows every remote with a colour-coded tile for its storage type. You can replace any tile with your own picture.
 
 ## Included logos
 
@@ -9,11 +9,11 @@ The download already contains logos for: `azureblob`, `b2`, `box`, `drime`, `dri
 ## How to add your own icon
 
 1. Open (or create) the logo folder:
-   - **Windows:** `icons\remotes` next to `RcloneBrowser.exe`
+   - **Windows:** `icons\remotes` next to `RcloneExplorer.exe`
    - **Linux:** `~/.local/share/rclone-browser/rclone-browser/icons/remotes/`, or `icons/remotes/` next to the AppImage in portable mode
 2. Save the picture as `<type>.png`, `<type>.svg` or `<type>.ico`, using the **file name from the table below** (all lower case). Example: `icons\remotes\drive.png` for Google Drive.
 3. Use a square image. Recommended: SVG, or PNG at 256 × 256 px with a transparent background.
-4. Restart Rclone Browser, or right-click a remote in the sidebar and choose **Reload remotes**.
+4. Restart Rclone Explorer, or right-click a remote in the sidebar and choose **Reload remotes**.
 
 If one file exists in several formats, PNG is used first, then SVG, then ICO. The icon applies to every remote of that type. To find a remote's type, look under its name on the Home page, or run `rclone listremotes --long`.
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.0.0] - 2026-10-10
+
+### Changed
+-   **New name: Rclone Explorer** (formerly Rclone Browser). The app now works like a file explorer (tabs, breadcrumbs, icon and detail views), and the old name was shared by the original project and several forks. Window titles, About box, downloads (`RcloneExplorer-<version>-windows-x64.zip`, `RcloneExplorer-<version>-linux-x86_64.AppImage`), the program (`RcloneExplorer.exe`, `rclone-explorer`), documentation and website all use the new name
+-   The repository is now `Jackpison/RcloneExplorer` and the website `https://jackpison.github.io/RcloneExplorer/` (old repository links redirect; the old website address does not)
+-   The PDF guide is now `Rclone-Explorer-Guide.pdf`
+
+### Upgrading
+-   **Settings carry over.** On Windows, a portable `RcloneBrowser.ini` next to the new exe is copied to `RcloneExplorer.ini` automatically (an ini that is already in use is never overwritten). Registry settings on Windows and `~/.config/rclone-browser` on Linux keep their location on purpose
+
+### Fixed
+-   `site/sitemap.xml` was empty since 4.0.0; it is regenerated for the new address
+-   A few dialogs (e.g. the config password prompt) showed the internal name `rclone-browser` as their title
+
 ## [4.1.0] - 2026-10-09
 
 ### Fixed
@@ -47,7 +61,7 @@
 ## [3.7.0] - 2026-10-09
 
 ### New
--   Website: https://jackpison.github.io/RcloneBrowser/ (source in `site/`, published automatically)
+-   Website: https://jackpison.github.io/RcloneExplorer/ (source in `site/`, published automatically)
 -   Tabs redesigned like Windows 11 File Explorer: tab strip, selected tab merges into the page, separators, "+" right after the last tab
 
 ### Changed

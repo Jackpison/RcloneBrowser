@@ -11,7 +11,7 @@ QString exeName() {
 #endif
 }
 
-const char *kUserAgent = "RcloneBrowser/" RCLONE_BROWSER_VERSION;
+const char *kUserAgent = "RcloneExplorer/" RCLONE_BROWSER_VERSION;
 
 } // namespace
 
@@ -23,7 +23,7 @@ RcloneUpdater::RcloneUpdater(QObject *parent)
       {QString(), "https://github.com/rclone/rclone/releases/download/%1"},
   };
 
-  // Honour the proxy configured in Rclone Browser's preferences; otherwise
+  // Honour the proxy configured in Rclone Explorer's preferences; otherwise
   // use the Windows/system proxy settings.
   auto settings = GetSettings();
   QUrl proxyUrl(settings->value("Settings/https_proxy").toString());

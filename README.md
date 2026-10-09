@@ -1,16 +1,18 @@
-<p align="center"><img src="docs/logo.png" width="96" alt="Rclone Browser logo"></p>
+<p align="center"><img src="docs/logo.png" width="96" alt="Rclone Explorer logo"></p>
 
-<h1 align="center">Rclone Browser – rclone GUI for Windows and Linux</h1>
+<h1 align="center">Rclone Explorer – rclone GUI for Windows and Linux</h1>
+
+<p align="center"><i>Formerly <b>Rclone Browser</b>. Same project, new name: a revival of the original by mmozeiko, DinCahill and kapitainsky.</i></p>
 
 <p align="center">A modern rclone GUI: browse, transfer and sync files on all your cloud storage, powered by <a href="https://rclone.org/">rclone</a>.<br>Portable, nothing to install: unzip or run it from anywhere, even a USB stick.</p>
 
-<p align="center"><b><a href="../../releases/latest">Download the latest release</a></b> · <a href="https://jackpison.github.io/RcloneBrowser/">Website</a> · <a href="docs/Rclone-Browser-Guide.pdf">User guide (PDF)</a> · <a href="docs/remote-icons.md">Remote icons</a> · <a href="CHANGELOG.md">Changelog</a></p>
+<p align="center"><b><a href="../../releases/latest">Download the latest release</a></b> · <a href="https://jackpison.github.io/RcloneExplorer/">Website</a> · <a href="docs/Rclone-Explorer-Guide.pdf">User guide (PDF)</a> · <a href="docs/remote-icons.md">Remote icons</a> · <a href="CHANGELOG.md">Changelog</a></p>
 
 ![Browsing a remote with tabs in dark mode](docs/browser.png)
 
 ## Features
 
-Rclone Browser gives rclone a full graphical interface, so you can manage cloud files without the command line:
+Rclone Explorer gives rclone a full graphical interface, so you can manage cloud files without the command line:
 
 - **Modern design** in black and gold or warm light, with a one-click **light / dark** switch next to the app name
 - **All your clouds in one place**: Google Drive, OneDrive, Dropbox, pCloud, S3, SFTP, encrypted remotes and every other rclone storage type, using your existing rclone configuration. Logos for 34 popular services are included; you can [add your own](docs/remote-icons.md).
@@ -34,36 +36,42 @@ Rclone Browser gives rclone a full graphical interface, so you can manage cloud 
 
 ### Windows 10 / 11
 
-1. Download `RcloneBrowser-<version>-windows-x64.zip` from the [latest release](../../releases/latest).
-2. Extract it to any folder and run `RcloneBrowser.exe`.
+1. Download `RcloneExplorer-<version>-windows-x64.zip` from the [latest release](../../releases/latest).
+2. Extract it to any folder and run `RcloneExplorer.exe`.
 3. Windows may show "Windows protected your PC" because the app is not code-signed: click **More info**, then **Run anyway**.
 
 Mounting remotes as drive letters needs [WinFsp](https://winfsp.dev/).
 
 ### Linux (x86_64)
 
-1. Download `RcloneBrowser-<version>-linux-x86_64.AppImage` from the [latest release](../../releases/latest).
-2. Make it executable: `chmod +x RcloneBrowser-*.AppImage` (or *Properties → Allow executing as program*).
+1. Download `RcloneExplorer-<version>-linux-x86_64.AppImage` from the [latest release](../../releases/latest).
+2. Make it executable: `chmod +x RcloneExplorer-*.AppImage` (or *Properties → Allow executing as program*).
 3. Run it.
 
 Works on most distributions (Ubuntu, Fedora, Debian, Mint, Arch, openSUSE…). If it does not start, install FUSE 2 (`sudo apt install libfuse2t64` on Ubuntu 24.04+, `libfuse2` on older releases) or run it with `--appimage-extract-and-run`. Mounting needs FUSE 3 (`fuse3`).
 
-Your existing rclone remotes appear automatically on both systems. If you have none yet, click **New remote** on the Home page (or **+** next to *Remotes* in the sidebar) to set one up with rclone's assistant. The **[user guide](docs/Rclone-Browser-Guide.pdf)** explains every feature in detail.
+Your existing rclone remotes appear automatically on both systems. If you have none yet, click **New remote** on the Home page (or **+** next to *Remotes* in the sidebar) to set one up with rclone's assistant. The **[user guide](docs/Rclone-Explorer-Guide.pdf)** explains every feature in detail.
+
+## Upgrading from Rclone Browser (4.x and older)
+
+- **Windows, portable:** extract the new zip to a new folder, then copy your old `RcloneBrowser.ini` (and `tasks.bin`) next to `RcloneExplorer.exe`. The settings are picked up automatically on the first start; the old file stays untouched as a backup.
+- **Windows, not portable (no ini file):** nothing to do, settings are kept.
+- **Linux:** nothing to do. Settings stay in `~/.config/rclone-browser/` on purpose.
 
 ## Where things are stored
 
-**Windows (portable):** `RcloneBrowser.ini` next to the exe switches portable mode on, and everything stays in the app folder:
+**Windows (portable):** `RcloneExplorer.ini` next to the exe switches portable mode on, and everything stays in the app folder:
 
 | What | Where |
 |---|---|
 | rclone | `rclone\rclone.exe` (updated from inside the app) |
 | rclone configuration | `%APPDATA%\rclone\rclone.conf` by default; copy it to `rclone\rclone.conf` to take your remotes with you |
-| Settings / saved tasks | `RcloneBrowser.ini` / `tasks.bin` |
+| Settings / saved tasks | `RcloneExplorer.ini` / `tasks.bin` |
 | Remote logos | `icons\remotes\<type>.png` (see [remote-icons.md](docs/remote-icons.md)) |
 | Documentation | `docs\` |
 | Qt plugins | `qt\plugins` (located via `qt.conf`) |
 
-**Linux:** settings in `~/.config/rclone-browser/`, the rclone updated by the app in `~/.local/share/rclone-browser/rclone-browser/`, your rclone configuration in its usual place (`~/.config/rclone/rclone.conf`). To make the AppImage portable, create a folder named like the AppImage plus `.config` next to it (for example `RcloneBrowser-4.0.0-linux-x86_64.AppImage.config`); settings and an updated rclone then stay beside the AppImage. Your own remote logos go in `~/.local/share/rclone-browser/rclone-browser/icons/remotes/` (or `icons/remotes/` next to the AppImage in portable mode).
+**Linux:** settings in `~/.config/rclone-browser/`, the rclone updated by the app in `~/.local/share/rclone-browser/rclone-browser/`, your rclone configuration in its usual place (`~/.config/rclone/rclone.conf`). To make the AppImage portable, create a folder named like the AppImage plus `.config` next to it (for example `RcloneExplorer-<version>-linux-x86_64.AppImage.config`); settings and an updated rclone then stay beside the AppImage. Your own remote logos go in `~/.local/share/rclone-browser/rclone-browser/icons/remotes/` (or `icons/remotes/` next to the AppImage in portable mode).
 
 ## Keyboard shortcuts
 
@@ -107,7 +115,7 @@ ctest --test-dir build
 ```
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-./build/build/rclone-browser
+./build/build/rclone-explorer
 ```
 
 The user guide is generated with `python docs/guide/build_guide.py` (needs `pip install reportlab`). The website lives in `site/` and is published to GitHub Pages by `.github/workflows/pages.yml`.

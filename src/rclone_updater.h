@@ -6,7 +6,7 @@
 //
 // Sources: downloads.rclone.org (official) with GitHub Releases as fallback.
 // Every download is checked against rclone's published SHA256SUMS before it
-// is used. The installed copy lives next to Rclone Browser in portable mode
+// is used. The installed copy lives next to Rclone Explorer in portable mode
 // (<app dir>/rclone/rclone.exe, stored as a relative path so the folder can
 // be moved) or in the per-user app data folder otherwise.
 //
@@ -20,7 +20,7 @@ class RcloneUpdater : public QObject {
 public:
   explicit RcloneUpdater(QObject *parent = nullptr);
 
-  // Where Rclone Browser keeps its own rclone copy (absolute path).
+  // Where Rclone Explorer keeps its own rclone copy (absolute path).
   static QString managedPath();
   // Value to store in Settings/rclone for the managed copy (relative in
   // portable mode).

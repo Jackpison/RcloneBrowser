@@ -162,7 +162,7 @@ void setPageMargins(QLayout *l) {
 } // namespace
 
 void MainWindow::buildShell() {
-  setWindowTitle(tr("Rclone Browser"));
+  setWindowTitle(tr("Rclone Explorer"));
   setMinimumSize(960, 600);
   if (!GetSettings()->contains("MainWindow/geometry")) {
     // roomy first-start size, but never larger than the screen
@@ -192,7 +192,7 @@ void MainWindow::buildShell() {
   auto *logo = new QLabel;
   logo->setPixmap(qApp->windowIcon().pixmap(32, 32));
   bl->addWidget(logo);
-  auto *appName = new QLabel(tr("Rclone Browser"));
+  auto *appName = new QLabel(tr("Rclone Explorer"));
   appName->setObjectName("AppTitle");
   bl->addWidget(appName, 1);
   mThemeButton = new QToolButton;
@@ -335,7 +335,7 @@ void MainWindow::buildShell() {
                        ui.preferences->trigger();
                      } else if (id == "github") {
                        QDesktopServices::openUrl(
-                           QUrl("https://github.com/Jackpison/RcloneBrowser"));
+                           QUrl("https://github.com/Jackpison/RcloneExplorer"));
                      } else {
                        helpMenu->exec(footer->viewport()->mapToGlobal(r.topRight()));
                      }

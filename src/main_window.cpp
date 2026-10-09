@@ -20,7 +20,7 @@ MainWindow::MainWindow() {
   if (IsPortableMode()) {
     // (portable mode is indicated in About and Settings, not the title)
   } else {
-    this->setWindowTitle("Rclone Browser");
+    this->setWindowTitle("Rclone Explorer");
   }
 
 #if defined(Q_OS_WIN) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -158,17 +158,17 @@ MainWindow::MainWindow() {
 
   QObject::connect(ui.about, &QAction::triggered, this, [=, this]() {
     QMessageBox box(this);
-    box.setWindowTitle(tr("About Rclone Browser"));
+    box.setWindowTitle(tr("About Rclone Explorer"));
     box.setIconPixmap(qApp->windowIcon().pixmap(64, 64));
     box.setTextFormat(Qt::RichText);
     box.setText(QString(
-        R"(<h3>Rclone Browser )" RCLONE_BROWSER_VERSION "</h3>"
+        R"(<h3>Rclone Explorer )" RCLONE_BROWSER_VERSION "</h3>"
         R"(<p>Browse, transfer and sync your cloud storage with rclone.</p>)"
         R"(<p>Copyright &copy; 2026 <a href="https://github.com/Jackpison">Jackpison</a></p>)"
-        R"(<p>Development and maintenance<br /><a href="https://github.com/Jackpison/RcloneBrowser">github.com/Jackpison/RcloneBrowser</a></p>)"
-        R"(<p>Based on the original version by<br /><a href="https://github.com/mmozeiko/RcloneBrowser">Martins Mozeiko</a></p>)"
+        R"(<p>Development and maintenance<br /><a href="https://github.com/Jackpison/RcloneExplorer">github.com/Jackpison/RcloneExplorer</a></p>)"
+        R"(<p>Based on Rclone Browser, originally by<br /><a href="https://github.com/mmozeiko/RcloneBrowser">Martins Mozeiko</a></p>)"
         R"(<p>Released under the MIT License.</p>)"
-        R"(<p><b>Feedback and bug reports are welcome!</b><br /><a href="https://github.com/Jackpison/RcloneBrowser/issues">Open an issue on GitHub</a></p>)"));
+        R"(<p><b>Feedback and bug reports are welcome!</b><br /><a href="https://github.com/Jackpison/RcloneExplorer/issues">Open an issue on GitHub</a></p>)"));
     box.exec();
   });
   QObject::connect(ui.aboutQt, &QAction::triggered, qApp,
@@ -622,7 +622,7 @@ bool MainWindow::getConfigPassword(QProcess *p) {
   if (output.indexOf("RCLONE_CONFIG_PASS") > 0) {
     bool ok;
     QString password = QInputDialog::getText(
-        this, qApp->applicationDisplayName(),
+        this, tr("Rclone Explorer"),
         "Enter password for .rclone.conf configuration file:",
         QLineEdit::Password, QString(), &ok);
     if (ok) {
@@ -630,7 +630,7 @@ bool MainWindow::getConfigPassword(QProcess *p) {
       return true;
     }
   } else if (output.indexOf("unknown command \"listremotes\"") > 0) {
-    QMessageBox::critical(this, qApp->applicationDisplayName(),
+    QMessageBox::critical(this, tr("Rclone Explorer"),
                           "It seems rclone version you are using is too "
                           "old.\nPlease upgrade to the latest version");
     return false;
@@ -649,7 +649,7 @@ bool MainWindow::canClose() {
   showNormal();
 
   int button =
-      QMessageBox::question(this, "Rclone Browser",
+      QMessageBox::question(this, "Rclone Explorer",
                             QString("There are %1 job(s) running.\n"
                                     "Do you want to stop them and quit?")
                                 .arg(mJobCount),
@@ -1061,10 +1061,10 @@ void MainWindow::checkRcloneUpdate(bool interactive) {
           const bool bundled = !RcloneUpdater::bundledPath().isEmpty() &&
                                GetRclone() == RcloneUpdater::bundledPath();
           info += bundled
-                      ? tr("<br><br>Rclone Browser will use this copy instead of the "
+                      ? tr("<br><br>Rclone Explorer will use this copy instead of the "
                            "rclone included in the app. Your remotes and settings "
                            "are not affected.")
-                      : tr("<br><br>Rclone Browser will switch from your current "
+                      : tr("<br><br>Rclone Explorer will switch from your current "
                            "rclone (%1) to this copy. Your remotes and settings are "
                            "not affected.")
                             .arg(QDir::toNativeSeparators(GetRclone()));
@@ -1100,11 +1100,11 @@ void MainWindow::offerRcloneDownload() {
   QMessageBox box(this);
   box.setIcon(QMessageBox::Question);
   box.setWindowTitle(tr("rclone not found"));
-  box.setText(tr("<b>Rclone Browser needs rclone to work.</b>"));
+  box.setText(tr("<b>Rclone Explorer needs rclone to work.</b>"));
   box.setInformativeText(
       IsPortableMode()
           ? tr("It can download the latest official rclone into the "
-               "<i>rclone</i> folder next to Rclone Browser, so the whole "
+               "<i>rclone</i> folder next to Rclone Explorer, so the whole "
                "folder stays portable.")
           : tr("It can download the latest official rclone for you, or you "
                "can point it at an rclone.exe you already have."));

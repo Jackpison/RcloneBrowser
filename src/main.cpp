@@ -18,9 +18,14 @@ int main(int argc, char *argv[]) {
 
   QApplication app(argc, argv);
 
-  //  app.setApplicationDisplayName("Rclone Browser");
+  //  app.setApplicationDisplayName("Rclone Explorer");
   app.setApplicationName("rclone-browser");
   app.setOrganizationName("rclone-browser");
+  // Settings keep their old internal name ("rclone-browser") on purpose, so
+  // everyone's settings carry over from Rclone Browser. Only the visible name
+  // changed.
+  app.setDesktopFileName(QStringLiteral("rclone-explorer"));
+  MigrateLegacyPortableIni();
   app.setWindowIcon(QIcon(":/icons/icon.png"));
 
   // Build check used by CI: verifies that the deployed folder layout works
@@ -85,7 +90,7 @@ int main(int argc, char *argv[]) {
     settings->setValue("Settings/iconSize", "medium");
   };
 
-  // enforce one instance of Rclone Browser per user
+  // enforce one instance of Rclone Explorer per user
   QString tmpDir;
   QString applicationNameBase;
   QFileInfo applicationPath;
@@ -213,14 +218,14 @@ int main(int argc, char *argv[]) {
                                QCryptographicHash::Sha256)
           .toHex()
           .left(16);
-  QLockFile lockFile(QDir::temp().filePath("RcloneBrowser_" +
+  QLockFile lockFile(QDir::temp().filePath("RcloneExplorer_" +
                                            QString::fromLatin1(installId) + ".lock"));
 
   if (!lockFile.tryLock(100)) {
     // if already running display warning and quit
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Rclone Browser is already running."
+    msgBox.setText("Rclone Explorer is already running."
                    "\r\n\nOnly one instance is allowed.");
     msgBox.exec();
     return static_cast<int>(

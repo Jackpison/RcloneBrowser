@@ -57,9 +57,9 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $ver = (Get-Content VERSION -First 1).Trim()
-          $dir = "dist\RcloneBrowser"
+          $dir = "dist\RcloneExplorer"
           New-Item -ItemType Directory -Force $dir | Out-Null
-          Copy-Item build\build\RcloneBrowser.exe $dir
+          Copy-Item build\build\RcloneExplorer.exe $dir
 
           # Qt plugins go into qt\plugins (found via qt.conf) instead of seven
           # folders next to the exe; plugin types the app does not use are
@@ -68,7 +68,7 @@ jobs:
           windeployqt --release --no-translations --no-system-d3d-compiler `
                       --no-opengl-sw --no-compiler-runtime `
                       --skip-plugin-types styles,generic,networkinformation `
-                      --plugindir "$dir\qt\plugins" "$dir\RcloneBrowser.exe"
+                      --plugindir "$dir\qt\plugins" "$dir\RcloneExplorer.exe"
           @(
             "[Paths]"
             "Plugins = qt/plugins"
@@ -92,36 +92,36 @@ jobs:
           New-Item -ItemType Directory -Force "$dir\rclone" | Out-Null
           Copy-Item (Get-ChildItem rclone-x -Recurse -Filter rclone.exe).FullName "$dir\rclone\"
 
-          # Presence of RcloneBrowser.ini switches on portable mode. Paths are
+          # Presence of RcloneExplorer.ini switches on portable mode. Paths are
           # relative to the exe, so the folder can live anywhere (USB stick...).
           @(
             "[Settings]"
             "rclone=rclone/rclone.exe"
             "checkRcloneUpdates=true"
-          ) | Set-Content -Encoding ascii "$dir\RcloneBrowser.ini"
+          ) | Set-Content -Encoding ascii "$dir\RcloneExplorer.ini"
 
           # remote logos shipped by default (users can add or replace files)
           New-Item -ItemType Directory -Force "$dir\icons\remotes" | Out-Null
           Copy-Item icons\remotes\*.png "$dir\icons\remotes\"
           Copy-Item docs\remote-icons.md "$dir\icons\remotes\README.md"
           New-Item -ItemType Directory -Force "$dir\docs" | Out-Null
-          Copy-Item README.md, LICENSE, CHANGELOG.md, docs\Rclone-Browser-Guide.pdf "$dir\docs\"
+          Copy-Item README.md, LICENSE, CHANGELOG.md, docs\Rclone-Explorer-Guide.pdf "$dir\docs\"
 
           # Smoke test of the packaged folder: the app must start with this
           # layout (platform plugin via qt.conf, image formats, TLS).
-          $p = Start-Process -FilePath "$dir\RcloneBrowser.exe" -ArgumentList "--selftest" `
+          $p = Start-Process -FilePath "$dir\RcloneExplorer.exe" -ArgumentList "--selftest" `
                  -PassThru -NoNewWindow -RedirectStandardOutput selftest.txt
           if (-not $p.WaitForExit(90000)) { $p.Kill(); throw "self-test timed out" }
           $out = (Get-Content selftest.txt -Raw)
           Write-Host $out
           if ($p.ExitCode -ne 0) { throw "self-test failed ($($p.ExitCode)): $($out -replace '\s+',' ')" }
-          Compress-Archive "$dir" "dist\RcloneBrowser-$ver-windows-x64.zip"
+          Compress-Archive "$dir" "dist\RcloneExplorer-$ver-windows-x64.zip"
           "VERSION=$ver" | Out-File -Append $env:GITHUB_ENV
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: RcloneBrowser-${{ env.VERSION }}-windows-x64
-          path: dist/RcloneBrowser
+          name: RcloneExplorer-${{ env.VERSION }}-windows-x64
+          path: dist/RcloneExplorer
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -186,10 +186,10 @@ jobs:
           # app files
           mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/metainfo \
                    AppDir/usr/share/icons/hicolor/256x256/apps AppDir/usr/share/rclone-browser
-          cp build/build/rclone-browser AppDir/usr/bin/
-          cp packaging/linux/rclone-browser.desktop AppDir/usr/share/applications/
-          cp packaging/linux/rclone-browser.png AppDir/usr/share/icons/hicolor/256x256/apps/
-          cp packaging/linux/io.github.jackpison.RcloneBrowser.metainfo.xml AppDir/usr/share/metainfo/
+          cp build/build/rclone-explorer AppDir/usr/bin/
+          cp packaging/linux/rclone-explorer.desktop AppDir/usr/share/applications/
+          cp packaging/linux/rclone-explorer.png AppDir/usr/share/icons/hicolor/256x256/apps/
+          cp packaging/linux/io.github.jackpison.RcloneExplorer.metainfo.xml AppDir/usr/share/metainfo/
           mkdir -p AppDir/usr/share/rclone-browser/icons/remotes
           cp icons/remotes/*.png AppDir/usr/share/rclone-browser/icons/remotes/
 
@@ -205,11 +205,11 @@ jobs:
           QMAKE="$QT_ROOT_DIR/bin/qmake" LINUXDEPLOY_OUTPUT_VERSION="$ver" \
             ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
           mkdir -p dist
-          mv Rclone_Browser-*-x86_64.AppImage "dist/RcloneBrowser-$ver-linux-x86_64.AppImage"
+          mv Rclone_*-x86_64.AppImage "dist/RcloneExplorer-$ver-linux-x86_64.AppImage"
           chmod +x dist/*.AppImage
 
           # smoke test of the finished AppImage on an X11 display
-          if ! out=$(xvfb-run -a "dist/RcloneBrowser-$ver-linux-x86_64.AppImage" --selftest 2>&1); then
+          if ! out=$(xvfb-run -a "dist/RcloneExplorer-$ver-linux-x86_64.AppImage" --selftest 2>&1); then
             echo "::error::self-test failed: $(echo "$out" | tr '\n' ' ')"
             exit 1
           fi
@@ -254,8 +254,8 @@ jobs:
           notes = m.group(1).strip() if m else "See CHANGELOG.md for details."
           notes += (
               "\n\n---\n**Downloads**\n\n"
-              f"- **Windows 10/11:** `RcloneBrowser-{ver}-windows-x64.zip`, extract anywhere and run `RcloneBrowser.exe`.\n"
-              f"- **Linux (x86_64):** `RcloneBrowser-{ver}-linux-x86_64.AppImage`, make it executable (`chmod +x`) and run it.\n\n"
+              f"- **Windows 10/11:** `RcloneExplorer-{ver}-windows-x64.zip`, extract anywhere and run `RcloneExplorer.exe`.\n"
+              f"- **Linux (x86_64):** `RcloneExplorer-{ver}-linux-x86_64.AppImage`, make it executable (`chmod +x`) and run it.\n\n"
               "SHA-256 checksums are in `SHA256SUMS.txt`. Feedback and bug reports are welcome!"
           )
           open("dist/release-notes.md", "w", encoding="utf-8").write(notes)
@@ -263,7 +263,7 @@ jobs:
 
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          name: Rclone Browser ${{ env.VERSION }}
+          name: Rclone Explorer ${{ env.VERSION }}
           body_path: dist/release-notes.md
           files: |
             dist/*.zip

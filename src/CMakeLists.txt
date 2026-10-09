@@ -17,6 +17,7 @@ set(SOURCES
   icon_cache.cpp icon_cache.h
   item_model.cpp item_model.h
   rclone_output.cpp rclone_output.h
+  legacy_ini.cpp legacy_ini.h
   rclone_updater.cpp rclone_updater.h
   theme.cpp theme.h
   utils.cpp utils.h
@@ -27,10 +28,10 @@ set(SOURCES
 )
 
 if(WIN32)
-  set(TARGET_NAME RcloneBrowser)
+  set(TARGET_NAME RcloneExplorer)
   list(APPEND SOURCES resources.rc)
 else()
-  set(TARGET_NAME rclone-browser)
+  set(TARGET_NAME rclone-explorer)
 endif()
 
 add_executable(${TARGET_NAME} WIN32 ${SOURCES})
@@ -103,5 +104,11 @@ if(RB_BUILD_TESTS)
     target_link_libraries(test_rclone_output PRIVATE Qt::Core Qt::Test)
     set_target_properties(test_rclone_output PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
     add_test(NAME rclone_output COMMAND test_rclone_output)
+
+    add_executable(test_legacy_ini ../tests/test_legacy_ini.cpp legacy_ini.cpp legacy_ini.h)
+    target_include_directories(test_legacy_ini PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(test_legacy_ini PRIVATE Qt::Core Qt::Test)
+    set_target_properties(test_legacy_ini PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+    add_test(NAME legacy_ini COMMAND test_legacy_ini)
   endif()
 endif()

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Rclone Browser</string>
+   <string>Rclone Explorer</string>
   </property>
   <widget class="QWidget" name="widgetMain">
    <layout class="QVBoxLayout" name="verticalLayout_3">

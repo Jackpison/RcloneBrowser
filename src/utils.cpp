@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "legacy_ini.h"
 
 static QString gRclone;
 static QString gRcloneConf;
@@ -297,4 +298,10 @@ QStringList GetShowHidden() {
                      << ".*";
   }
   return showHiddenOption;
+}
+
+void MigrateLegacyPortableIni() {
+#ifdef Q_OS_WIN
+  MigrateLegacyIni(qApp->applicationFilePath());
+#endif
 }
