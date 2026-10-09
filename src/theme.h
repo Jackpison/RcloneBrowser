@@ -11,6 +11,20 @@
 // are tinted to match and popups get native Windows 11 rounded corners.
 namespace Theme {
 
+// Emits changed() after every theme switch, so widgets that cache a
+// theme-coloured pixmap can redraw it.
+class Notifier : public QObject {
+  Q_OBJECT
+signals:
+  void changed();
+};
+Notifier *notifier();
+
+// Checks that every kind of widget gets the right text size, also after a
+// simulated Windows font reset and after theme switches. Used by --selftest in
+// CI on both platforms. Returns false and fills `report` on any mismatch.
+bool selfTestFonts(QString *report);
+
 enum Mode { System = 0, Light = 1, Dark = 2 };
 
 Mode load();

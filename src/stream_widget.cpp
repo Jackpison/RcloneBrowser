@@ -14,7 +14,6 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
 
   ui.details->setVisible(false);
 
-  ui.output->setFont(Theme::monoFont());
   ui.output->setVisible(false);
 
   QObject::connect(

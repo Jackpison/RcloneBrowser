@@ -972,8 +972,6 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   QTimer::singleShot(0, this, [this]() { updateCommandBar(); });
 
   ui.tree->setUniformRowHeights(true); // much faster with large folders
-  ui.tree->setFont(Theme::uiFont(1.06));
-  ui.tree->header()->setFont(Theme::uiFont());
 
   // Details columns: right-click the header to choose (as in File Explorer)
   {
@@ -1010,7 +1008,6 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
                        menu.exec(hdr->mapToGlobal(pos));
                      });
   }
-  mGrid->setFont(Theme::uiFont());
   ui.tree->setAnimated(true);
   ui.tree->setIconSize(QSize(22, 22));
   ui.tree->setFrameShape(QFrame::NoFrame);
@@ -1073,6 +1070,9 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   });
 
   updateBreadcrumbs(model, remote);
+  // the breadcrumb arrows are pixmaps in the theme's colour: redraw on a switch
+  QObject::connect(Theme::notifier(), &Theme::Notifier::changed, this,
+                   [this, model, remote]() { updateBreadcrumbs(model, remote); });
 
   // Icons view is the default; the choice is remembered
   const bool icons =

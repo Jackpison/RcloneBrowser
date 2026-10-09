@@ -2,6 +2,7 @@
 #include "utils.h"
 
 #include <QSvgRenderer>
+#include <functional>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -16,6 +17,27 @@ bool gDark = false;
 bool gWatching = false;
 QColor gAccentBtn;  // filled accent controls
 QColor gAccentText; // accent used for text, indicators, focus
+
+// One definition of the app's text, used for the application font, the
+// style sheet, and anything painted by hand. Trebuchet MS ships with Windows
+// but its licence does not allow bundling it, so on Linux it is used when
+// installed and otherwise a similar humanist sans is picked.
+const QStringList kFamilies = {"Trebuchet MS", "Ubuntu", "Fira Sans", "Noto Sans",
+                               "DejaVu Sans", "Segoe UI", "Sans Serif"};
+const QStringList kMonoFamilies = {"Cascadia Mono", "Cascadia Code", "Consolas",
+                                   "DejaVu Sans Mono", "Liberation Mono", "Monospace"};
+constexpr qreal kBasePt = 12.0;
+constexpr qreal kListPt = 12.5;  // file names, sizes and dates
+constexpr qreal kMonoPt = 10.5;  // log output
+
+QString quoted(const QStringList &families) {
+  QStringList q;
+  for (const QString &f : families) {
+    q << '"' + f + '"';
+  }
+  return q.join(", ");
+}
+
 
 // ------------------------------------------------------------ accent ----
 
@@ -194,6 +216,9 @@ QMap<QString, QString> buildTokens() {
   set("criticalTint", d ? QColor(248, 113, 113, 32) : QColor(185, 28, 28, 20));
   set("checkStroke", d ? QColor("#57534E") : QColor("#A8A29E"));
 
+  t["fontFamilies"] = quoted(kFamilies);
+  t["monoFamilies"] = quoted(kMonoFamilies);
+
   const QColor iconC = d ? QColor(255, 255, 255, 200) : QColor(0, 0, 0, 170);
   t["imgCheck"] = iconFile("checkmark", QColor("#1A1405"), 14);
   t["imgRight"] = iconFile("chevron", iconC, 12);
@@ -205,7 +230,12 @@ QMap<QString, QString> buildTokens() {
 }
 
 const char *kStyleSheet = R"QSS(
-* { outline: 0; }
+* { outline: 0; font-family: @fontFamilies; font-size: 12pt; }
+/* Sizes that differ from the base: list text, log output. Everything else,
+   including every dialog and popup, takes the base size above, so no widget
+   depends on what the platform theme hands out. */
+QTreeView, QListView#IconGrid { font-size: 12.5pt; }
+QPlainTextEdit, QTextEdit { font-family: @monoFamilies; font-size: 10.5pt; }
 QWidget { color: @text; }
 QMainWindow, QDialog, QMessageBox { background: @bg; }
 QWidget#NavPane { background: @bg; }
@@ -546,32 +576,46 @@ public:
 };
 #endif
 
-// Safety net for dialogs (message boxes, input dialogs, ...): any label
-// that did not get a font explicitly is given the app font when the dialog
-// opens. Windows supplies its own smaller fonts for some dialog parts.
-class DialogFontFilter : public QObject {
+QFont fluentFont();
+void pinClassFonts(const QFont &font);
+bool classFontsIntact();
+
+bool gApplying = false;
+
+// Re-pins the fonts if something outside this file resets them: a Windows
+// theme or accessibility change makes Qt rebuild its per-class font table.
+class FontGuard : public QObject {
 public:
   using QObject::QObject;
   bool eventFilter(QObject *o, QEvent *e) override {
-    if (e->type() == QEvent::Show) {
-      if (auto *dlg = qobject_cast<QDialog *>(o)) {
-        for (QLabel *l : dlg->findChildren<QLabel *>()) {
-          if (!l->testAttribute(Qt::WA_SetFont)) {
-            l->setFont(uiFont());
-          }
+    if (o == qApp && !gApplying && !mPending &&
+        (e->type() == QEvent::ApplicationFontChange || e->type() == QEvent::ThemeChange)) {
+      mPending = true;
+      QTimer::singleShot(0, this, [this]() {
+        mPending = false;
+        if (!gApplying && !classFontsIntact()) {
+          gApplying = true;
+          pinClassFonts(fluentFont());
+          gApplying = false;
         }
-      }
+      });
     }
     return false;
   }
+
+private:
+  bool mPending = false;
 };
 
-void applyChromeToAllWindows() {
-  static DialogFontFilter *fontFilter = nullptr;
-  if (!fontFilter) {
-    fontFilter = new DialogFontFilter(qApp);
-    qApp->installEventFilter(fontFilter);
+void installGuards() {
+  static bool done = false;
+  if (!done) {
+    done = true;
+    qApp->installEventFilter(new FontGuard(qApp));
   }
+}
+
+void applyChromeToAllWindows() {
 #ifdef Q_OS_WIN
   static WindowChromeFilter *filter = nullptr;
   if (!filter) {
@@ -587,18 +631,42 @@ void applyChromeToAllWindows() {
 }
 
 QFont fluentFont() {
-  // Built from scratch (not from QApplication::font()) so the result never
-  // depends on what Windows or a previous call left behind.
-  QFont f;
-  // Trebuchet MS ships with Windows. Its license does not allow bundling it,
-  // so on Linux it is used when installed (ttf-mscorefonts) and otherwise
-  // falls back to a similar humanist sans.
-  f.setFamilies({"Trebuchet MS", "Ubuntu", "Fira Sans", "Noto Sans",
-                 "DejaVu Sans", "Segoe UI", "Sans Serif"});
+  QFont f(kFamilies.first());
+  f.setFamilies(kFamilies);
   f.setStyleHint(QFont::SansSerif);
-  f.setPointSizeF(12);
+  f.setPointSizeF(kBasePt);
   f.setHintingPreference(QFont::PreferNoHinting);
   return f;
+}
+
+// Windows (and Qt, when the system theme changes) keeps a table of fonts per
+// widget class: list views, headers, menus, tooltips, message boxes... They
+// are normally 9 pt "Segoe UI" and win over the application font. Overriding
+// them here is the second line of defence; the style sheet is the first.
+void pinClassFonts(const QFont &font) {
+  QApplication::setFont(font); // also clears the per-class table
+  for (const char *cls : {"QAbstractItemView", "QListView", "QListWidget", "QTreeView",
+                          "QTreeWidget", "QTableView", "QHeaderView", "QMenu", "QMenuBar",
+                          "QTabBar", "QStatusBar", "QTipLabel", "QToolTip", "QMessageBox",
+                          "QMessageBoxLabel", "QMessageBoxDetailsText", "QLabel",
+                          "QAbstractButton", "QLineEdit", "QComboBox", "QGroupBox",
+                          "QTextEdit", "QPlainTextEdit", "QDialog"}) {
+    QApplication::setFont(font, cls);
+  }
+}
+
+bool classFontsIntact() {
+  const QFont want = fluentFont();
+  if (QApplication::font() != want) {
+    return false;
+  }
+  for (const char *cls : {"QAbstractItemView", "QListView", "QTreeView", "QHeaderView", "QMenu",
+                          "QMessageBox", "QTipLabel", "QStatusBar"}) {
+    if (QApplication::font(cls) != want) {
+      return false;
+    }
+  }
+  return true;
 }
 
 } // namespace
@@ -623,47 +691,45 @@ void save(Mode mode) {
   settings->setValue("Settings/darkMode", mode == Dark);
 }
 
-void apply() {
-  const Mode mode = load();
+static void applyMode(Mode mode) {
+  gApplying = true;
   gDark = mode == Dark || (mode == System && systemIsDark());
   computeAccent();
 
-  qApp->setStyle(QStyleFactory::create("Fusion"));
-  const QFont font = fluentFont();
-  qApp->setFont(font);
-  // Windows supplies per-class fonts (item views, menus, tooltips...) that
-  // take precedence over the application font; pin all of them.
-  for (const char *cls : {"QAbstractItemView", "QListView", "QListWidget",
-                          "QTreeView", "QTreeWidget", "QTableView",
-                          "QHeaderView", "QMenu", "QMenuBar", "QTabBar",
-                          "QStatusBar", "QTipLabel", "QToolTip", "QMessageBox",
-                          "QMessageBoxLabel", "QMessageBoxDetailsText",
-                          "QLabel", "QAbstractButton", "QLineEdit",
-                          "QComboBox", "QGroupBox"}) {
-    QApplication::setFont(font, cls);
+  // The style object is created once; switching theme only swaps palette and
+  // style sheet (re-creating the style re-polishes every widget twice).
+  static bool styleSet = false;
+  if (!styleSet) {
+    styleSet = true;
+    qApp->setStyle(QStyleFactory::create("Fusion"));
   }
+  pinClassFonts(fluentFont());
   qApp->setPalette(buildPalette());
   qApp->setStyleSheet(buildStyleSheet());
   applyChromeToAllWindows();
-
-  {
-    auto settings = GetSettings();
-    settings->setValue("Settings/darkModeIni", gDark);
-  }
+  gApplying = false;
+  installGuards();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
   if (!gWatching) {
     gWatching = true;
-    QObject::connect(QGuiApplication::styleHints(),
-                     &QStyleHints::colorSchemeChanged, qApp, [] {
-                       if (load() == System) {
-                         apply();
-                       }
-                     });
+    QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, qApp, [] {
+      if (load() == System) {
+        apply();
+      }
+    });
   }
 #else
   Q_UNUSED(gWatching);
 #endif
+  emit notifier()->changed();
+}
+
+void apply() { applyMode(load()); }
+
+Notifier *notifier() {
+  static Notifier *n = new Notifier;
+  return n;
 }
 
 bool isDark() { return gDark; }
@@ -675,12 +741,11 @@ QFont uiFont(qreal scale) {
 }
 
 QFont monoFont() {
-  QFont f;
-  f.setFamilies({"Cascadia Mono", "Cascadia Code", "Consolas", "DejaVu Sans Mono",
-                 "Liberation Mono", "Monospace"});
+  QFont f(kMonoFamilies.first());
+  f.setFamilies(kMonoFamilies);
   f.setStyleHint(QFont::Monospace);
   f.setFixedPitch(true);
-  f.setPointSizeF(10.5);
+  f.setPointSizeF(kMonoPt);
   return f;
 }
 
@@ -928,6 +993,114 @@ QString displayName(Mode mode) {
   default:
     return QObject::tr("Same as Windows");
   }
+}
+
+
+// ---------------------------------------------------------------- self test ----
+
+namespace {
+struct Probe {
+  QString name;
+  std::function<QWidget *()> make;
+  qreal expect;
+};
+
+qreal effectiveSize(QWidget *w) {
+  w->ensurePolished();
+  if (auto *box = qobject_cast<QMessageBox *>(w)) {
+    QLabel *label = box->findChild<QLabel *>("qt_msgbox_label");
+    if (label) {
+      label->ensurePolished();
+      return label->font().pointSizeF();
+    }
+  }
+  return w->font().pointSizeF();
+}
+
+QList<Probe> probes() {
+  QList<Probe> p;
+  p << Probe{"QLabel", [] { return new QLabel("x"); }, kBasePt};
+  p << Probe{"QPushButton", [] { return new QPushButton("x"); }, kBasePt};
+  p << Probe{"QToolButton", [] { return new QToolButton; }, kBasePt};
+  p << Probe{"QLineEdit", [] { return new QLineEdit; }, kBasePt};
+  p << Probe{"QComboBox", [] { return new QComboBox; }, kBasePt};
+  p << Probe{"QCheckBox", [] { return new QCheckBox("x"); }, kBasePt};
+  p << Probe{"QGroupBox", [] { return new QGroupBox("x"); }, kBasePt};
+  p << Probe{"QTabBar", [] { return new QTabBar; }, kBasePt};
+  p << Probe{"QStatusBar", [] { return new QStatusBar; }, kBasePt};
+  p << Probe{"QMenu", [] { return new QMenu; }, kBasePt};
+  p << Probe{"QHeaderView", [] { return new QHeaderView(Qt::Horizontal); }, kBasePt};
+  p << Probe{"QListWidget", [] { return new QListWidget; }, kBasePt};
+  p << Probe{"QDialog", [] { return new QDialog; }, kBasePt};
+  p << Probe{"QMessageBox text", [] {
+               auto *m = new QMessageBox;
+               m->setText("x");
+               m->setInformativeText("y");
+               return m;
+             }, kBasePt};
+  p << Probe{"QTreeView (file list)", [] { return new QTreeView; }, kListPt};
+  p << Probe{"QListView#IconGrid", [] {
+               auto *v = new QListView;
+               v->setObjectName("IconGrid");
+               return v;
+             }, kListPt};
+  p << Probe{"QPlainTextEdit (log)", [] { return new QPlainTextEdit; }, kMonoPt};
+  return p;
+}
+
+void settle() {
+  QEventLoop loop;
+  QTimer::singleShot(40, &loop, &QEventLoop::quit);
+  loop.exec();
+}
+} // namespace
+
+bool selfTestFonts(QString *report) {
+  QStringList problems;
+  int checks = 0;
+  auto run = [&](const char *phase) {
+    for (const Probe &p : probes()) {
+      std::unique_ptr<QWidget> w(p.make());
+      const qreal got = effectiveSize(w.get());
+      ++checks;
+      if (!qFuzzyCompare(got + 1, p.expect + 1)) {
+        problems << QString("[%1] %2 is %3 pt, expected %4 pt")
+                        .arg(phase, p.name).arg(got).arg(p.expect);
+      }
+    }
+  };
+
+  applyMode(Dark);
+  run("dark");
+
+  // What Windows does behind the app's back: rebuild the per-class font table
+  // from the system theme (9 pt "Segoe UI").
+  {
+    const QFont system("Sans Serif", 8);
+    QApplication::setFont(system);
+    for (const char *cls : {"QAbstractItemView", "QListView", "QTreeView", "QHeaderView", "QMenu",
+                            "QMessageBox", "QTipLabel", "QStatusBar", "QLabel", "QTabBar"}) {
+      QApplication::setFont(system, cls);
+    }
+    settle();
+    run("after font reset");
+    if (!classFontsIntact()) {
+      problems << "class fonts were not restored after a reset";
+    }
+  }
+
+  applyMode(Light);
+  run("light");
+  applyMode(Dark);
+  run("dark again");
+
+  if (report) {
+    *report = problems.isEmpty()
+                  ? QString("fonts ok (%1 checks)").arg(checks)
+                  : QString("FONT PROBLEMS (%1 of %2 checks): ").arg(problems.size()).arg(checks) +
+                        problems.mid(0, 8).join(" | ");
+  }
+  return problems.isEmpty();
 }
 
 } // namespace Theme

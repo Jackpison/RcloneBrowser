@@ -36,7 +36,11 @@ int main(int argc, char *argv[]) {
                  qPrintable(QGuiApplication::platformName()), images, tls,
                  qPrintable(QCoreApplication::libraryPaths().join(';')));
     std::fflush(stdout);
-    return (platform && images && tls) ? 0 : 1;
+    QString fontReport;
+    const bool fonts = Theme::selfTestFonts(&fontReport);
+    std::fprintf(stdout, "%s\n", qPrintable(fontReport));
+    std::fflush(stdout);
+    return (platform && images && tls && fonts) ? 0 : 1;
   }
 
 // initialize SSL libraries
@@ -74,23 +78,6 @@ int main(int argc, char *argv[]) {
     qputenv("NO_PROXY", settings->value("Settings/no_proxy").toByteArray());
     qputenv("no_proxy", settings->value("Settings/no_proxy").toByteArray());
   }
-
-  // remmber darkMode state on app startup
-  // during first run the darkModeIni key might not exist
-  if (!(settings->contains("Settings/darkModeIni"))) {
-    // if darkModeIni does not exist create new key
-    settings->setValue("Settings/darkModeIni", "false");
-  };
-
-  // during first run the darkMode key might not exist
-  if (!(settings->contains("Settings/darkMode"))) {
-    // if darkMode does not exist create new key
-    settings->setValue("Settings/darkMode", "false");
-  };
-
-  bool darkMode = settings->value("Settings/darkMode").toBool();
-
-  settings->setValue("Settings/darkModeIni", darkMode);
 
   // during first run the iconSize key might not exist
   if (!(settings->contains("Settings/iconSize"))) {

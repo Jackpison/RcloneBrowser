@@ -13,7 +13,6 @@ ProgressDialog::ProgressDialog(const QString &title, const QString &operation,
   ui.labelOperation->setText(operation);
   ui.labelInfo->setText(message);
 
-  ui.output->setFont(Theme::monoFont());
   ui.output->setVisible(false);
 
   QObject::connect(ui.buttonBox, &QDialogButtonBox::rejected, this,

@@ -134,8 +134,7 @@ private:
 };
 
 ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
-    : QAbstractItemModel(parent), mRemote(remote),
-      mFixedFont(Theme::uiFont()) {
+    : QAbstractItemModel(parent), mRemote(remote) {
   QStyle *style = qApp->style();
   Q_UNUSED(style);
   for (int px : {16, 20, 24, 32, 40, 48, 64, 96, 128, 256}) {

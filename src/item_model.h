@@ -93,7 +93,6 @@ private:
   QIcon mFolderIcon;
   QIcon mFileIcon;
 
-  QFont mFixedFont;
 
   int mSortColumn;
   Qt::SortOrder mSortOrder;

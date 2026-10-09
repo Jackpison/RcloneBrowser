@@ -21,7 +21,6 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
 
   ui.details->setVisible(false);
 
-  ui.output->setFont(Theme::monoFont());
   ui.output->setVisible(false);
 
   QObject::connect(

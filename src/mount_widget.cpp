@@ -14,7 +14,6 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
 
   ui.details->setVisible(false);
 
-  ui.output->setFont(Theme::monoFont());
   ui.output->setVisible(false);
 
   QObject::connect(

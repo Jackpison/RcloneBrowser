@@ -112,8 +112,9 @@ jobs:
           $p = Start-Process -FilePath "$dir\RcloneBrowser.exe" -ArgumentList "--selftest" `
                  -PassThru -NoNewWindow -RedirectStandardOutput selftest.txt
           if (-not $p.WaitForExit(90000)) { $p.Kill(); throw "self-test timed out" }
-          Get-Content selftest.txt
-          if ($p.ExitCode -ne 0) { throw "self-test failed with exit code $($p.ExitCode)" }
+          $out = (Get-Content selftest.txt -Raw)
+          Write-Host $out
+          if ($p.ExitCode -ne 0) { throw "self-test failed ($($p.ExitCode)): $($out -replace '\s+',' ')" }
           Compress-Archive "$dir" "dist\RcloneBrowser-$ver-windows-x64.zip"
           "VERSION=$ver" | Out-File -Append $env:GITHUB_ENV
 
@@ -208,7 +209,11 @@ jobs:
           chmod +x dist/*.AppImage
 
           # smoke test of the finished AppImage on an X11 display
-          xvfb-run -a "dist/RcloneBrowser-$ver-linux-x86_64.AppImage" --selftest
+          if ! out=$(xvfb-run -a "dist/RcloneBrowser-$ver-linux-x86_64.AppImage" --selftest 2>&1); then
+            echo "::error::self-test failed: $(echo "$out" | tr '\n' ' ')"
+            exit 1
+          fi
+          echo "$out"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

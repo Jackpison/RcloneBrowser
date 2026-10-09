@@ -215,7 +215,6 @@ void MainWindow::buildShell() {
     list->setMouseTracking(true);
     list->setCursor(Qt::PointingHandCursor);
     list->setUniformItemSizes(true);
-    list->setFont(Theme::uiFont());
   };
 
   // main pages
@@ -311,9 +310,9 @@ void MainWindow::buildShell() {
     it->setData(TargetRole, id);
     it->setData(FilledIconRole, Theme::icon(icon + "_filled"));
   };
-  addAction("github", tr("GitHub"), "github");
   addAction("settings", tr("Settings"), "settings");
-  addAction("update", tr("Update & About"), "help");
+  addAction("github", tr("GitHub"), "github");
+  addAction("help", tr("Help & Update"), "help");
   footer->setFixedHeight(3 * 42 + 4);
   navLayout->addWidget(footer);
 
@@ -377,7 +376,6 @@ void MainWindow::buildShell() {
   ui.tabs->setUsesScrollButtons(true);
   ui.tabs->tabBar()->setExpanding(false);
   ui.tabs->tabBar()->setIconSize(QSize(18, 18));
-  ui.tabs->tabBar()->setFont(Theme::uiFont()); // never inherit a stale font
 
   // "+" right after the last tab, as in File Explorer (Qt only offers a
   // corner position, so it is placed manually; see updateNewTabButton()).
@@ -442,7 +440,6 @@ void MainWindow::buildShell() {
     ui.remotes->setFrameShape(QFrame::NoFrame);
     ui.remotes->setSelectionRectVisible(false);
     ui.remotes->setItemDelegate(new RemoteCardDelegate(ui.remotes));
-    ui.remotes->setFont(Theme::uiFont());
     ui.remotes->setMouseTracking(true);
     ui.remotes->setCursor(Qt::PointingHandCursor);
 
@@ -486,7 +483,6 @@ void MainWindow::buildShell() {
     ui.tasksListWidget->setFrameShape(QFrame::NoFrame);
     ui.tasksListWidget->setSpacing(0);
     ui.tasksListWidget->setIconSize(QSize(20, 20));
-    ui.tasksListWidget->setFont(Theme::uiFont());
 
     ui.buttonRunTask->setProperty("accent", true);
     ui.buttonDryrunTask->setIcon(Theme::icon("dryrun"));

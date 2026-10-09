@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0] - 2026-10-09
+
+### Fixed
+-   **Text size, for good.** Parts of the app (the file list in cloud folders, headers, menus, popups) started with Windows' small default font and only became the right size after switching the theme. Cause: Windows keeps its own font per widget type and can reset them while the app runs, and the app only patched individual widgets, one report at a time. Now the style sheet itself sets the text size for every widget, a guard restores the fonts if the system resets them, and the 15 scattered per-widget font fixes are gone
+-   Breadcrumb arrows in the address bar kept the old theme's colour after a theme switch
+-   A new self-test runs on both platforms before every release: it checks 17 kinds of widget (including dialogs, menus and the file list) at startup, after a simulated Windows font reset, and after theme switches, and blocks the release on any mismatch
+
+### Changed
+-   Sidebar footer is now **Settings, GitHub, Help & Update** (was GitHub, Settings, Update & About)
+-   Removed leftover code from the original dark-mode feature and the old remote icon sizes
+-   Theme switching no longer re-creates the widget style each time, so it is faster and re-polishes widgets once
+
 ## [4.0.1] - 2026-10-09
 
 ### Fixed
