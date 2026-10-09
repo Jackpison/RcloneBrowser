@@ -1,0 +1,52 @@
+# Flatpak manifest for Flathub. Build locally with:
+#   flatpak-builder --user --install --force-clean build-dir \
+#     packaging/flatpak/io.github.jackpison.RcloneBrowser.yml
+app-id: io.github.jackpison.RcloneBrowser
+runtime: org.kde.Platform
+runtime-version: "6.10"
+sdk: org.kde.Sdk
+command: rclone-browser
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # No broad filesystem access: local files are picked through the file
+  # portal. The portal also provides the system light/dark setting.
+  - --talk-name=org.freedesktop.portal.Desktop
+
+modules:
+  # rclone is a static Go binary: ship the official release (not built here).
+  # Replace url/sha256 with the current release (see x-checker-data).
+  - name: rclone
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 rclone /app/bin/rclone
+    sources:
+      - type: archive
+        url: https://downloads.rclone.org/v1.70.3/rclone-v1.70.3-linux-amd64.zip
+        sha256: REPLACE_WITH_SHA256_OF_THE_ZIP # TODO: fill in before submitting to Flathub
+        strip-components: 1
+        only-arches: [x86_64]
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/rclone/rclone/releases/latest
+          version-query: .tag_name | sub("^v"; "")
+          url-query: '"https://downloads.rclone.org/v" + $version + "/rclone-v" + $version + "-linux-amd64.zip"'
+
+  - name: rclone-browser
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DRB_BUILD_TESTS=OFF
+    post-install:
+      # Flathub wants the desktop file, icon and metainfo named after the app id.
+      - mv /app/share/applications/rclone-browser.desktop /app/share/applications/io.github.jackpison.RcloneBrowser.desktop
+      - sed -i 's/^Icon=.*/Icon=io.github.jackpison.RcloneBrowser/; s/^StartupWMClass=.*/StartupWMClass=io.github.jackpison.RcloneBrowser/' /app/share/applications/io.github.jackpison.RcloneBrowser.desktop
+      - mv /app/share/icons/hicolor/256x256/apps/rclone-browser.png /app/share/icons/hicolor/256x256/apps/io.github.jackpison.RcloneBrowser.png
+      - sed -i 's#<launchable type="desktop-id">.*</launchable>#<launchable type="desktop-id">io.github.jackpison.RcloneBrowser.desktop</launchable>#' /app/share/metainfo/io.github.jackpison.RcloneBrowser.metainfo.xml
+    sources:
+      - type: dir
+        path: ../..

@@ -157,7 +157,7 @@ jobs:
           sudo apt-get install -y -q ninja-build libgl1-mesa-dev libegl1 libxkbcommon-x11-0 \
             libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
             libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libfontconfig1 \
-            libdbus-1-3 xvfb file
+            libdbus-1-3 libwayland-client0 libwayland-cursor0 libwayland-egl1 xvfb file
 
       - name: Configure, build and test
         run: |
@@ -201,8 +201,20 @@ jobs:
           python3 -m zipfile -e "$zip" rclone-x
           install -m 755 "$(find rclone-x -name rclone -type f | head -1)" AppDir/usr/bin/rclone
 
+          # Native Wayland (falls back to X11 when no Wayland session is
+          # running) and the desktop portal platform theme (native file
+          # dialogs, system light/dark setting).
+          export EXTRA_PLATFORM_PLUGINS="libqwayland-generic.so;libqwayland-egl.so"
+          export EXTRA_QT_PLUGINS="wayland-decoration-client;wayland-graphics-integration-client;wayland-shell-integration"
+          export DEPLOY_PLATFORM_THEMES=1
+
           QMAKE="$QT_ROOT_DIR/bin/qmake" LINUXDEPLOY_OUTPUT_VERSION="$ver" \
             ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
+          for f in platforms/libqwayland-generic.so platforms/libqwayland-egl.so \
+                   platformthemes/libqxdgdesktopportal.so; do
+            test -f "AppDir/usr/plugins/$f" || { echo "missing $f in AppDir"; exit 1; }
+          done
+
           mkdir -p dist
           mv Rclone_Browser-*-x86_64.AppImage "dist/RcloneBrowser-$ver-linux-x86_64.AppImage"
           chmod +x dist/*.AppImage

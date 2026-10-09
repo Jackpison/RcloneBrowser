@@ -16,7 +16,26 @@ int main(int argc, char *argv[]) {
   }
 #endif
 
+#if defined(Q_OS_LINUX)
+  // Use the desktop portal (org.freedesktop.portal) for the file dialogs and
+  // the light/dark setting, so the GNOME or KDE dialog opens and the app
+  // follows the system theme. Qt falls back to its own dialogs when the
+  // plugin or the portal is missing. Respect an explicit user choice.
+  if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORMTHEME")) {
+    qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
+  }
+#endif
+
   QApplication app(argc, argv);
+
+#if defined(Q_OS_LINUX)
+  // On Wayland the desktop file name is the window's app id: it links the
+  // window to its launcher and icon (the Flatpak id inside a Flatpak).
+  const QByteArray flatpakId = qgetenv("FLATPAK_ID");
+  QGuiApplication::setDesktopFileName(
+      flatpakId.isEmpty() ? QStringLiteral("rclone-browser")
+                          : QString::fromUtf8(flatpakId));
+#endif
 
   //  app.setApplicationDisplayName("Rclone Browser");
   app.setApplicationName("rclone-browser");

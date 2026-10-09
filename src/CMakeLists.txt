@@ -92,6 +92,22 @@ if(WIN32)
   target_link_libraries(${TARGET_NAME} PRIVATE shell32 ole32 dwmapi advapi32)
 endif()
 
+# Linux install (used by the Flatpak build; the AppImage is assembled by CI).
+if(UNIX AND NOT APPLE)
+  include(GNUInstallDirs)
+  set(PKG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../packaging/linux")
+  install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(FILES "${PKG_DIR}/rclone-browser.desktop"
+          DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+  install(FILES "${PKG_DIR}/io.github.jackpison.RcloneBrowser.metainfo.xml"
+          DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+  install(FILES "${PKG_DIR}/rclone-browser.png"
+          DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps)
+  file(GLOB REMOTE_LOGOS "${CMAKE_CURRENT_SOURCE_DIR}/../icons/remotes/*.png")
+  install(FILES ${REMOTE_LOGOS}
+          DESTINATION ${CMAKE_INSTALL_DATADIR}/rclone-browser/icons/remotes)
+endif()
+
 # Parser unit tests (no GUI, no rclone needed).
 option(RB_BUILD_TESTS "Build unit tests" ON)
 if(RB_BUILD_TESTS)
