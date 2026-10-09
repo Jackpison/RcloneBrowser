@@ -538,10 +538,12 @@ void applyChromeToAllWindows() {
 }
 
 QFont fluentFont() {
-  QFont f = QApplication::font();
-  // Windows 11 UI font, with fallbacks for Windows 10 and other systems.
+  // Built from scratch (not from QApplication::font()) so the result never
+  // depends on what Windows or a previous call left behind.
+  QFont f;
   f.setFamilies({"Segoe UI Variable Text", "Segoe UI", "Selawik", "Noto Sans",
                  "Sans Serif"});
+  f.setStyleHint(QFont::SansSerif);
   f.setPointSizeF(12);
   f.setHintingPreference(QFont::PreferNoHinting);
   return f;
@@ -575,7 +577,18 @@ void apply() {
   computeAccent();
 
   qApp->setStyle(QStyleFactory::create("Fusion"));
-  qApp->setFont(fluentFont());
+  const QFont font = fluentFont();
+  qApp->setFont(font);
+  // Windows supplies per-class fonts (item views, menus, tooltips...) that
+  // take precedence over the application font; pin all of them.
+  for (const char *cls : {"QAbstractItemView", "QListView", "QListWidget",
+                          "QTreeView", "QTreeWidget", "QTableView",
+                          "QHeaderView", "QMenu", "QMenuBar", "QTabBar",
+                          "QStatusBar", "QTipLabel", "QToolTip", "QMessageBox",
+                          "QLabel", "QAbstractButton", "QLineEdit",
+                          "QComboBox", "QGroupBox"}) {
+    QApplication::setFont(font, cls);
+  }
   qApp->setPalette(buildPalette());
   qApp->setStyleSheet(buildStyleSheet());
   applyChromeToAllWindows();
@@ -601,6 +614,22 @@ void apply() {
 }
 
 bool isDark() { return gDark; }
+
+QFont uiFont(qreal scale) {
+  QFont f = fluentFont();
+  f.setPointSizeF(f.pointSizeF() * scale);
+  return f;
+}
+
+QFont monoFont() {
+  QFont f;
+  f.setFamilies({"Cascadia Mono", "Cascadia Code", "Consolas", "DejaVu Sans Mono",
+                 "Liberation Mono", "Monospace"});
+  f.setStyleHint(QFont::Monospace);
+  f.setFixedPitch(true);
+  f.setPointSizeF(10.5);
+  return f;
+}
 
 void toggle() {
   save(gDark ? Light : Dark);

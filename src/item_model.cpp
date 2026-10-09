@@ -77,7 +77,7 @@ private:
 
 ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
     : QAbstractItemModel(parent), mRemote(remote),
-      mFixedFont(QFontDatabase::systemFont(QFontDatabase::FixedFont)) {
+      mFixedFont(Theme::uiFont()) {
   QStyle *style = qApp->style();
   Q_UNUSED(style);
   mDriveIcon = Theme::icon("f_drive", QColor("#5E6B78"));

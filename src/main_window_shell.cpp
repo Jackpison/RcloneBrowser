@@ -42,8 +42,7 @@ public:
     const QRect iconRect(int(r.left()) + 14, int(r.center().y()) - 11, 22, 22);
     icon.paint(p, iconRect, Qt::AlignCenter, selected ? QIcon::Selected : QIcon::Normal);
 
-    QFont f = opt.font;
-    f.setPointSizeF(f.pointSizeF() * 1.04);
+    QFont f = Theme::uiFont(1.04);
     if (selected) {
       f.setWeight(QFont::DemiBold);
     }
@@ -54,8 +53,7 @@ public:
     QRectF textRect(iconRect.right() + 14, r.top(), r.right() - iconRect.right() - 24, r.height());
     if (badge > 0) {
       const QString b = QString::number(badge);
-      QFont bf = opt.font;
-      bf.setPointSizeF(bf.pointSizeF() * 0.85);
+      QFont bf = Theme::uiFont(0.85);
       bf.setWeight(QFont::DemiBold);
       const qreal w = qMax<qreal>(22, QFontMetricsF(bf).horizontalAdvance(b) + 12);
       const QRectF pill(r.right() - 12 - w, r.center().y() - 11, w, 22);
@@ -133,7 +131,7 @@ public:
     icon.paint(p, tile.toRect());
 
     // name + type
-    QFont f = opt.font;
+    QFont f = Theme::uiFont();
     f.setWeight(QFont::DemiBold);
     p->setFont(f);
     p->setPen(Theme::color("text"));
@@ -142,8 +140,7 @@ public:
                                                     Qt::ElideRight, int(nameRect.width()));
     p->drawText(nameRect, Qt::AlignHCenter | Qt::AlignVCenter, name);
 
-    QFont typeFont = opt.font;
-    typeFont.setPointSizeF(typeFont.pointSizeF() * 0.9);
+    QFont typeFont = Theme::uiFont(0.9);
     p->setFont(typeFont);
     p->setPen(Theme::color("text2"));
     p->drawText(QRectF(nameRect.left(), nameRect.bottom(), nameRect.width(), 18),
@@ -201,6 +198,7 @@ void MainWindow::buildShell() {
     list->setMouseTracking(true);
     list->setCursor(Qt::PointingHandCursor);
     list->setUniformItemSizes(true);
+    list->setFont(Theme::uiFont());
   };
 
   // main pages
@@ -380,6 +378,7 @@ void MainWindow::buildShell() {
     ui.remotes->setFrameShape(QFrame::NoFrame);
     ui.remotes->setSelectionRectVisible(false);
     ui.remotes->setItemDelegate(new RemoteCardDelegate(ui.remotes));
+    ui.remotes->setFont(Theme::uiFont());
     ui.remotes->setMouseTracking(true);
     ui.remotes->setCursor(Qt::PointingHandCursor);
 
@@ -423,6 +422,7 @@ void MainWindow::buildShell() {
     ui.tasksListWidget->setFrameShape(QFrame::NoFrame);
     ui.tasksListWidget->setSpacing(0);
     ui.tasksListWidget->setIconSize(QSize(20, 20));
+    ui.tasksListWidget->setFont(Theme::uiFont());
 
     ui.buttonRunTask->setProperty("accent", true);
     ui.buttonDryrunTask->setIcon(Theme::icon("dryrun"));

@@ -21,7 +21,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
 
   ui.details->setVisible(false);
 
-  ui.output->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+  ui.output->setFont(Theme::monoFont());
   ui.output->setVisible(false);
 
   QObject::connect(
@@ -99,7 +99,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
         } else {
           ui.size->setText(s.done + ", " + s.percent);
           ui.totalsize->setText(s.total);
-          ui.eta->setText(s.eta);
+          ui.eta->setText(s.eta == "-" ? QString() : s.eta); // placeholder shows a dash
         }
         ui.bandwidth->setText(s.speed);
         if (mSummary && !s.total.isEmpty()) {
@@ -176,6 +176,24 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
                      } else {
                        Theme::setStatus(ui.showDetails, "error");
                        ui.showDetails->setText("Error");
+                     }
+                     // replace the last live reading ("100% · 3.9 MiB/s ·
+                     // 0s left") with a result summary
+                     if (mSummary) {
+                       const QString total =
+                           !ui.totalsize->text().isEmpty()
+                               ? ui.totalsize->text()
+                               : ui.size->text().section(',', 0, 0);
+                       const QString took = ui.elapsed->text();
+                       QString text;
+                       if (status == 0) {
+                         text = took.isEmpty() ? tr("Done")
+                                               : tr("Done · %1 in %2").arg(total, took);
+                       } else {
+                         text = took.isEmpty() ? tr("Stopped")
+                                               : tr("Stopped after %1").arg(took);
+                       }
+                       mSummary->setText(text);
                      }
 
                      ui.cancel->setToolTip("Close");

@@ -925,6 +925,9 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
                    [this, model]() { setIconView(false, model); });
 
   ui.tree->setUniformRowHeights(true); // much faster with large folders
+  ui.tree->setFont(Theme::uiFont());
+  ui.tree->header()->setFont(Theme::uiFont());
+  mGrid->setFont(Theme::uiFont());
   ui.tree->setAnimated(true);
   ui.tree->setIconSize(QSize(22, 22));
   ui.tree->setFrameShape(QFrame::NoFrame);

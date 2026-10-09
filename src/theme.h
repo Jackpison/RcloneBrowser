@@ -30,6 +30,14 @@ bool usingFusionDark();
 
 QString displayName(Mode mode);
 
+// The app's UI font (Segoe UI Variable, 12 pt) times `scale`, and the
+// monospace font for log output (Cascadia Mono / Consolas). Widgets that
+// paint text themselves use these rather than inheriting a widget font:
+// on Windows, list and tree views otherwise start with the smaller system
+// "icon title" font until the theme is re-applied.
+QFont uiFont(qreal scale = 1.0);
+QFont monoFont();
+
 // Accent colour as used for text/indicators in the current mode.
 QColor accent();
 

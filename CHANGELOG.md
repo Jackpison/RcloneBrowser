@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.1.0] - 2026-10-09
+
+### Fixed
+-   Sidebar, Home cards, file lists and task list could start with Windows' small default list font (correct only after switching the theme); the app now sets its own fonts everywhere
+-   Transfer output ("Show Output") used the tiny system fixed font; now Cascadia Mono / Consolas at a readable size (also in the Folder size / Folder tree window)
+-   Size and Modified columns in the Details view used the small fixed font
+-   Finished transfers kept showing the last live reading ("100% · 3.9 MiB/s · 0s left"); they now show "Done · 47.3 MiB in 11.3s" or "Stopped after …"
+-   "Time left" showed rclone's raw "-" instead of a dash placeholder
+
+### Changed
+-   New gold logo
+
 ## [3.0.0] - 2026-10-09
 
 ### Design
