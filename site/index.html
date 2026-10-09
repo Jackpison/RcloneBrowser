@@ -3,11 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rclone Browser – browse and transfer files on all your cloud storage</title>
-<meta name="description" content="A modern, portable Windows app for rclone: browse, upload, download and sync files on Google Drive, OneDrive, Dropbox, pCloud, S3 and 70+ other cloud services.">
-<meta property="og:title" content="Rclone Browser">
-<meta property="og:description" content="Browse, transfer and sync files on all your cloud storage. Portable, free and open source.">
-<meta property="og:image" content="img/browser.png">
+<title>Rclone Browser – the rclone GUI for Windows | Free, portable cloud file manager</title>
+<meta name="description" content="Rclone Browser is a free, open-source rclone GUI for Windows 10 and 11: browse, upload, download and sync files on Google Drive, OneDrive, Dropbox, pCloud, S3 and 70+ cloud services. Portable, no install.">
+<meta name="keywords" content="rclone gui, rclone browser, rclone gui windows, rclone frontend, rclone graphical interface, cloud file manager, google drive, onedrive, dropbox, pcloud, s3">
+<link rel="canonical" href="https://jackpison.github.io/RcloneBrowser/">
+<meta property="og:title" content="Rclone Browser – rclone GUI for Windows">
+<meta property="og:description" content="A modern rclone GUI for Windows: browse, transfer and sync files on all your cloud storage. Portable, free and open source.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jackpison.github.io/RcloneBrowser/">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://jackpison.github.io/RcloneBrowser/img/browser.png">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="img/logo.png">
 <style>
@@ -124,6 +129,23 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
     document.documentElement.setAttribute("data-theme", t);
   })();
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Rclone Browser",
+  "alternateName": ["rclone GUI", "Rclone Browser for Windows"],
+  "description": "Free, open-source rclone GUI for Windows: browse, upload, download and sync files on 70+ cloud storage services.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://opensource.org/licenses/MIT",
+  "url": "https://jackpison.github.io/RcloneBrowser/",
+  "downloadUrl": "https://github.com/Jackpison/RcloneBrowser/releases/latest",
+  "screenshot": "https://jackpison.github.io/RcloneBrowser/img/browser.png",
+  "author": { "@type": "Person", "name": "Jackpison", "url": "https://github.com/Jackpison" }
+}
+</script>
 </head>
 <body>
 <header class="nav">
@@ -147,9 +169,9 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
 <main>
   <section class="hero">
     <div class="wrap">
-      <span class="pill">For Windows 10 &amp; 11</span>
+      <span class="pill">rclone GUI for Windows 10 &amp; 11</span>
       <h1>All your clouds.<br><span>One fast browser.</span></h1>
-      <p class="lead">Browse, upload, download and sync files on Google Drive, OneDrive, Dropbox, pCloud, S3 and 70+ other services, powered by <a href="https://rclone.org/">rclone</a>. Portable, free and open source.</p>
+      <p class="lead">Rclone Browser is a modern rclone GUI: browse, upload, download and sync files on Google Drive, OneDrive, Dropbox, pCloud, S3 and 70+ other services, powered by <a href="https://rclone.org/">rclone</a>. Portable, free and open source.</p>
       <div class="cta">
         <a class="btn primary" id="download" href="https://github.com/Jackpison/RcloneBrowser/releases/latest">
           <svg class="ic" viewBox="0 0 20 20" aria-hidden="true">
@@ -160,8 +182,8 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
       </div>
       <div class="meta" id="download-meta">Portable zip · no installation · 64-bit</div>
       <div class="shot-hero">
-        <img class="only-dark" src="img/browser.png" alt="Rclone Browser in dark mode, Icons view with tabs" width="1400" height="820">
-        <img class="only-light" src="img/browser-light.png" alt="Rclone Browser in light mode, Icons view with tabs" width="1400" height="820">
+        <img class="only-dark" src="img/browser.png" alt="Rclone Browser, an rclone GUI for Windows, in dark mode" width="1400" height="820">
+        <img class="only-light" src="img/browser-light.png" alt="Rclone Browser, an rclone GUI for Windows, in light mode" width="1400" height="820">
       </div>
     </div>
   </section>
@@ -169,7 +191,7 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
   <section id="features">
     <div class="wrap">
       <div class="section-title"><span class="pill">Features</span><h2>Everything you need</h2>
-        <p>The power of rclone with the comfort of File Explorer.</p></div>
+        <p>All the power of rclone in a graphical interface as comfortable as File Explorer.</p></div>
       <div class="grid">
       <article class="card">
         <div class="card-icon"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true">
@@ -241,7 +263,7 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
   <section id="screenshots">
     <div class="wrap">
       <div class="section-title"><span class="pill">Screenshots</span><h2>Made for Windows 11</h2>
-        <p>Dark or light, it fits right in.</p></div>
+        <p>An rclone GUI that looks at home on Windows 11, in dark or light.</p></div>
       <div class="gallery">
         <figure><img src="img/home.png" alt="Home page with remote cards" loading="lazy"><figcaption>All your remotes at a glance</figcaption></figure>
         <figure><img src="img/transfers-dark.png" alt="A running transfer with progress" loading="lazy"><figcaption>Transfers with live progress, pause and resume</figcaption></figure>

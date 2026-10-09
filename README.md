@@ -1,14 +1,17 @@
 <p align="center"><img src="docs/logo.png" width="96" alt="Rclone Browser logo"></p>
 
-<h1 align="center">Rclone Browser for Windows</h1>
+<h1 align="center">Rclone Browser – rclone GUI for Windows</h1>
 
-<p align="center">Browse, transfer and sync files on all your cloud storage, powered by <a href="https://rclone.org/">rclone</a>.<br>Portable, nothing to install: unzip it anywhere (even on a USB stick) and run.</p>
+<p align="center">A modern rclone GUI: browse, transfer and sync files on all your cloud storage, powered by <a href="https://rclone.org/">rclone</a>.<br>Portable, nothing to install: unzip it anywhere (even on a USB stick) and run.</p>
 
 <p align="center"><b><a href="../../releases/latest">Download the latest release</a></b> · <a href="https://jackpison.github.io/RcloneBrowser/">Website</a> · <a href="docs/Rclone-Browser-Guide.pdf">User guide (PDF)</a> · <a href="docs/remote-icons.md">Remote icons</a> · <a href="CHANGELOG.md">Changelog</a></p>
 
 ![Browsing a remote with tabs in dark mode](docs/browser.png)
 
 ## Features
+
+Rclone Browser gives rclone a full graphical interface, so you can manage cloud files without the command line:
+
 
 - **Modern design** in black and gold or warm light, with a one-click **light / dark** switch next to the app name
 - **All your clouds in one place**: Google Drive, OneDrive, Dropbox, pCloud, S3, SFTP, encrypted remotes and every other rclone storage type, using your existing rclone configuration. Logos for popular services are included; every other service gets a colour-coded tile, or [your own icon](docs/remote-icons.md).
