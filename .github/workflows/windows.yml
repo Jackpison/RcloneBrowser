@@ -1,4 +1,4 @@
-name: Windows portable
+name: Windows
 
 on:
   push:
@@ -53,7 +53,7 @@ jobs:
           cmake --build build || exit /b 1
           ctest --test-dir build --output-on-failure || exit /b 1
 
-      - name: Assemble portable folder
+      - name: Assemble app folder
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
