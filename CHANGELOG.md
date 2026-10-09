@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.0.1] - 2026-10-09
+
+### Fixed
+-   Deleting a single file could take a very long time: it used rclone's bulk `delete` command, which lists the whole parent folder (recursively with `--fast-list`) to find the file. It now uses `deletefile`, a single API call
+-   Text in message boxes and other popups was too small on Windows
+
+### Changed
+-   Clearer delete confirmation: "Delete “name”?", a note that it cannot be undone, a red Delete button and Cancel as the default
+
 ## [4.0.0] - 2026-10-09
 
 ### New

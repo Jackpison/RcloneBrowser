@@ -231,6 +231,9 @@ QLabel#NavCount { color: @text2; background: @tile; border-radius: 10px; padding
 QFrame#NavDivider { background: @divider; max-height: 1px; min-height: 1px; border: none; }
 QLabel#PageSubtitle, QLabel[secondary="true"] { color: @text2; }
 QDialogButtonBox { dialogbuttonbox-buttons-have-icons: 0; }
+QMessageBox QLabel#qt_msgbox_label, QMessageBox QLabel#qt_msgbox_informativelabel { min-width: 380px; }
+QPushButton[destructive="true"] { color: @critical; border-color: @critical; }
+QPushButton[destructive="true"]:hover { background: @criticalTint; }
 QLabel#noJobsAvailable { color: @text2; }
 QLabel#SectionHeader { font-weight: 600; padding-top: 4px; }
 
@@ -543,7 +546,32 @@ public:
 };
 #endif
 
+// Safety net for dialogs (message boxes, input dialogs, ...): any label
+// that did not get a font explicitly is given the app font when the dialog
+// opens. Windows supplies its own smaller fonts for some dialog parts.
+class DialogFontFilter : public QObject {
+public:
+  using QObject::QObject;
+  bool eventFilter(QObject *o, QEvent *e) override {
+    if (e->type() == QEvent::Show) {
+      if (auto *dlg = qobject_cast<QDialog *>(o)) {
+        for (QLabel *l : dlg->findChildren<QLabel *>()) {
+          if (!l->testAttribute(Qt::WA_SetFont)) {
+            l->setFont(uiFont());
+          }
+        }
+      }
+    }
+    return false;
+  }
+};
+
 void applyChromeToAllWindows() {
+  static DialogFontFilter *fontFilter = nullptr;
+  if (!fontFilter) {
+    fontFilter = new DialogFontFilter(qApp);
+    qApp->installEventFilter(fontFilter);
+  }
 #ifdef Q_OS_WIN
   static WindowChromeFilter *filter = nullptr;
   if (!filter) {
@@ -609,6 +637,7 @@ void apply() {
                           "QTreeView", "QTreeWidget", "QTableView",
                           "QHeaderView", "QMenu", "QMenuBar", "QTabBar",
                           "QStatusBar", "QTipLabel", "QToolTip", "QMessageBox",
+                          "QMessageBoxLabel", "QMessageBoxDetailsText",
                           "QLabel", "QAbstractButton", "QLineEdit",
                           "QComboBox", "QGroupBox"}) {
     QApplication::setFont(font, cls);

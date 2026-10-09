@@ -255,16 +255,30 @@ QString root = isLocal ? "/" : QString();
     QString path = model->path(index).path();
     QString pathMsg = isLocal ? QDir::toNativeSeparators(path) : path;
 
-    int button = QMessageBox::question(
-        this, "Delete",
-        QString("Are you sure you want to delete %1 ?").arg(pathMsg),
-        QMessageBox::Yes | QMessageBox::No);
-    if (button == QMessageBox::Yes) {
+    const bool folder = model->isFolder(index);
+    const QString name = model->data(index.siblingAtColumn(0), Qt::DisplayRole).toString();
+    QMessageBox confirm(QMessageBox::Warning, tr("Delete"),
+                        tr("Delete \u201c%1\u201d?").arg(name), QMessageBox::NoButton, this);
+    confirm.setInformativeText(
+        folder ? tr("The folder and everything in it will be deleted from %1. "
+                    "This cannot be undone.").arg(remote)
+               : tr("The file will be deleted from %1. This cannot be undone.").arg(remote));
+    QPushButton *del = confirm.addButton(tr("Delete"), QMessageBox::DestructiveRole);
+    del->setProperty("destructive", true);
+    del->style()->unpolish(del); // re-apply the style sheet with the new property
+    del->style()->polish(del);
+    QPushButton *cancel = confirm.addButton(QMessageBox::Cancel);
+    confirm.setDefaultButton(cancel); // Enter must not delete by accident
+    confirm.exec();
+    if (confirm.clickedButton() == del) {
       QProcess process;
       UseRclonePassword(&process);
       process.setProgram(GetRclone());
+      // deletefile removes exactly one file with one API call. "delete" is a
+      // bulk filter command: it lists the parent folder (recursively with
+      // --fast-list) just to find the file, which can take minutes.
       process.setArguments(QStringList()
-                           << (model->isFolder(index) ? "purge" : "delete")
+                           << (folder ? "purge" : "deletefile")
                            << GetRcloneConf() << GetDriveSharedWithMe()
                            << GetDefaultRcloneOptionsList()
                            << remote + ":" + path);
