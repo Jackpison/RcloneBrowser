@@ -31,6 +31,12 @@ private:
   QToolButton *mUp = nullptr;
   QWidget *mCrumbs = nullptr;
   QPersistentModelIndex mFilterFolder;
+  class QListView *mGrid = nullptr;
+  QToolButton *mViewIcons = nullptr;
+  QToolButton *mViewDetails = nullptr;
+  bool mSyncingFromGrid = false;
+  void setIconView(bool icons, class ItemModel *model);
+  void showFolderInGrid(const QModelIndex &folder, class ItemModel *model);
 
   void buildFluentUi(class ItemModel *model, const QString &remote);
   void updateBreadcrumbs(class ItemModel *model, const QString &remote);

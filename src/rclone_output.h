@@ -59,6 +59,12 @@ ListEntry parseLsdLine(const QString &line);
 // Parse one line of `rclone lsl` output. Names keep leading/trailing spaces.
 ListEntry parseLslLine(const QString &line);
 
+// Parse the complete output of `rclone lsjson` (one directory level).
+// Folders and files come back in a single listing, so opening a folder needs
+// one rclone call instead of two (lsd + lsl). Times are converted to local
+// time and formatted "YYYY-MM-DD HH:MM:SS" like lsl output.
+QList<ListEntry> parseLsJson(const QByteArray &json, bool *ok = nullptr);
+
 // Strip only the line terminator (\n or \r\n), never other whitespace,
 // because file names may legitimately start or end with spaces.
 QString chomp(const QString &line);

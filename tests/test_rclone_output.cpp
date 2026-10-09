@@ -155,6 +155,38 @@ private slots:
     QVERIFY(!parseLsdLine("").valid);
   }
 
+  // ---- lsjson (captured from rclone v1.75.1)
+  void lsjson() {
+    const QByteArray json =
+        "[\n"
+        "{\"Path\":\"Backups\",\"Name\":\"Backups\",\"Size\":4096,"
+        "\"ModTime\":\"2026-10-08T18:18:39.142115738Z\",\"IsDir\":true},\n"
+        "{\"Path\":\" lead \",\"Name\":\" lead \",\"Size\":0,"
+        "\"ModTime\":\"2026-10-08T18:18:39Z\",\"IsDir\":false},\n"
+        "{\"Path\":\"big.bin\",\"Name\":\"big.bin\",\"Size\":314572800,"
+        "\"ModTime\":\"2026-10-08T18:18:39.5+02:00\",\"IsDir\":false}\n"
+        "]\n";
+    bool ok = false;
+    const auto list = parseLsJson(json, &ok);
+    QVERIFY(ok);
+    QCOMPARE(list.size(), 3);
+    QVERIFY(list[0].isDir);
+    QCOMPARE(list[0].size, quint64(0));
+    QCOMPARE(list[1].name, QString(" lead "));
+    QCOMPARE(list[2].size, quint64(314572800));
+    const QString expected = QDateTime(QDate(2026, 10, 8), QTime(18, 18, 39), QTimeZone::utc())
+                                 .toLocalTime().toString("yyyy-MM-dd HH:mm:ss");
+    QCOMPARE(list[0].modified, expected);
+    QVERIFY(!list[2].modified.isEmpty());
+  }
+  void lsjsonEmptyAndBroken() {
+    bool ok = false;
+    QVERIFY(parseLsJson("[]", &ok).isEmpty());
+    QVERIFY(ok);
+    QVERIFY(parseLsJson("garbage", &ok).isEmpty());
+    QVERIFY(!ok);
+  }
+
   // ---- line buffering for chunked process output ----
   void lineBuffer() {
     LineBuffer b;

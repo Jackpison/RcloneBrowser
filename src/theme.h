@@ -16,6 +16,9 @@ enum Mode { System = 0, Light = 1, Dark = 2 };
 Mode load();
 void save(Mode mode);
 
+// Switch between light and dark (the sidebar toggle) and save the choice.
+void toggle();
+
 // Apply the saved theme to qApp. Safe to call again after settings change.
 void apply();
 

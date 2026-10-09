@@ -25,13 +25,13 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
   ui.output->setVisible(false);
 
   QObject::connect(
-      ui.showDetails, &QToolButton::toggled, this, [=](bool checked) {
+      ui.showDetails, &QToolButton::toggled, this, [=, this](bool checked) {
         ui.details->setVisible(checked);
         ui.showDetails->setArrowType(checked ? Qt::DownArrow : Qt::RightArrow);
       });
 
   QObject::connect(
-      ui.showOutput, &QToolButton::toggled, this, [=](bool checked) {
+      ui.showOutput, &QToolButton::toggled, this, [=, this](bool checked) {
         ui.output->setVisible(checked);
         ui.showOutput->setArrowType(checked ? Qt::DownArrow : Qt::RightArrow);
       });
@@ -39,7 +39,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
   ui.cancel->setIcon(
       Theme::icon("close"));
 
-  QObject::connect(ui.cancel, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.cancel, &QToolButton::clicked, this, [=, this]() {
     if (mRunning) {
       int button = QMessageBox::question(
           this, "Transfer",
@@ -56,12 +56,12 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
   ui.copy->setIcon(
       Theme::icon("copy"));
 
-  QObject::connect(ui.copy, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.copy, &QToolButton::clicked, this, [=, this]() {
     QClipboard *clipboard = QGuiApplication::clipboard();
     clipboard->setText(mArgs.join(" "));
   });
 
-  QObject::connect(mProcess, &QProcess::readyRead, this, [=]() {
+  QObject::connect(mProcess, &QProcess::readyRead, this, [=, this]() {
     using RcloneOutput::StatsLine;
 
     while (mProcess->canReadLine()) {
@@ -156,7 +156,7 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
   QObject::connect(mProcess,
                    static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
                        &QProcess::finished),
-                   this, [=](int status, QProcess::ExitStatus) {
+                   this, [=, this](int status, QProcess::ExitStatus) {
                      mProcess->deleteLater();
                      for (auto label : mActive) {
                        ui.progress->removeWidget(label->buddy());

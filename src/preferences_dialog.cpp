@@ -5,7 +5,7 @@
 PreferencesDialog::PreferencesDialog(QWidget *parent) : QDialog(parent) {
   ui.setupUi(this);
 
-  QObject::connect(ui.rcloneBrowse, &QPushButton::clicked, this, [=]() {
+  QObject::connect(ui.rcloneBrowse, &QPushButton::clicked, this, [=, this]() {
     QString rclone = QFileDialog::getOpenFileName(
         this, "Select rclone executable", ui.rclone->text());
     if (rclone.isEmpty()) {
@@ -28,7 +28,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) : QDialog(parent) {
     ui.rclone->setText(rclone);
   });
 
-  QObject::connect(ui.rcloneConfBrowse, &QPushButton::clicked, this, [=]() {
+  QObject::connect(ui.rcloneConfBrowse, &QPushButton::clicked, this, [=, this]() {
     QString rcloneConf = QFileDialog::getOpenFileName(
         this, "Select .rclone.conf location", ui.rcloneConf->text());
     if (rcloneConf.isEmpty()) {
@@ -39,7 +39,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) : QDialog(parent) {
   });
 
   QObject::connect(
-      ui.defaultDownloadDirBrowse, &QPushButton::clicked, this, [=]() {
+      ui.defaultDownloadDirBrowse, &QPushButton::clicked, this, [=, this]() {
         QString defaultDownloadDir = QFileDialog::getExistingDirectory(
             this, "Select default download directory",
             ui.defaultDownloadDir->text());
@@ -52,7 +52,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) : QDialog(parent) {
       });
 
   QObject::connect(
-      ui.defaultUploadDirBrowse, &QPushButton::clicked, this, [=]() {
+      ui.defaultUploadDirBrowse, &QPushButton::clicked, this, [=, this]() {
         QString defaultUploadDir = QFileDialog::getExistingDirectory(
             this, "Select default upload directory",
             ui.defaultUploadDir->text());
@@ -103,6 +103,8 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) : QDialog(parent) {
   // The upstream Rclone Browser project is no longer maintained, so there is
   // nothing meaningful to check against.
   ui.checkRcloneBrowserUpdates->hide();
+  // remote icons have a fixed size in the redesigned interface
+  ui.groupBox_5->hide();
 
   if (QSystemTrayIcon::isSystemTrayAvailable()) {
     ui.alwaysShowInTray->setChecked(

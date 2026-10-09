@@ -12,10 +12,71 @@ namespace {
 enum NavRole {
   KindRole = Qt::UserRole + 1, // "page" or "remote"
   TargetRole,                  // page index or remote name
-  TypeRole                     // remote type
+  TypeRole,                    // remote type
+  BadgeRole                    // number shown on the right (0 = none)
 };
 
-enum Page { HomePage = 0, TransfersPage = 1, TasksPage = 2 };
+// Sidebar entry: rounded highlight, gold text and icon when selected,
+// optional count badge on the right.
+class NavDelegate : public QStyledItemDelegate {
+public:
+  using QStyledItemDelegate::QStyledItemDelegate;
+
+  QSize sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const override {
+    return QSize(200, 42);
+  }
+
+  void paint(QPainter *p, const QStyleOptionViewItem &opt,
+             const QModelIndex &index) const override {
+    p->save();
+    p->setRenderHint(QPainter::Antialiasing);
+    const bool selected = opt.state & QStyle::State_Selected;
+    const bool hover = opt.state & QStyle::State_MouseOver;
+    const QRectF r = QRectF(opt.rect).adjusted(6, 3, -6, -3);
+    if (selected || hover) {
+      p->setPen(Qt::NoPen);
+      p->setBrush(selected ? Theme::color("navSel") : Theme::color("subtleHover"));
+      p->drawRoundedRect(r, 10, 10);
+    }
+    const QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
+    const QRect iconRect(int(r.left()) + 14, int(r.center().y()) - 11, 22, 22);
+    icon.paint(p, iconRect, Qt::AlignCenter, selected ? QIcon::Selected : QIcon::Normal);
+
+    QFont f = opt.font;
+    f.setPointSizeF(f.pointSizeF() * 1.04);
+    if (selected) {
+      f.setWeight(QFont::DemiBold);
+    }
+    p->setFont(f);
+    p->setPen(selected ? Theme::color("accentText") : Theme::color("text"));
+
+    const int badge = index.data(BadgeRole).toInt();
+    QRectF textRect(iconRect.right() + 14, r.top(), r.right() - iconRect.right() - 24, r.height());
+    if (badge > 0) {
+      const QString b = QString::number(badge);
+      QFont bf = opt.font;
+      bf.setPointSizeF(bf.pointSizeF() * 0.85);
+      bf.setWeight(QFont::DemiBold);
+      const qreal w = qMax<qreal>(22, QFontMetricsF(bf).horizontalAdvance(b) + 12);
+      const QRectF pill(r.right() - 12 - w, r.center().y() - 11, w, 22);
+      p->setPen(Qt::NoPen);
+      p->setBrush(selected ? Theme::color("accentBtn") : Theme::color("tile"));
+      p->drawRoundedRect(pill, 11, 11);
+      p->setFont(bf);
+      p->setPen(selected ? Theme::color("onAccent") : Theme::color("text2"));
+      p->drawText(pill, Qt::AlignCenter, b);
+      p->setFont(f);
+      p->setPen(selected ? Theme::color("accentText") : Theme::color("text"));
+      textRect.setRight(pill.left() - 8);
+    }
+    const QString text = QFontMetrics(f).elidedText(
+        index.data(Qt::DisplayRole).toString(), Qt::ElideRight, int(textRect.width()));
+    p->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, text);
+    p->restore();
+  }
+};
+
+enum Page { HomePage = 0, TransfersPage = 1, TasksPage = 2, BrowserPage = 3 };
 
 QLabel *makeLabel(const QString &text, const char *objectName) {
   auto *l = new QLabel(text);
@@ -100,7 +161,7 @@ void setPageMargins(QLayout *l) {
 } // namespace
 
 void MainWindow::buildShell() {
-  setWindowTitle(IsPortableMode() ? tr("Rclone Browser (portable)")
+  setWindowTitle(IsPortableMode() ? tr("Rclone Browser Portable")
                                   : tr("Rclone Browser"));
   setMinimumSize(900, 580);
   if (!GetSettings()->contains("MainWindow/geometry")) {
@@ -113,32 +174,38 @@ void MainWindow::buildShell() {
   // ---------------------------------------------------- navigation pane --
   auto *nav = new QWidget;
   nav->setObjectName("NavPane");
-  nav->setFixedWidth(250);
+  nav->setFixedWidth(280);
   auto *navLayout = new QVBoxLayout(nav);
-  navLayout->setContentsMargins(4, 10, 4, 8);
-  navLayout->setSpacing(4);
+  navLayout->setContentsMargins(10, 18, 10, 14);
+  navLayout->setSpacing(2);
 
-  auto *appTitle = new QWidget;
-  auto *at = new QHBoxLayout(appTitle);
-  at->setContentsMargins(14, 0, 8, 6);
-  at->setSpacing(10);
-  auto *appIcon = new QLabel;
-  appIcon->setPixmap(qApp->windowIcon().pixmap(20, 20));
-  at->addWidget(appIcon);
+  // brand
+  auto *brand = new QWidget;
+  auto *bl = new QHBoxLayout(brand);
+  bl->setContentsMargins(14, 0, 8, 14);
+  bl->setSpacing(12);
+  auto *logo = new QLabel;
+  logo->setPixmap(qApp->windowIcon().pixmap(32, 32));
+  bl->addWidget(logo);
   auto *appName = new QLabel(tr("Rclone Browser"));
-  appName->setProperty("secondary", true);
-  at->addWidget(appName, 1);
-  navLayout->addWidget(appTitle);
+  appName->setObjectName("AppTitle");
+  bl->addWidget(appName, 1);
+  navLayout->addWidget(brand);
 
+  auto setupList = [&](QListWidget *list, const char *name) {
+    list->setObjectName(name);
+    list->setItemDelegate(new NavDelegate(list));
+    list->setIconSize(QSize(22, 22));
+    list->setFrameShape(QFrame::NoFrame);
+    list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    list->setMouseTracking(true);
+    list->setCursor(Qt::PointingHandCursor);
+    list->setUniformItemSizes(true);
+  };
+
+  // main pages
   mNav = new QListWidget;
-  mNav->setObjectName("NavList");
-  mNav->setIconSize(QSize(20, 20));
-  mNav->setFrameShape(QFrame::NoFrame);
-  mNav->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  mNav->setContextMenuPolicy(Qt::CustomContextMenu);
-  mNav->setTextElideMode(Qt::ElideRight);
-  navLayout->addWidget(mNav, 1);
-
+  setupList(mNav, "NavList");
   auto addPage = [&](const QString &icon, const QString &text, int page) {
     auto *it = new QListWidgetItem(Theme::icon(icon), text, mNav);
     it->setData(KindRole, "page");
@@ -148,15 +215,41 @@ void MainWindow::buildShell() {
   addPage("home", tr("Home"), HomePage);
   mNavTransfers = addPage("transfers", tr("Transfers"), TransfersPage);
   addPage("tasks", tr("Tasks"), TasksPage);
+  mNav->setFixedHeight(3 * 42 + 4);
+  mNav->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  navLayout->addWidget(mNav);
 
-  auto *header = new QListWidgetItem(tr("Remotes"), mNav);
-  header->setFlags(Qt::NoItemFlags);
-  QFont hf = header->font();
-  hf.setWeight(QFont::DemiBold);
-  hf.setPointSizeF(hf.pointSizeF() * 0.92);
-  header->setFont(hf);
-  header->setSizeHint(QSize(0, 40));
-  mNavRemotesHeader = header;
+  // remotes section header: title, count, add button
+  mNavRemotesHeader = new QWidget;
+  auto *rh = new QHBoxLayout(mNavRemotesHeader);
+  rh->setContentsMargins(0, 18, 8, 6);
+  rh->setSpacing(8);
+  auto *rt = new QLabel(tr("Remotes"));
+  rt->setObjectName("NavSection");
+  rh->addWidget(rt);
+  mNavRemoteCount = new QLabel;
+  mNavRemoteCount->setObjectName("NavCount");
+  rh->addWidget(mNavRemoteCount);
+  rh->addStretch(1);
+  auto *addRemote = new QToolButton;
+  addRemote->setObjectName("NavAdd");
+  addRemote->setIcon(Theme::icon("add"));
+  addRemote->setToolTip(tr("New remote"));
+  QObject::connect(addRemote, &QToolButton::clicked, ui.config, &QPushButton::click);
+  rh->addWidget(addRemote);
+  navLayout->addWidget(mNavRemotesHeader);
+
+  mNavRemotes = new QListWidget;
+  setupList(mNavRemotes, "NavRemotes");
+  mNavRemotes->setContextMenuPolicy(Qt::CustomContextMenu);
+  navLayout->addWidget(mNavRemotes, 1);
+
+  // footer
+  auto *divider = new QFrame;
+  divider->setObjectName("NavDivider");
+  navLayout->addSpacing(6);
+  navLayout->addWidget(divider);
+  navLayout->addSpacing(6);
 
   auto footerButton = [&](const QString &icon, const QString &text) {
     auto *b = new QToolButton;
@@ -167,14 +260,25 @@ void MainWindow::buildShell() {
     b->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     b->setCursor(Qt::PointingHandCursor);
+    navLayout->addWidget(b);
     return b;
   };
 
+  auto *settingsBtn = footerButton("settings", tr("Settings"));
+  QObject::connect(settingsBtn, &QToolButton::clicked, ui.preferences,
+                   &QAction::trigger);
+
+  mThemeButton = footerButton(Theme::isDark() ? "sun" : "moon",
+                              Theme::isDark() ? tr("Light mode") : tr("Dark mode"));
+  mThemeButton->setToolTip(tr("Switch between light and dark"));
+  QObject::connect(mThemeButton, &QToolButton::clicked, this, [this]() {
+    Theme::toggle();
+    updateThemeButton();
+  });
+
   auto *more = footerButton("more", tr("More"));
   auto *moreMenu = new QMenu(more);
-  // Help menu (rclone updates, about) is assembled in setupRcloneUpdater();
-  // mirror it here so it stays in sync.
-  QObject::connect(moreMenu, &QMenu::aboutToShow, this, [=]() {
+  QObject::connect(moreMenu, &QMenu::aboutToShow, this, [=, this]() {
     moreMenu->clear();
     for (QAction *a : ui.menuHelp->actions()) {
       moreMenu->addAction(a);
@@ -184,12 +288,6 @@ void MainWindow::buildShell() {
   });
   more->setMenu(moreMenu);
   more->setPopupMode(QToolButton::InstantPopup);
-  navLayout->addWidget(more);
-
-  auto *settingsBtn = footerButton("settings", tr("Settings"));
-  QObject::connect(settingsBtn, &QToolButton::clicked, ui.preferences,
-                   &QAction::trigger);
-  navLayout->addWidget(settingsBtn);
 
   ui.about->setIcon(Theme::icon("info"));
   ui.quit->setIcon(Theme::icon("quit"));
@@ -203,7 +301,21 @@ void MainWindow::buildShell() {
   cl->setContentsMargins(1, 1, 0, 0);
   cl->setSpacing(0);
 
-  ui.tabs->setParent(content);
+  // Home, Transfers and Tasks are pages of their own; the tab widget holds
+  // only the open remotes (Explorer-style tabs).
+  mPages = new QStackedWidget;
+  mPages->setObjectName("Pages");
+  QWidget *pageWidgets[3] = {ui.tabs->widget(0), ui.tabs->widget(1), ui.tabs->widget(2)};
+  for (int i = 2; i >= 0; --i) {
+    ui.tabs->removeTab(i);
+  }
+  for (QWidget *w : pageWidgets) {
+    mPages->addWidget(w);
+  }
+  mPages->addWidget(ui.tabs);
+  cl->addWidget(mPages);
+
+  ui.tabs->setAttribute(Qt::WA_StyledBackground);
   ui.tabs->setDocumentMode(true);
   ui.tabs->setTabsClosable(true);
   ui.tabs->setMovable(true);
@@ -211,11 +323,6 @@ void MainWindow::buildShell() {
   ui.tabs->setUsesScrollButtons(true);
   ui.tabs->tabBar()->setExpanding(false);
   ui.tabs->tabBar()->setIconSize(QSize(18, 18));
-  // Home / Transfers / Tasks are pages, not tabs; only remotes show as tabs
-  for (int i = HomePage; i <= TasksPage; ++i) {
-    ui.tabs->tabBar()->setTabVisible(i, false);
-  }
-  ui.tabs->tabBar()->hide();
 
   auto *newTab = new QToolButton;
   newTab->setIcon(Theme::icon("add"));
@@ -228,8 +335,6 @@ void MainWindow::buildShell() {
     }
   });
   ui.tabs->setCornerWidget(newTab, Qt::TopRightCorner);
-  newTab->hide();
-  cl->addWidget(ui.tabs);
 
   auto *central = new QWidget;
   auto *hl = new QHBoxLayout(central);
@@ -245,7 +350,7 @@ void MainWindow::buildShell() {
 
   // ---------------------------------------------------------- Home page --
   {
-    QWidget *page = ui.tabs->widget(HomePage);
+    QWidget *page = mPages->widget(HomePage);
     auto *v = qobject_cast<QVBoxLayout *>(page->layout());
     setPageMargins(v);
 
@@ -289,7 +394,7 @@ void MainWindow::buildShell() {
 
   // ----------------------------------------------------- Transfers page --
   {
-    QWidget *page = ui.tabs->widget(TransfersPage);
+    QWidget *page = mPages->widget(TransfersPage);
     auto *v = qobject_cast<QVBoxLayout *>(page->layout());
     setPageMargins(v);
     v->insertWidget(0, makePageHeader(tr("Transfers"),
@@ -307,7 +412,7 @@ void MainWindow::buildShell() {
 
   // --------------------------------------------------------- Tasks page --
   {
-    QWidget *page = ui.tabs->widget(TasksPage);
+    QWidget *page = mPages->widget(TasksPage);
     auto *v = qobject_cast<QVBoxLayout *>(page->layout());
     setPageMargins(v);
     v->insertWidget(0, makePageHeader(tr("Tasks"),
@@ -329,60 +434,58 @@ void MainWindow::buildShell() {
   mDownloadIcon = Theme::icon("download");
 
   // ------------------------------------------------------- navigation ----
-  QObject::connect(mNav, &QListWidget::currentItemChanged, this,
-                   [this](QListWidgetItem *item) {
-                     if (!item || mSyncingNav) {
-                       return;
-                     }
-                     if (item->data(KindRole).toString() == "page") {
-                       ui.tabs->setCurrentIndex(item->data(TargetRole).toInt());
-                     } else {
-                       openRemote(item->data(TargetRole).toString(),
-                                  item->data(TypeRole).toString());
-                     }
-                   });
-  QObject::connect(ui.tabs, &QTabWidget::currentChanged, this, [this, newTab](int i) {
-    const bool browsing = i > TasksPage;
-    ui.tabs->tabBar()->setVisible(browsing);
-    newTab->setVisible(browsing);
-    syncNavToCurrentPage();
-  });
-  QObject::connect(ui.tabs, &QTabWidget::tabCloseRequested, this, [this](int i) {
-    if (i > TasksPage) {
-      closeRemoteWidget(ui.tabs->widget(i));
+  auto onNav = [this](QListWidgetItem *item) {
+    if (!item || mSyncingNav) {
+      return;
     }
-  });
+    if (item->data(KindRole).toString() == "page") {
+      showPage(item->data(TargetRole).toInt());
+    } else {
+      openRemote(item->data(TargetRole).toString(),
+                 item->data(TypeRole).toString());
+    }
+  };
+  QObject::connect(mNav, &QListWidget::itemClicked, this, onNav);
+  QObject::connect(mNavRemotes, &QListWidget::itemClicked, this, onNav);
+  QObject::connect(mNav, &QListWidget::currentItemChanged, this, onNav);
+  QObject::connect(mNavRemotes, &QListWidget::currentItemChanged, this, onNav);
+  QObject::connect(ui.tabs, &QTabWidget::currentChanged, this,
+                   [this](int) { syncNavToCurrentPage(); });
+  QObject::connect(mPages, &QStackedWidget::currentChanged, this,
+                   [this](int) { syncNavToCurrentPage(); });
+  QObject::connect(ui.tabs, &QTabWidget::tabCloseRequested, this,
+                   [this](int i) { closeRemoteWidget(ui.tabs->widget(i)); });
   // middle-click closes a tab, as in File Explorer and browsers
   ui.tabs->tabBar()->installEventFilter(this);
 
-  QObject::connect(mNav, &QWidget::customContextMenuRequested, this,
+  QObject::connect(mNavRemotes, &QWidget::customContextMenuRequested, this,
                    [this](const QPoint &pos) {
-                     QListWidgetItem *item = mNav->itemAt(pos);
+                     QListWidgetItem *item = mNavRemotes->itemAt(pos);
                      if (!item || item->data(KindRole).toString() != "remote") {
                        return;
                      }
                      const QString name = item->data(TargetRole).toString();
                      QMenu menu;
-                     menu.addAction(Theme::icon("open"), tr("Open"), this, [=]() {
+                     menu.addAction(Theme::icon("open"), tr("Open"), this, [=, this]() {
                        openRemote(name, item->data(TypeRole).toString());
                      });
-                     menu.addAction(Theme::icon("new_tab"), tr("Open in new tab"), this, [=]() {
+                     menu.addAction(Theme::icon("new_tab"), tr("Open in new tab"), this, [=, this]() {
                        openRemote(name, item->data(TypeRole).toString(), true);
                      });
                      QAction *close = menu.addAction(Theme::icon("close"), tr("Close all tabs"), this,
-                                                     [=]() { closeRemote(name); });
+                                                     [=, this]() { closeRemote(name); });
                      close->setEnabled(remoteTab(name) >= 0);
                      menu.addSeparator();
                      menu.addAction(Theme::icon("refresh"), tr("Reload remotes"), this,
                                     &MainWindow::rcloneListRemotes);
-                     menu.exec(mNav->viewport()->mapToGlobal(pos));
+                     menu.exec(mNavRemotes->viewport()->mapToGlobal(pos));
                    });
 
   mNav->setCurrentRow(0);
 }
 
 int MainWindow::remoteTab(const QString &name) const {
-  for (int i = TasksPage + 1; i < ui.tabs->count(); ++i) {
+  for (int i = 0; i < ui.tabs->count(); ++i) {
     if (ui.tabs->widget(i)->property("remoteName").toString() == name) {
       return i;
     }
@@ -411,20 +514,29 @@ void MainWindow::openRemote(const QString &name, const QString &type,
     ui.tabs->setTabToolTip(index, QString("%1 · %2").arg(name, type));
   }
   ui.tabs->setCurrentIndex(index);
+  showPage(BrowserPage);
+}
+
+void MainWindow::showPage(int page) {
+  if (!mPages) {
+    return;
+  }
+  if (page == BrowserPage && ui.tabs->count() == 0) {
+    page = HomePage;
+  }
+  mPages->setCurrentIndex(page);
+  syncNavToCurrentPage();
 }
 
 void MainWindow::closeRemoteWidget(QWidget *w) {
   const int index = ui.tabs->indexOf(w);
-  if (index <= TasksPage) {
+  if (index < 0) {
     return;
   }
-  const bool wasCurrent = ui.tabs->currentIndex() == index;
-  ui.tabs->removeTab(index);
+  ui.tabs->removeTab(index); // Qt selects the neighbouring tab
   w->deleteLater();
-  if (wasCurrent) {
-    // like a browser: go to the neighbouring tab, or Home if none is left
-    int next = qMin(index, ui.tabs->count() - 1);
-    ui.tabs->setCurrentIndex(next > TasksPage ? next : int(HomePage));
+  if (ui.tabs->count() == 0 && mPages->currentIndex() == BrowserPage) {
+    showPage(HomePage);
   }
   syncNavToCurrentPage();
 }
@@ -441,7 +553,7 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
     auto *me = static_cast<QMouseEvent *>(e);
     if (me->button() == Qt::MiddleButton) {
       const int i = ui.tabs->tabBar()->tabAt(me->position().toPoint());
-      if (i > TasksPage) {
+      if (i >= 0) {
         closeRemoteWidget(ui.tabs->widget(i));
         return true;
       }
@@ -454,48 +566,46 @@ void MainWindow::syncNavToCurrentPage() {
   if (!mNav) {
     return;
   }
-  const int index = ui.tabs->currentIndex();
-  const QString remote =
-      index > TasksPage ? ui.tabs->widget(index)->property("remoteName").toString()
-                        : QString();
-  for (int i = 0; i < mNav->count(); ++i) {
-    QListWidgetItem *it = mNav->item(i);
-    const bool match =
-        remote.isEmpty()
-            ? (it->data(KindRole).toString() == "page" &&
-               it->data(TargetRole).toInt() == index)
-            : (it->data(KindRole).toString() == "remote" &&
-               it->data(TargetRole).toString() == remote);
+  const int index = mPages->currentIndex();
+  QWidget *tab = ui.tabs->currentWidget();
+  const QString remote = (index == BrowserPage && tab)
+                             ? tab->property("remoteName").toString()
+                             : QString();
+  mSyncingNav = true;
+  QListWidget *active = remote.isEmpty() ? mNav : mNavRemotes;
+  QListWidget *other = remote.isEmpty() ? mNavRemotes : mNav;
+  other->clearSelection();
+  other->setCurrentItem(nullptr);
+  for (int i = 0; i < active->count(); ++i) {
+    QListWidgetItem *it = active->item(i);
+    const bool match = remote.isEmpty() ? it->data(TargetRole).toInt() == index
+                                        : it->data(TargetRole).toString() == remote;
     if (match) {
-      mSyncingNav = true;
-      mNav->setCurrentItem(it);
-      mSyncingNav = false;
-      return;
+      active->setCurrentItem(it);
+      break;
     }
   }
+  mSyncingNav = false;
 }
 
 void MainWindow::rebuildNavRemotes() {
-  if (!mNav) {
+  if (!mNavRemotes) {
     return;
   }
-  // drop old remote entries
-  for (int i = mNav->count() - 1; i >= 0; --i) {
-    if (mNav->item(i)->data(KindRole).toString() == "remote") {
-      delete mNav->takeItem(i);
-    }
-  }
+  mSyncingNav = true;
+  mNavRemotes->clear();
+  mSyncingNav = false;
   const int n = ui.remotes->count();
   for (int i = 0; i < n; ++i) {
     QListWidgetItem *src = ui.remotes->item(i);
-    auto *it = new QListWidgetItem(src->icon(), src->text(), mNav);
+    auto *it = new QListWidgetItem(src->icon(), src->text(), mNavRemotes);
     it->setData(KindRole, "remote");
     it->setData(TargetRole, src->text());
     it->setData(TypeRole, src->data(Qt::UserRole));
     it->setToolTip(src->text() + " · " + src->data(Qt::UserRole).toString());
-
   }
-  mNavRemotesHeader->setHidden(n == 0);
+  mNavRemoteCount->setText(QString::number(n));
+  mNavRemoteCount->setVisible(n > 0);
   ui.remotes->setVisible(n > 0);
   mHomeEmpty->setVisible(n == 0);
   mHomeSubtitle->setText(
@@ -506,11 +616,21 @@ void MainWindow::rebuildNavRemotes() {
   syncNavToCurrentPage();
 }
 
+void MainWindow::updateThemeButton() {
+  if (mThemeButton) {
+    mThemeButton->setIcon(Theme::icon(Theme::isDark() ? "sun" : "moon"));
+    mThemeButton->setText(Theme::isDark() ? tr("Light mode") : tr("Dark mode"));
+  }
+  if (mNav) {
+    mNav->viewport()->update();
+    mNavRemotes->viewport()->update();
+  }
+}
+
 void MainWindow::setJobsTabText(const QString &text) {
-  ui.tabs->setTabText(TransfersPage, text);
   if (mNavTransfers) {
-    QString t = text;
-    t.replace("Jobs", tr("Transfers"));
-    mNavTransfers->setText(t);
+    static const QRegularExpression rx(R"(\((\d+)\))");
+    const auto m = rx.match(text);
+    mNavTransfers->setData(BadgeRole, m.hasMatch() ? m.captured(1).toInt() : 0);
   }
 }

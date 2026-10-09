@@ -18,13 +18,13 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
   ui.output->setVisible(false);
 
   QObject::connect(
-      ui.showDetails, &QToolButton::toggled, this, [=](bool checked) {
+      ui.showDetails, &QToolButton::toggled, this, [=, this](bool checked) {
         ui.details->setVisible(checked);
         ui.showDetails->setArrowType(checked ? Qt::DownArrow : Qt::RightArrow);
       });
 
   QObject::connect(
-      ui.showOutput, &QToolButton::toggled, this, [=](bool checked) {
+      ui.showOutput, &QToolButton::toggled, this, [=, this](bool checked) {
         ui.output->setVisible(checked);
         ui.showOutput->setArrowType(checked ? Qt::DownArrow : Qt::RightArrow);
       });
@@ -32,7 +32,7 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
   ui.cancel->setIcon(
       Theme::icon("close"));
 
-  QObject::connect(ui.cancel, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.cancel, &QToolButton::clicked, this, [=, this]() {
     if (mRunning) {
       int button = QMessageBox::question(
           this, "Stop", QString("Do you want to stop %1 stream?").arg(remote),
@@ -45,7 +45,7 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
     }
   });
 
-  QObject::connect(mRclone, &QProcess::readyRead, this, [=]() {
+  QObject::connect(mRclone, &QProcess::readyRead, this, [=, this]() {
     while (mRclone->canReadLine()) {
       ui.output->appendPlainText(mRclone->readLine().trimmed());
     }
@@ -54,7 +54,7 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
   QObject::connect(mRclone,
                    static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
                        &QProcess::finished),
-                   this, [=]() {
+                   this, [=, this]() {
                      mRclone->deleteLater();
                      mRunning = false;
                      emit finished();

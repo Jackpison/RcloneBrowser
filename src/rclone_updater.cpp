@@ -145,7 +145,7 @@ void RcloneUpdater::checkFrom(int i) {
       get(QUrl(useRedirect ? "https://github.com/rclone/rclone/releases/latest"
                            : src.versionUrl));
 
-  connect(reply, &QNetworkReply::finished, this, [=]() {
+  connect(reply, &QNetworkReply::finished, this, [=, this]() {
     reply->deleteLater();
     if (mCancelled) {
       fail(QString());
@@ -198,7 +198,7 @@ void RcloneUpdater::downloadFrom(int i, const QString &version) {
   // 1) checksums (small)  2) the archive itself (with progress)
   emit status(tr("Fetching checksums from %1…").arg(host));
   QNetworkReply *sumsReply = get(QUrl(base + "/SHA256SUMS"));
-  connect(sumsReply, &QNetworkReply::finished, this, [=]() {
+  connect(sumsReply, &QNetworkReply::finished, this, [=, this]() {
     sumsReply->deleteLater();
     if (mCancelled) {
       fail(QString());
@@ -213,14 +213,24 @@ void RcloneUpdater::downloadFrom(int i, const QString &version) {
     emit status(tr("Downloading %1 from %2…").arg(zipName, host));
     QNetworkReply *zipReply = get(QUrl(base + "/" + zipName));
     connect(zipReply, &QNetworkReply::downloadProgress, this,
-            &RcloneUpdater::progress);
-    connect(zipReply, &QNetworkReply::finished, this, [=]() {
+            [this, zipReply](qint64 got, qint64 total) {
+              // rclone zips are ~30 MB; refuse anything absurdly large
+              constexpr qint64 kMaxDownload = 256LL * 1024 * 1024;
+              if (got > kMaxDownload || total > kMaxDownload) {
+                zipReply->abort();
+                return;
+              }
+              emit progress(got, total);
+            });
+    connect(zipReply, &QNetworkReply::finished, this, [=, this]() {
       zipReply->deleteLater();
       if (mCancelled) {
         fail(QString());
         return;
       }
-      if (zipReply->error() != QNetworkReply::NoError) {
+      // after redirects the file must still have come over HTTPS
+      if (zipReply->error() != QNetworkReply::NoError ||
+          zipReply->url().scheme() != QLatin1String("https")) {
         downloadFrom(i + 1, version);
         return;
       }
@@ -310,14 +320,14 @@ void RcloneUpdater::extract(const QString &version, const QString &zipPath,
 
   emit status(tr("Unpacking…"));
   auto *p = new QProcess(this);
-  connect(p, &QProcess::errorOccurred, this, [=](QProcess::ProcessError e) {
+  connect(p, &QProcess::errorOccurred, this, [=, this](QProcess::ProcessError e) {
     if (e == QProcess::FailedToStart) {
       p->deleteLater();
       extract(version, zipPath, attempt + 1);
     }
   });
   connect(p, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this,
-          [=](int code, QProcess::ExitStatus st) {
+          [=, this](int code, QProcess::ExitStatus st) {
             p->deleteLater();
             if (code != 0 || st != QProcess::NormalExit) {
               extract(version, zipPath, attempt + 1);

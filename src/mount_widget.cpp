@@ -18,13 +18,13 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
   ui.output->setVisible(false);
 
   QObject::connect(
-      ui.showDetails, &QToolButton::toggled, this, [=](bool checked) {
+      ui.showDetails, &QToolButton::toggled, this, [=, this](bool checked) {
         ui.details->setVisible(checked);
         ui.showDetails->setArrowType(checked ? Qt::DownArrow : Qt::RightArrow);
       });
 
   QObject::connect(
-      ui.showOutput, &QToolButton::toggled, this, [=](bool checked) {
+      ui.showOutput, &QToolButton::toggled, this, [=, this](bool checked) {
         ui.output->setVisible(checked);
         ui.showOutput->setArrowType(checked ? Qt::DownArrow : Qt::RightArrow);
       });
@@ -32,7 +32,7 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
   ui.cancel->setIcon(
       Theme::icon("close"));
 
-  QObject::connect(ui.cancel, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.cancel, &QToolButton::clicked, this, [=, this]() {
     if (mRunning) {
       int button = QMessageBox::question(
           this, "Unmount",
@@ -50,7 +50,7 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
     }
   });
 
-  QObject::connect(mProcess, &QProcess::readyRead, this, [=]() {
+  QObject::connect(mProcess, &QProcess::readyRead, this, [=, this]() {
     while (mProcess->canReadLine()) {
       ui.output->appendPlainText(mProcess->readLine().trimmed());
     }
@@ -59,7 +59,7 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
   QObject::connect(mProcess,
                    static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
                        &QProcess::finished),
-                   this, [=](int status, QProcess::ExitStatus) {
+                   this, [=, this](int status, QProcess::ExitStatus) {
                      mProcess->deleteLater();
                      mRunning = false;
                      if (status == 0) {

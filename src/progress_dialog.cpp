@@ -18,7 +18,7 @@ ProgressDialog::ProgressDialog(const QString &title, const QString &operation,
                    &QDialog::reject);
 
   QObject::connect(ui.buttonShowOutput, &QPushButton::toggled, this,
-                   [=](bool checked) {
+                   [=, this](bool checked) {
                      ui.output->setVisible(checked);
                      ui.buttonShowOutput->setArrowType(
                          checked ? Qt::DownArrow : Qt::RightArrow);
@@ -30,7 +30,7 @@ ProgressDialog::ProgressDialog(const QString &title, const QString &operation,
   QObject::connect(process,
                    static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
                        &QProcess::finished),
-                   this, [=](int code, QProcess::ExitStatus status) {
+                   this, [=, this](int code, QProcess::ExitStatus status) {
                      if (status == QProcess::NormalExit && code == 0) {
                        if (close) {
                          emit accept();
@@ -41,7 +41,7 @@ ProgressDialog::ProgressDialog(const QString &title, const QString &operation,
                      }
                    });
 
-  QObject::connect(process, &QProcess::readyRead, this, [=]() {
+  QObject::connect(process, &QProcess::readyRead, this, [=, this]() {
     QString output = process->readAll();
     if (trim) {
       output = output.trimmed();

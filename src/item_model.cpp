@@ -95,7 +95,7 @@ ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
   QObject::connect(this, &ItemModel::getIcon, icons, &IconCache::getIcon);
   QObject::connect(
       icons, &IconCache::iconReady, this,
-      [=](Item *item, const QPersistentModelIndex &parent, const QIcon &icon) {
+      [=, this](Item *item, const QPersistentModelIndex &parent, const QIcon &icon) {
         item->state = Item::Ready;
         QString ext = QFileInfo(item->name).suffix();
         if (!mLoadedIcons.contains(ext)) {
@@ -368,8 +368,9 @@ Item *ItemModel::get(const QModelIndex &index) const {
 }
 
 void ItemModel::load(const QPersistentModelIndex &parentIndex, Item *parent) {
-  auto lsd = new QProcess(this);
-  auto lsl = new QProcess(this);
+  // One `rclone lsjson` call lists folders and files together (previously
+  // two separate rclone runs, lsd + lsl, each listing the folder again).
+  auto ls = new QProcess(this);
 
   auto cache = new QVector<Item *>();
 
@@ -380,20 +381,26 @@ void ItemModel::load(const QPersistentModelIndex &parentIndex, Item *parent) {
 
   QTimer *timer = new QTimer(this);
 
-  QObject::connect(timer, &QTimer::timeout, this, [=]() {
+  QObject::connect(timer, &QTimer::timeout, this, [=, this]() {
     advanceSpinner(loading->name);
     auto loadingIndex = createIndex(loading->num(), 0, loading);
     emit dataChanged(loadingIndex, loadingIndex, QVector<int>{Qt::DisplayRole});
   });
 
-  auto rcloneFinished = [=]() {
-    sender()->deleteLater();
-
-    parent->state =
-        parent->state == Item::Loading1 ? Item::Loading2 : Item::Ready;
-    if (parent->state != Item::Ready) {
-      return;
+  auto rcloneFinished = [=, this]() {
+    ls->deleteLater();
+    bool parsed = false;
+    const auto entries = RcloneOutput::parseLsJson(ls->readAllStandardOutput(), &parsed);
+    for (const auto &e : entries) {
+      Item *child = new Item();
+      child->parent = parent;
+      child->isFolder = e.isDir;
+      child->name = e.name;
+      child->modified = e.modified;
+      child->size = e.size;
+      cache->append(child);
     }
+    parent->state = Item::Ready;
 
     timer->stop();
     timer->deleteLater();
@@ -471,68 +478,26 @@ void ItemModel::load(const QPersistentModelIndex &parentIndex, Item *parent) {
     }
   };
 
-  QObject::connect(lsd,
-                   static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
-                       &QProcess::finished),
-                   this, rcloneFinished);
-  QObject::connect(lsl,
+  QObject::connect(ls,
                    static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
                        &QProcess::finished),
                    this, rcloneFinished);
 
-  QObject::connect(lsd, &QProcess::readyRead, this, [=]() {
-    while (lsd->canReadLine()) {
-      const auto e =
-          RcloneOutput::parseLsdLine(QString::fromUtf8(lsd->readLine()));
-      if (e.valid) {
-        Item *child = new Item();
-        child->isFolder = true;
-        child->parent = parent;
-        child->name = e.name;
-        child->modified = e.modified;
-
-        cache->append(child);
-      }
-    }
-  });
-
-  QObject::connect(lsl, &QProcess::readyRead, this, [=]() {
-    while (lsl->canReadLine()) {
-      const auto e =
-          RcloneOutput::parseLslLine(QString::fromUtf8(lsl->readLine()));
-      if (e.valid) {
-        Item *child = new Item();
-        child->parent = parent;
-        child->name = e.name;
-        child->modified = e.modified;
-        child->size = e.size;
-
-        cache->append(child);
-      }
-    }
-  });
-
-  parent->state = Item::Loading1;
+  parent->state = Item::Loading2;
 
   emit beginInsertRows(parentIndex, 0, 0);
   parent->childs.prepend(loading);
   emit endInsertRows();
 
   timer->start(100);
-  UseRclonePassword(lsd);
-  UseRclonePassword(lsl);
-
-  lsd->start(GetRclone(),
-             QStringList() << "lsd" << GetRcloneConf() << GetDriveSharedWithMe()
-                           << GetShowHidden() << GetDefaultRcloneOptionsList()
-                           << mRemote + ":" + parent->path.path(),
-             QIODevice::ReadOnly);
-  lsl->start(GetRclone(),
-             QStringList() << "lsl" << GetRcloneConf() << GetDriveSharedWithMe()
-                           << GetShowHidden() << "--max-depth"
-                           << "1" << GetDefaultRcloneOptionsList()
-                           << mRemote + ":" + parent->path.path(),
-             QIODevice::ReadOnly);
+  UseRclonePassword(ls);
+  ls->setProcessChannelMode(QProcess::SeparateChannels);
+  ls->start(GetRclone(),
+            QStringList() << "lsjson" << "--no-mimetype"
+                          << GetRcloneConf() << GetDriveSharedWithMe()
+                          << GetShowHidden() << GetDefaultRcloneOptionsList()
+                          << mRemote + ":" + parent->path.path(),
+            QIODevice::ReadOnly);
 }
 
 void ItemModel::sortRecursive(Item *item, const ItemSorter &sorter) {

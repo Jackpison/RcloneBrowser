@@ -27,7 +27,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
         ui.buttonBox->addButton("&Run", QDialogButtonBox::AcceptRole);
     runButton->setDefault(true); // Enter runs the transfer, not a dry run
     QObject::connect(dryRun, &QPushButton::clicked, this,
-                     [=]() { mDryRun = true; });
+                     [=, this]() { mDryRun = true; });
   }
 
   QPushButton *saveTask = ui.buttonBox->addButton(
@@ -35,7 +35,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
 
   QObject::connect(
       ui.buttonBox->button(QDialogButtonBox::RestoreDefaults),
-      &QPushButton::clicked, this, [=]() {
+      &QPushButton::clicked, this, [=, this]() {
         ui.cbSyncDelete->setCurrentIndex(0);
         // set combobox tooltips
         ui.cbSyncDelete->setItemData(0, "--delete-during", Qt::ToolTipRole);
@@ -83,7 +83,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
 
   ui.buttonBox->button(QDialogButtonBox::RestoreDefaults)->click();
 
-  QObject::connect(saveTask, &QPushButton::clicked, this, [=]() {
+  QObject::connect(saveTask, &QPushButton::clicked, this, [=, this]() {
     // validate before saving task...
     if (ui.textDescription->text().isEmpty()) {
       QMessageBox::warning(this, "Warning",
@@ -110,7 +110,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
   QObject::connect(ui.buttonBox, &QDialogButtonBox::rejected, this,
                    &QDialog::reject);
 
-  QObject::connect(ui.buttonSourceFile, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonSourceFile, &QToolButton::clicked, this, [=, this]() {
     QString file = QFileDialog::getOpenFileName(this, "Choose file to upload");
     if (!file.isEmpty()) {
       ui.textSource->setText(QDir::toNativeSeparators(file));
@@ -118,7 +118,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
     }
   });
 
-  QObject::connect(ui.buttonSourceFolder, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonSourceFolder, &QToolButton::clicked, this, [=, this]() {
     auto settings = GetSettings();
     QString last_used_source_folder =
         (settings->value("Settings/lastUsedSourceFolder").toString());
@@ -134,7 +134,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
     }
   });
 
-  QObject::connect(ui.buttonDefaultSource, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonDefaultSource, &QToolButton::clicked, this, [=, this]() {
     auto settings = GetSettings();
     QString default_folder =
         (settings->value("Settings/defaultUploadDir").toString());
@@ -149,7 +149,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
     };
   });
 
-  QObject::connect(ui.buttonDest, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonDest, &QToolButton::clicked, this, [=, this]() {
     auto settings = GetSettings();
     QString last_used_dest_folder =
         (settings->value("Settings/lastUsedDestFolder").toString());
@@ -168,7 +168,7 @@ TransferDialog::TransferDialog(bool isDownload, bool isDrop,
     }
   });
 
-  QObject::connect(ui.buttonDefaultDest, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonDefaultDest, &QToolButton::clicked, this, [=, this]() {
     auto settings = GetSettings();
     QString default_folder =
         (settings->value("Settings/defaultDownloadDir").toString());

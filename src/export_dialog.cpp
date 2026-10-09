@@ -12,7 +12,7 @@ ExportDialog::ExportDialog(const QString &remote, const QDir &path,
   mTarget = remote + ":" + path.path();
 
   QObject::connect(ui.buttonBox->button(QDialogButtonBox::RestoreDefaults),
-                   &QPushButton::clicked, this, [=]() {
+                   &QPushButton::clicked, this, [=, this]() {
                      ui.rbText->setChecked(true);
                      ui.checkSameFilesystem->setChecked(false);
                      ui.textMinSize->clear();
@@ -29,7 +29,7 @@ ExportDialog::ExportDialog(const QString &remote, const QDir &path,
   QObject::connect(ui.buttonBox, &QDialogButtonBox::rejected, this,
                    &QDialog::reject);
 
-  QObject::connect(ui.fileBrowse, &QToolButton::clicked, this, [=]() {
+  QObject::connect(ui.fileBrowse, &QToolButton::clicked, this, [=, this]() {
     QString file =
         QFileDialog::getSaveFileName(this, "Choose destination file");
     if (!file.isEmpty()) {

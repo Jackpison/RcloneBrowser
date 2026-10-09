@@ -1,5 +1,9 @@
 #include "rclone_output.h"
 
+#include <QDateTime>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QRegularExpression>
 
 namespace RcloneOutput {
@@ -144,6 +148,42 @@ ListEntry parseLslLine(const QString &rawLine) {
     e.name = m.captured(3);
   }
   return e;
+}
+
+QList<ListEntry> parseLsJson(const QByteArray &json, bool *ok) {
+  QList<ListEntry> out;
+  QJsonParseError err{};
+  const QJsonDocument doc = QJsonDocument::fromJson(json, &err);
+  if (ok) {
+    *ok = err.error == QJsonParseError::NoError && doc.isArray();
+  }
+  if (!doc.isArray()) {
+    return out;
+  }
+  static const QRegularExpression fraction(R"(\.\d+)");
+  const QJsonArray arr = doc.array();
+  out.reserve(arr.size());
+  for (const QJsonValue &v : arr) {
+    const QJsonObject o = v.toObject();
+    ListEntry e;
+    e.name = o.value(QLatin1String("Name")).toString();
+    if (e.name.isEmpty()) {
+      continue;
+    }
+    e.valid = true;
+    e.isDir = o.value(QLatin1String("IsDir")).toBool();
+    const double size = o.value(QLatin1String("Size")).toDouble();
+    e.size = (e.isDir || size < 0) ? 0 : quint64(size);
+    // "2026-10-08T18:18:39.142115738Z" -> local "2026-10-08 20:18:39"
+    QString t = o.value(QLatin1String("ModTime")).toString();
+    t.remove(fraction);
+    const QDateTime dt = QDateTime::fromString(t, Qt::ISODate);
+    if (dt.isValid()) {
+      e.modified = dt.toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+    }
+    out.append(e);
+  }
+  return out;
 }
 
 QStringList LineBuffer::append(const QString &chunk) {

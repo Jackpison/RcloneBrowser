@@ -91,7 +91,7 @@ MainWindow::MainWindow() {
     };
   }
 
-  QObject::connect(ui.preferences, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.preferences, &QAction::triggered, this, [=, this]() {
     PreferencesDialog dialog(this);
     if (dialog.exec() == QDialog::Accepted) {
       auto settings = GetSettings();
@@ -129,7 +129,7 @@ MainWindow::MainWindow() {
       settings->setValue("Settings/showHidden", dialog.getShowHidden());
       Theme::save(dialog.getTheme());
       Theme::apply();
-      rcloneListRemotes(); // remote logos have light and dark variants
+      updateThemeButton();
       settings->setValue("Settings/iconSize", dialog.getIconSize().trimmed());
 
       settings->setValue("Settings/useProxy", dialog.getUseProxy());
@@ -152,12 +152,12 @@ MainWindow::MainWindow() {
     }
   });
 
-  QObject::connect(ui.quit, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.quit, &QAction::triggered, this, [=, this]() {
     mCloseToTray = false;
     close();
   });
 
-  QObject::connect(ui.about, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.about, &QAction::triggered, this, [=, this]() {
     QMessageBox::about(
         this, "Rclone Browser",
         QString(
@@ -175,7 +175,7 @@ MainWindow::MainWindow() {
 
   QObject::connect(
       ui.remotes, &QListWidget::currentItemChanged, this,
-      [=](QListWidgetItem *current) { ui.open->setEnabled(current != NULL); });
+      [=, this](QListWidgetItem *current) { ui.open->setEnabled(current != NULL); });
   QObject::connect(ui.remotes, &QListWidget::itemActivated, ui.open,
                    &QPushButton::clicked);
 
@@ -184,7 +184,7 @@ MainWindow::MainWindow() {
   QObject::connect(ui.refresh, &QPushButton::clicked, this,
                    &MainWindow::rcloneListRemotes);
 
-  QObject::connect(ui.open, &QPushButton::clicked, this, [=]() {
+  QObject::connect(ui.open, &QPushButton::clicked, this, [=, this]() {
     auto items = ui.remotes->selectedItems();
     if (items.isEmpty()) {
       return;
@@ -194,19 +194,19 @@ MainWindow::MainWindow() {
 
 
   QObject::connect(ui.tasksListWidget, &QListWidget::currentItemChanged, this,
-                   [=](QListWidgetItem *current) {
+                   [=, this](QListWidgetItem *current) {
                      ui.buttonDeleteTask->setEnabled(current != nullptr);
                      ui.buttonEditTask->setEnabled(current != nullptr);
                      ui.buttonRunTask->setEnabled(current != nullptr);
                      ui.buttonDryrunTask->setEnabled(current != nullptr);
                    });
 
-  QObject::connect(ui.buttonRunTask, &QPushButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonRunTask, &QPushButton::clicked, this, [=, this]() {
     JobOptionsListWidgetItem *item = static_cast<JobOptionsListWidgetItem *>(
         ui.tasksListWidget->currentItem());
     runItem(item);
   });
-  QObject::connect(ui.buttonDryrunTask, &QPushButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonDryrunTask, &QPushButton::clicked, this, [=, this]() {
     JobOptionsListWidgetItem *item = static_cast<JobOptionsListWidgetItem *>(
         ui.tasksListWidget->currentItem());
     runItem(item, true);
@@ -219,9 +219,9 @@ MainWindow::MainWindow() {
   //    });
 
   QObject::connect(ui.buttonEditTask, &QPushButton::clicked, this,
-                   [=]() { editSelectedTask(); });
+                   [=, this]() { editSelectedTask(); });
 
-  QObject::connect(ui.buttonDeleteTask, &QPushButton::clicked, this, [=]() {
+  QObject::connect(ui.buttonDeleteTask, &QPushButton::clicked, this, [=, this]() {
     JobOptionsListWidgetItem *item = static_cast<JobOptionsListWidgetItem *>(
         ui.tasksListWidget->currentItem());
     JobOptions *jo = item->GetData();
@@ -233,18 +233,12 @@ MainWindow::MainWindow() {
                    &MainWindow::listTasks);
 
 
-  ui.tabs->tabBar()->setTabButton(0, QTabBar::RightSide, nullptr);
-  ui.tabs->tabBar()->setTabButton(0, QTabBar::LeftSide, nullptr);
-  ui.tabs->tabBar()->setTabButton(1, QTabBar::RightSide, nullptr);
-  ui.tabs->tabBar()->setTabButton(1, QTabBar::LeftSide, nullptr);
-  ui.tabs->tabBar()->setTabButton(2, QTabBar::RightSide, nullptr);
-  ui.tabs->tabBar()->setTabButton(2, QTabBar::LeftSide, nullptr);
-  ui.tabs->setCurrentIndex(0);
+  showPage(0);
 
   listTasks();
 
   QObject::connect(&mSystemTray, &QSystemTrayIcon::activated, this,
-                   [=](QSystemTrayIcon::ActivationReason reason) {
+                   [=, this](QSystemTrayIcon::ActivationReason reason) {
                      if (reason == QSystemTrayIcon::DoubleClick ||
                          reason == QSystemTrayIcon::Trigger) {
                        showNormal();
@@ -252,11 +246,11 @@ MainWindow::MainWindow() {
                      }
                    });
 
-  QObject::connect(&mSystemTray, &QSystemTrayIcon::messageClicked, this, [=]() {
+  QObject::connect(&mSystemTray, &QSystemTrayIcon::messageClicked, this, [=, this]() {
     showNormal();
     mSystemTray.setVisible(mAlwaysShowInTray);
 
-    ui.tabs->setCurrentIndex(1);
+    showPage(1);
     if (mLastFinished) {
       mLastFinished->showDetails();
       ui.jobsArea->ensureWidgetVisible(mLastFinished);
@@ -265,7 +259,7 @@ MainWindow::MainWindow() {
 
   QMenu *trayMenu = new QMenu(this);
   QObject::connect(
-      trayMenu->addAction("&Show"), &QAction::triggered, this, [=]() {
+      trayMenu->addAction("&Show"), &QAction::triggered, this, [=, this]() {
         MainWindow::setWindowState((windowState() & ~Qt::WindowMinimized) |
                                    Qt::WindowActive);
         MainWindow::show();  // bring window to top on macOS
@@ -323,7 +317,7 @@ void MainWindow::rcloneGetVersion() {
       p,
       static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
           &QProcess::finished),
-      this, [=](int code, QProcess::ExitStatus) {
+      this, [=, this](int code, QProcess::ExitStatus) {
         if (code == 0) {
           QString version = p->readAllStandardOutput().trimmed();
 
@@ -489,7 +483,7 @@ void MainWindow::rcloneConfig() {
   QObject::connect(p,
                    static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
                        &QProcess::finished),
-                   this, [=](int code, QProcess::ExitStatus) {
+                   this, [=, this](int code, QProcess::ExitStatus) {
                      if (code == 0) {
                        emit rcloneListRemotes();
                      }
@@ -565,7 +559,7 @@ void MainWindow::rcloneListRemotes() {
       p,
       static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
           &QProcess::finished),
-      this, [=](int code, QProcess::ExitStatus) {
+      this, [=, this](int code, QProcess::ExitStatus) {
         if (code == 0) {
           QStyle *style = qApp->style();
 
@@ -717,7 +711,7 @@ bool MainWindow::canClose() {
 
   bool wasVisible = isVisible();
 
-  ui.tabs->setCurrentIndex(1);
+  showPage(1);
   showNormal();
 
   int button =
@@ -820,7 +814,7 @@ void MainWindow::addTransfer(const QString &message, const QString &source,
   line->setFrameShadow(QFrame::Sunken);
 
   QObject::connect(
-      widget, &JobWidget::finished, this, [=](const QString &info) {
+      widget, &JobWidget::finished, this, [=, this](const QString &info) {
         if (mNotifyFinishedTransfers) {
           qApp->alert(this);
           mLastFinished = widget;
@@ -834,7 +828,7 @@ void MainWindow::addTransfer(const QString &message, const QString &source,
         }
       });
 
-  QObject::connect(widget, &JobWidget::closed, this, [=]() {
+  QObject::connect(widget, &JobWidget::closed, this, [=, this]() {
     if (widget == mLastFinished) {
       mLastFinished = nullptr;
     }
@@ -869,7 +863,7 @@ void MainWindow::addMount(const QString &remote, const QString &folder) {
   line->setFrameShape(QFrame::HLine);
   line->setFrameShadow(QFrame::Sunken);
 
-  QObject::connect(widget, &MountWidget::finished, this, [=]() {
+  QObject::connect(widget, &MountWidget::finished, this, [=, this]() {
     if (--mJobCount == 0) {
       setJobsTabText("Jobs");
     } else {
@@ -877,7 +871,7 @@ void MainWindow::addMount(const QString &remote, const QString &folder) {
     }
   });
 
-  QObject::connect(widget, &MountWidget::closed, this, [=]() {
+  QObject::connect(widget, &MountWidget::closed, this, [=, this]() {
     ui.jobs->removeWidget(widget);
     ui.jobs->removeWidget(line);
     widget->deleteLater();
@@ -946,7 +940,7 @@ void MainWindow::addStream(const QString &remote, const QString &stream) {
       player,
       static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(
           &QProcess::finished),
-      this, [=](int status, QProcess::ExitStatus) {
+      this, [=, this](int status, QProcess::ExitStatus) {
         player->deleteLater();
         if (status != 0 && player->error() == QProcess::FailedToStart) {
           QMessageBox::critical(
@@ -963,7 +957,7 @@ void MainWindow::addStream(const QString &remote, const QString &stream) {
   line->setFrameShape(QFrame::HLine);
   line->setFrameShadow(QFrame::Sunken);
 
-  QObject::connect(widget, &StreamWidget::finished, this, [=]() {
+  QObject::connect(widget, &StreamWidget::finished, this, [=, this]() {
     if (--mJobCount == 0) {
       setJobsTabText("Jobs");
     } else {
@@ -971,7 +965,7 @@ void MainWindow::addStream(const QString &remote, const QString &stream) {
     }
   });
 
-  QObject::connect(widget, &StreamWidget::closed, this, [=]() {
+  QObject::connect(widget, &StreamWidget::closed, this, [=, this]() {
     ui.jobs->removeWidget(widget);
     ui.jobs->removeWidget(line);
     widget->deleteLater();

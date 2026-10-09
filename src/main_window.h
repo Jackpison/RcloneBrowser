@@ -71,7 +71,13 @@ private:
   // Windows 11 shell (main_window_shell.cpp)
   QListWidget *mNav = nullptr;
   QListWidgetItem *mNavTransfers = nullptr;
-  QListWidgetItem *mNavRemotesHeader = nullptr;
+  QWidget *mNavRemotesHeader = nullptr;
+  QListWidget *mNavRemotes = nullptr;
+  QLabel *mNavRemoteCount = nullptr;
+  QToolButton *mThemeButton = nullptr;
+  QStackedWidget *mPages = nullptr; // Home, Transfers, Tasks, remote tabs
+  void showPage(int page);
+  void updateThemeButton();
   QLabel *mHomeSubtitle = nullptr;
   QLabel *mHomeEmpty = nullptr;
   bool mSyncingNav = false;

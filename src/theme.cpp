@@ -19,53 +19,11 @@ QColor gAccentText; // accent used for text, indicators, focus
 
 // ------------------------------------------------------------ accent ----
 
-struct AccentPalette {
-  bool valid = false;
-  QColor light2, light3, base, dark1, dark2;
-};
-
-AccentPalette readWindowsAccent() {
-  AccentPalette p;
-#ifdef Q_OS_WIN
-  // Explorer\Accent\AccentPalette: 8 RGBA entries
-  // (Light3, Light2, Light1, Base, Dark1, Dark2, Dark3, unused) – the same
-  // shades WinUI apps use.
-  BYTE data[32];
-  DWORD size = sizeof(data);
-  if (RegGetValueW(HKEY_CURRENT_USER,
-                   L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent",
-                   L"AccentPalette", RRF_RT_REG_BINARY, nullptr, data,
-                   &size) == ERROR_SUCCESS &&
-      size >= 28) {
-    auto at = [&](int i) { return QColor(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]); };
-    p.light3 = at(0);
-    p.light2 = at(1);
-    p.base = at(3);
-    p.dark1 = at(4);
-    p.dark2 = at(5);
-    p.valid = p.base.isValid();
-  }
-#endif
-  return p;
-}
-
 void computeAccent() {
-  AccentPalette p = readWindowsAccent();
-  if (!p.valid) {
-    // Windows default blue
-    p.light2 = QColor("#60CDFF");
-    p.light3 = QColor("#99EBFF");
-    p.base = QColor("#0078D4");
-    p.dark1 = QColor("#005FB8");
-    p.dark2 = QColor("#003E92");
-  }
-  if (gDark) {
-    gAccentBtn = p.light2;
-    gAccentText = p.light2;
-  } else {
-    gAccentBtn = p.dark1;
-    gAccentText = p.dark1;
-  }
+  // Brand accent: bright gold. Text/indicators use a darker amber on light
+  // backgrounds so they stay readable (WCAG AA contrast).
+  gAccentBtn = QColor("#F5B70A");
+  gAccentText = gDark ? QColor("#FBBF24") : QColor("#A15C07");
 }
 
 // ------------------------------------------------------------- icons ----
@@ -87,7 +45,9 @@ QColor iconColor(const QColor &forced, QIcon::Mode mode) {
              : gDark          ? QColor(255, 255, 255)
                               : QColor(0, 0, 0, 228);
   if (mode == QIcon::Disabled) {
-    c.setAlphaF(c.alphaF() * (gDark ? 0.36 : 0.36));
+    c.setAlphaF(c.alphaF() * 0.36);
+  } else if (mode == QIcon::Selected && !forced.isValid()) {
+    c = gAccentText;
   }
   return c;
 }
@@ -162,11 +122,6 @@ QString iconFile(const QString &name, const QColor &color, int px = 16) {
 
 // ------------------------------------------------------------ tokens ----
 
-QColor mix(const QColor &a, const QColor &b, qreal t) {
-  return QColor::fromRgbF(a.redF() * t + b.redF() * (1 - t),
-                          a.greenF() * t + b.greenF() * (1 - t),
-                          a.blueF() * t + b.blueF() * (1 - t));
-}
 
 QMap<QString, QString> buildTokens();
 QMap<QString, QString> tokens() {
@@ -189,52 +144,50 @@ QMap<QString, QString> buildTokens() {
                                   .arg(c.alpha());
   };
   const bool d = gDark;
-  const QColor card = d ? QColor("#303030") : QColor("#FFFFFF");
-  set("bg", d ? QColor("#1F1F1F") : QColor("#EEEEEE"));
-  set("layer", d ? QColor("#272727") : QColor("#F8F8F8"));
+  const QColor card = d ? QColor("#151515") : QColor("#FFFFFF");
+  set("bg", d ? QColor("#0E0E0E") : QColor("#F3F1EC"));        // sidebar, window
+  set("layer", d ? QColor("#0A0A0A") : QColor("#FAF9F6"));     // content area
   set("card", card);
-  set("cardHover", d ? QColor("#383838") : QColor("#F4F4F4"));
-  set("stroke", d ? QColor("#1C1C1C") : QColor("#E5E5E5"));
-  set("cardStroke", d ? QColor("#424242") : QColor("#D9D9D9"));
-  set("tile", d ? QColor("#3A3A3A") : QColor("#F3F3F3"));
-  set("headerBg", d ? QColor("#363636") : QColor("#F6F6F6"));
-  set("divider", d ? QColor("#383838") : QColor("#E5E5E5"));
-  set("text", d ? QColor("#FFFFFF") : QColor("#141414"));
-  set("text2", d ? QColor("#D8D8D8") : QColor("#474747"));
-  set("text3", d ? QColor("#A0A0A0") : QColor("#8A8A8A"));
-  set("ctrl", d ? QColor("#2D2D2D") : QColor("#FFFFFF"));
-  set("ctrlHover", d ? QColor("#323232") : QColor("#F9F9F9"));
-  set("ctrlPressed", d ? QColor("#272727") : QColor("#F5F5F5"));
-  set("ctrlDisabled", d ? QColor("#2A2A2A") : QColor("#F5F5F5"));
-  set("ctrlStroke", d ? QColor("#3B3B3B") : QColor("#E5E5E5"));
-  set("ctrlStrokeBottom", d ? QColor("#353535") : QColor("#CCCCCC"));
-  set("inputBottom", d ? QColor("#9A9A9A") : QColor("#868686"));
-  set("inputFocus", d ? QColor("#1F1F1F") : QColor("#FFFFFF"));
-  set("subtleHover", d ? QColor(255, 255, 255, 20) : QColor(0, 0, 0, 13));
-  set("subtlePressed", d ? QColor(255, 255, 255, 10) : QColor(0, 0, 0, 6));
-  set("flyout", d ? QColor("#2C2C2C") : QColor("#F9F9F9"));
-  set("flyoutStroke", d ? QColor("#1A1A1A") : QColor("#D8D8D8"));
-  set("scroll", d ? QColor(255, 255, 255, 110) : QColor(0, 0, 0, 110));
-  set("track", d ? QColor("#4A4A4A") : QColor("#D6D6D6"));
+  set("cardHover", d ? QColor("#1C1C1C") : QColor("#FBF8F1"));
+  set("stroke", d ? QColor("#1F1F1F") : QColor("#E4DFD5"));
+  set("cardStroke", d ? QColor("#262626") : QColor("#E4DFD5"));
+  set("tile", d ? QColor("#1D1D1D") : QColor("#F5F2EB"));
+  set("headerBg", d ? QColor("#191919") : QColor("#F7F4EE"));
+  set("divider", d ? QColor("#232323") : QColor("#E7E2D8"));
+  set("text", d ? QColor("#F5F3EE") : QColor("#1C1917"));
+  set("text2", d ? QColor("#B5AFA8") : QColor("#57534E"));
+  set("text3", d ? QColor("#78716C") : QColor("#A8A29E"));
+  set("ctrl", d ? QColor("#171717") : QColor("#FFFFFF"));
+  set("ctrlHover", d ? QColor("#1E1E1E") : QColor("#FBF9F5"));
+  set("ctrlPressed", d ? QColor("#141414") : QColor("#F4F1EA"));
+  set("ctrlDisabled", d ? QColor("#131313") : QColor("#F4F1EA"));
+  set("ctrlStroke", d ? QColor("#2A2A2A") : QColor("#DDD7CB"));
+  set("ctrlStrokeBottom", d ? QColor("#2A2A2A") : QColor("#C9C2B4"));
+  set("inputBottom", d ? QColor("#3A3A3A") : QColor("#B9B1A2"));
+  set("inputFocus", d ? QColor("#121212") : QColor("#FFFFFF"));
+  set("subtleHover", d ? QColor(255, 255, 255, 14) : QColor(28, 25, 23, 12));
+  set("subtlePressed", d ? QColor(255, 255, 255, 9) : QColor(28, 25, 23, 7));
+  set("flyout", d ? QColor("#161616") : QColor("#FFFFFF"));
+  set("flyoutStroke", d ? QColor("#2A2A2A") : QColor("#DDD7CB"));
+  set("scroll", d ? QColor(255, 255, 255, 90) : QColor(28, 25, 23, 100));
+  set("track", d ? QColor("#2A2A2A") : QColor("#E4DFD5"));
   set("accentBtn", gAccentBtn);
-  set("accentBtnHover", d ? gAccentBtn.darker(110) : gAccentBtn.lighter(112));
-  set("accentBtnPressed", d ? gAccentBtn.darker(125) : gAccentBtn.lighter(125));
+  set("accentBtnHover", QColor("#FFC93C"));
+  set("accentBtnPressed", QColor("#E0A400"));
   set("accentText", gAccentText);
-  set("onAccent", d ? QColor("#000000") : QColor("#FFFFFF"));
-  set("sel", mix(gAccentText, card, d ? 0.22 : 0.14));
-  set("selHover", mix(gAccentText, card, d ? 0.28 : 0.20));
-  set("success", d ? QColor("#6CCB5F") : QColor("#0F7B0F"));
-  set("critical", d ? QColor("#FF99A4") : QColor("#C42B1C"));
-  {
-    QColor a = gAccentText; a.setAlpha(d ? 46 : 30);
-    set("accentTint", a);
-  }
-  set("successTint", d ? QColor(108, 203, 95, 40) : QColor(15, 123, 15, 26));
-  set("criticalTint", d ? QColor(255, 153, 164, 40) : QColor(196, 43, 28, 24));
-  set("checkStroke", d ? QColor("#9A9A9A") : QColor("#878787"));
+  set("onAccent", QColor("#1A1405"));
+  set("sel", d ? QColor(245, 183, 10, 34) : QColor(245, 183, 10, 46));
+  set("selHover", d ? QColor(245, 183, 10, 46) : QColor(245, 183, 10, 60));
+  set("navSel", d ? QColor("#2A2312") : QColor("#FBEFC9"));
+  set("success", d ? QColor("#4ADE80") : QColor("#15803D"));
+  set("critical", d ? QColor("#F87171") : QColor("#B91C1C"));
+  set("accentTint", d ? QColor(245, 183, 10, 38) : QColor(245, 183, 10, 40));
+  set("successTint", d ? QColor(74, 222, 128, 30) : QColor(21, 128, 61, 22));
+  set("criticalTint", d ? QColor(248, 113, 113, 32) : QColor(185, 28, 28, 20));
+  set("checkStroke", d ? QColor("#57534E") : QColor("#A8A29E"));
 
   const QColor iconC = d ? QColor(255, 255, 255, 200) : QColor(0, 0, 0, 170);
-  t["imgCheck"] = iconFile("checkmark", d ? QColor("#000000") : QColor("#FFFFFF"), 14);
+  t["imgCheck"] = iconFile("checkmark", QColor("#1A1405"), 14);
   t["imgRight"] = iconFile("chevron", iconC, 12);
   t["imgDown"] = iconFile("expand", iconC, 12);
   t["imgUp"] = iconFile("collapse", iconC, 12);
@@ -255,10 +208,19 @@ QWidget#ContentArea {
   border-top-left-radius: 8px;
 }
 QTabWidget#tabs::pane { border: none; background: transparent; }
+/* pages are painted opaque: transparent pages could show stale content of
+   the previous page when the tab strip appears or disappears */
+QTabWidget#tabs, QTabWidget#tabs > QStackedWidget,
 QTabWidget#tabs > QStackedWidget > QWidget,
-QScrollArea, QScrollArea > QWidget > QWidget { background: transparent; border: none; }
+QStackedWidget#Pages, QStackedWidget#Pages > QWidget { background: @layer; border: none; }
+QScrollArea { background: transparent; border: none; }
+QScrollArea > QWidget > QWidget { background: @layer; border: none; }
 
-QLabel#PageTitle { font-size: 22pt; font-weight: 600; padding: 0; }
+QLabel#PageTitle { font-size: 28pt; font-weight: 700; padding: 0; }
+QLabel#AppTitle { color: @accentText; font-size: 15pt; font-weight: 700; letter-spacing: 0.5px; }
+QLabel#NavSection { color: @text2; font-size: 10.5pt; font-weight: 700; padding: 0 0 0 14px; }
+QLabel#NavCount { color: @text2; background: @tile; border-radius: 10px; padding: 1px 8px; font-size: 10pt; font-weight: 600; }
+QFrame#NavDivider { background: @divider; max-height: 1px; min-height: 1px; border: none; }
 QLabel#PageSubtitle, QLabel[secondary="true"] { color: @text2; }
 QDialogButtonBox { dialogbuttonbox-buttons-have-icons: 0; }
 QLabel#noJobsAvailable { color: @text2; }
@@ -267,7 +229,7 @@ QLabel#SectionHeader { font-weight: 600; padding-top: 4px; }
 QWidget[card="true"], JobWidget, MountWidget, StreamWidget {
   background: @card;
   border: 1px solid @cardStroke;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 JobWidget QLineEdit, MountWidget QLineEdit, StreamWidget QLineEdit { background: transparent; border: none; padding: 1px 0; }
 JobWidget QLabel, MountWidget QLabel, StreamWidget QLabel { background: transparent; border: none; }
@@ -278,43 +240,39 @@ QToolButton[status="done"] { color: @success; background: @successTint; }
 QToolButton[status="error"] { color: @critical; background: @criticalTint; }
 
 /* ---------- boxed sections ---------- */
-QWidget#StatTile { background: @tile; border: none; border-radius: 6px; }
+QWidget#StatTile { background: @tile; border: none; border-radius: 10px; }
 QLabel#JobSummary { color: @text2; background: transparent; padding: 0 8px; }
-QLabel#StatLabel { color: @text2; font-size: 9.5pt; background: transparent; border: none; }
-QLineEdit[statValue="true"], QLineEdit[statValue="true"]:read-only { background: transparent; border: none; padding: 0; font-weight: 600; font-size: 12pt; }
+QLabel#StatLabel { color: @text2; font-size: 10.5pt; background: transparent; border: none; }
+QLineEdit[statValue="true"], QLineEdit[statValue="true"]:read-only { background: transparent; border: none; padding: 0; font-weight: 600; font-size: 13.5pt; }
 QLineEdit[pathValue="true"], QLineEdit[pathValue="true"]:read-only { background: @tile; border: none; border-radius: 5px; padding: 5px 9px; }
 QWidget[card="true"] QHeaderView::section { background: @headerBg; }
-QWidget[card="true"] QHeaderView::section:first { border-top-left-radius: 7px; }
-QWidget[card="true"] QHeaderView::section:last { border-top-right-radius: 7px; }
+QWidget[card="true"] QHeaderView::section:first { border-top-left-radius: 11px; }
+QWidget[card="true"] QHeaderView::section:last { border-top-right-radius: 11px; }
 
-/* ---------- remote tabs (Explorer style) ---------- */
+/* ---------- remote tabs: rounded chips ---------- */
 QTabWidget#tabs > QTabBar { background: transparent; }
 QTabWidget#tabs > QTabBar::tab {
-  background: transparent; color: @text2; border: 1px solid transparent; border-bottom: none;
-  border-top-left-radius: 7px; border-top-right-radius: 7px;
-  padding: 8px 10px 8px 14px; margin: 8px 0 0 4px; min-width: 120px; max-width: 240px;
+  background: @card; color: @text2; border: 1px solid @cardStroke; border-radius: 18px;
+  padding: 7px 10px 7px 14px; margin: 12px 0 4px 8px; min-width: 120px; max-width: 240px;
 }
-QTabWidget#tabs > QTabBar::tab:hover { background: @subtleHover; color: @text; }
-QTabWidget#tabs > QTabBar::tab:selected { background: @card; color: @text; border-color: @cardStroke; }
+QTabWidget#tabs > QTabBar::tab:hover { background: @cardHover; color: @text; }
+QTabWidget#tabs > QTabBar::tab:selected { background: @navSel; color: @accentText; border: 1px solid @accentText; font-weight: 600; }
 QTabWidget#tabs > QTabBar::close-button { image: url(@imgClose); subcontrol-position: right; margin: 2px; }
-QTabWidget#tabs > QTabBar::close-button:hover { background: @subtleHover; border-radius: 4px; }
+QTabWidget#tabs > QTabBar::close-button:hover { background: @subtleHover; border-radius: 8px; }
 QWidget#jobsArea QFrame[frameShape="4"] { border: none; background: transparent; max-height: 2px; }
 
 /* ---------- navigation pane ---------- */
-QListWidget#NavList { background: transparent; border: none; }
-QListWidget#NavList::item {
-  min-height: 36px; padding-left: 8px; margin: 1px 4px;
-  border-radius: 5px; border: none; border-left: 3px solid transparent;
+QListWidget#NavList, QListWidget#NavRemotes { background: transparent; border: none; }
+QToolButton#NavFooter {
+  text-align: left; padding: 10px 12px; margin: 0 6px; border-radius: 10px; color: @text2;
 }
-QListWidget#NavList::item:hover { background: @subtleHover; }
-QListWidget#NavList::item:selected { background: @subtleHover; color: @text; border-left: 3px solid @accentText; }
-QListWidget#NavList::item:disabled { color: @text2; background: transparent; min-height: 30px; }
-QToolButton#NavFooter { text-align: left; padding: 8px 10px 8px 15px; margin: 0 4px; border-radius: 5px; }
+QToolButton#NavFooter:hover { background: @subtleHover; color: @text; }
+QToolButton#NavAdd { padding: 3px; border-radius: 8px; }
 
 /* ---------- buttons ---------- */
 QPushButton {
   background: @ctrl; border: 1px solid @ctrlStroke; border-bottom-color: @ctrlStrokeBottom;
-  border-radius: 5px; padding: 5px 14px; min-height: 20px;
+  border-radius: 8px; padding: 7px 16px; min-height: 22px;
 }
 QPushButton:hover { background: @ctrlHover; }
 QPushButton:pressed { background: @ctrlPressed; color: @text2; border-bottom-color: @ctrlStroke; }
@@ -327,7 +285,7 @@ QPushButton:default:pressed, QPushButton[accent="true"]:pressed { background: @a
 QPushButton:default:disabled, QPushButton[accent="true"]:disabled { background: @ctrlDisabled; color: @text3; border-color: @ctrlStroke; }
 
 QToolButton {
-  background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 5px 8px;
+  background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 10px;
 }
 QToolButton:hover { background: @subtleHover; }
 QToolButton:pressed { background: @subtlePressed; color: @text2; }
@@ -341,7 +299,7 @@ QToolButton::menu-arrow { image: url(@imgDown); }
 /* ---------- inputs ---------- */
 QLineEdit, QAbstractSpinBox, QComboBox, QPlainTextEdit, QTextEdit {
   background: @ctrl; border: 1px solid @ctrlStroke; border-bottom: 1px solid @inputBottom;
-  border-radius: 5px; padding: 5px 9px;
+  border-radius: 8px; padding: 7px 11px;
   selection-background-color: @accentBtn; selection-color: @onAccent;
 }
 QPlainTextEdit, QTextEdit { padding: 4px; }
@@ -387,7 +345,7 @@ QTreeView, QListView, QTableView {
   alternate-background-color: @subtlePressed;
   selection-background-color: @sel; selection-color: @text;
 }
-QTreeView::item, QListView::item { min-height: 30px; padding: 0 4px; border: none; }
+QTreeView::item, QListView::item { min-height: 34px; padding: 0 4px; border: none; }
 QTreeView::item:hover, QListView::item:hover { background: @subtleHover; }
 QTreeView::item:selected, QListView::item:selected { background: @sel; color: @text; }
 QTreeView::item:selected:hover, QListView::item:selected:hover { background: @selHover; }
@@ -541,8 +499,8 @@ void styleNativeWindow(QWidget *w) {
   } else {
     // Title bar in the window background colour (Windows 11 22000+):
     // 35 = DWMWA_CAPTION_COLOR, 36 = DWMWA_TEXT_COLOR
-    QColor bg = gDark ? QColor("#202020") : QColor("#F3F3F3");
-    QColor fg = gDark ? QColor("#FFFFFF") : QColor("#1B1B1B");
+    QColor bg = gDark ? QColor("#0E0E0E") : QColor("#F3F1EC");
+    QColor fg = gDark ? QColor("#F5F3EE") : QColor("#1C1917");
     COLORREF cap = RGB(bg.red(), bg.green(), bg.blue());
     COLORREF txt = RGB(fg.red(), fg.green(), fg.blue());
     DwmSetWindowAttribute(hwnd, 35, &cap, sizeof(cap));
@@ -584,7 +542,7 @@ QFont fluentFont() {
   // Windows 11 UI font, with fallbacks for Windows 10 and other systems.
   f.setFamilies({"Segoe UI Variable Text", "Segoe UI", "Selawik", "Noto Sans",
                  "Sans Serif"});
-  f.setPointSizeF(11);
+  f.setPointSizeF(12);
   f.setHintingPreference(QFont::PreferNoHinting);
   return f;
 }
@@ -643,6 +601,11 @@ void apply() {
 }
 
 bool isDark() { return gDark; }
+
+void toggle() {
+  save(gDark ? Light : Dark);
+  apply();
+}
 bool usingFusionDark() { return gDark; }
 QColor accent() { return gAccentText; }
 
@@ -752,43 +715,81 @@ QIcon remoteIcon(const QString &type) {
   }
 
   struct T { const char *glyph; const char *color; };
+  // Generated together with docs/remote-icons.md from `rclone help backends`.
   static const QHash<QString, T> known = {
-      // personal cloud drives: each with its own colour
-      {"drive", {"t_cloud", "#1E8E3E"}},      {"onedrive", {"t_cloud", "#0F6CBD"}},
-      {"dropbox", {"t_cloud", "#2D5BE3"}},    {"box", {"t_cloud", "#1A73C7"}},
-      {"pcloud", {"t_cloud", "#139C9C"}},     {"mega", {"t_cloud", "#D9272E"}},
-      {"jottacloud", {"t_cloud", "#6A4FB8"}}, {"koofr", {"t_cloud", "#2F9E6E"}},
-      {"yandex", {"t_cloud", "#E0A100"}},     {"mailru", {"t_cloud", "#1D6FD8"}},
-      {"pikpak", {"t_cloud", "#3D7BE0"}},     {"protondrive", {"t_cloud", "#6D4AFF"}},
-      {"iclouddrive", {"t_cloud", "#3A8EE6"}}, {"seafile", {"t_cloud", "#E06C16"}},
-      {"opendrive", {"t_cloud", "#3E82C4"}},  {"hidrive", {"t_cloud", "#E2001A"}},
-      {"zoho", {"t_cloud", "#C8312B"}},       {"sharefile", {"t_cloud", "#4C6A8E"}},
-      {"putio", {"t_cloud", "#E3A72A"}},      {"premiumizeme", {"t_cloud", "#E0632A"}},
-      {"filefabric", {"t_cloud", "#4A5D7A"}}, {"linkbox", {"t_cloud", "#3BA7C9"}},
+      {"drive", {"t_cloud", "#1E8E3E"}},
+      {"onedrive", {"t_cloud", "#0F6CBD"}},
+      {"dropbox", {"t_cloud", "#2D5BE3"}},
+      {"box", {"t_cloud", "#1A73C7"}},
+      {"pcloud", {"t_cloud", "#139C9C"}},
+      {"mega", {"t_cloud", "#D9272E"}},
+      {"jottacloud", {"t_cloud", "#6A4FB8"}},
+      {"koofr", {"t_cloud", "#2F9E6E"}},
+      {"yandex", {"t_cloud", "#E0A100"}},
+      {"mailru", {"t_cloud", "#1D6FD8"}},
+      {"pikpak", {"t_cloud", "#3D7BE0"}},
+      {"protondrive", {"t_cloud", "#6D4AFF"}},
+      {"iclouddrive", {"t_cloud", "#3A8EE6"}},
+      {"seafile", {"t_cloud", "#E06C16"}},
+      {"opendrive", {"t_cloud", "#3E82C4"}},
+      {"hidrive", {"t_cloud", "#E2001A"}},
+      {"zoho", {"t_cloud", "#C8312B"}},
+      {"sharefile", {"t_cloud", "#4C6A8E"}},
+      {"putio", {"t_cloud", "#E3A72A"}},
+      {"premiumizeme", {"t_cloud", "#E0632A"}},
+      {"filefabric", {"t_cloud", "#4A5D7A"}},
+      {"linkbox", {"t_cloud", "#3BA7C9"}},
+      {"fichier", {"t_cloud", "#E65A28"}},
+      {"filelu", {"t_cloud", "#2E7DD7"}},
+      {"filescom", {"t_cloud", "#2563EB"}},
+      {"pixeldrain", {"t_cloud", "#4F8A3C"}},
+      {"ulozto", {"t_cloud", "#E5007E"}},
+      {"filen", {"t_cloud", "#1F2937"}},
+      {"gofile", {"t_cloud", "#3B82F6"}},
+      {"drime", {"t_cloud", "#7C3AED"}},
+      {"quatrix", {"t_cloud", "#0E7490"}},
+      {"shade", {"t_cloud", "#525252"}},
+      {"sugarsync", {"t_cloud", "#0A84C6"}},
+      {"huaweidrive", {"t_cloud", "#CF0A2C"}},
+      {"internxt", {"t_cloud", "#0066FF"}},
+      {"gphotos", {"t_photos", "#C2185B"}},
+      {"cloudinary", {"t_photos", "#3448C5"}},
+      {"imagekit", {"t_photos", "#0450D5"}},
+      {"s3", {"t_bucket", "#D9822B"}},
+      {"b2", {"t_bucket", "#C8312B"}},
+      {"azureblob", {"t_bucket", "#0F78D4"}},
+      {"azurefiles", {"t_bucket", "#0F78D4"}},
+      {"gcs", {"t_bucket", "#3367D6"}},
+      {"swift", {"t_bucket", "#B85C1E"}},
+      {"oos", {"t_bucket", "#C74634"}},
+      {"storj", {"t_bucket", "#2683FF"}},
+      {"tardigrade", {"t_bucket", "#2683FF"}},
+      {"qingstor", {"t_bucket", "#2D8CF0"}},
+      {"sia", {"t_bucket", "#1ED660"}},
+      {"netstorage", {"t_bucket", "#0096D6"}},
+      {"sftp", {"t_server", "#0E7C86"}},
+      {"ftp", {"t_server", "#3B7E5B"}},
+      {"smb", {"t_server", "#4E6A92"}},
+      {"webdav", {"t_server", "#7553C0"}},
+      {"http", {"t_web", "#4E6A92"}},
+      {"hdfs", {"t_server", "#5E6B78"}},
       {"internetarchive", {"t_archive", "#555D66"}},
-      {"google photos", {"t_photos", "#C2185B"}},
-      {"googlephotos", {"t_photos", "#C2185B"}},
-      // object storage
-      {"s3", {"t_bucket", "#D9822B"}},        {"b2", {"t_bucket", "#C8312B"}},
-      {"azureblob", {"t_bucket", "#0F78D4"}}, {"azurefiles", {"t_bucket", "#0F78D4"}},
-      {"google cloud storage", {"t_bucket", "#3367D6"}},
-      {"swift", {"t_bucket", "#B85C1E"}},     {"oracleobjectstorage", {"t_bucket", "#C74634"}},
-      {"storj", {"t_bucket", "#2683FF"}},     {"qingstor", {"t_bucket", "#2D8CF0"}},
-      {"sia", {"t_bucket", "#1ED660"}},       {"netstorage", {"t_bucket", "#0096D6"}},
-      // servers & protocols
-      {"sftp", {"t_server", "#0E7C86"}},      {"ftp", {"t_server", "#3B7E5B"}},
-      {"smb", {"t_server", "#4E6A92"}},       {"webdav", {"t_server", "#7553C0"}},
-      {"http", {"t_web", "#4E6A92"}},         {"hdfs", {"t_server", "#5E6B78"}},
-      // local & virtual
-      {"local", {"t_drive", "#5E6B78"}},      {"crypt", {"t_lock", "#5B5FC7"}},
+      {"doi", {"t_archive", "#555D66"}},
+      {"local", {"t_drive", "#5E6B78"}},
+      {"memory", {"t_drive", "#5E6B78"}},
+      {"crypt", {"t_lock", "#5B5FC7"}},
+      {"alias", {"t_folder", "#C98B1E"}},
+      {"union", {"t_folder", "#C98B1E"}},
+      {"combine", {"t_folder", "#C98B1E"}},
+      {"chunker", {"t_folder", "#C98B1E"}},
+      {"compress", {"t_folder", "#C98B1E"}},
+      {"hasher", {"t_folder", "#C98B1E"}},
+      {"cache", {"t_folder", "#C98B1E"}},
+      {"archive", {"t_folder", "#C98B1E"}}
   };
-  static const QStringList folderLike = {"alias", "union", "combine", "chunker",
-                                         "compress", "hasher", "cache"};
   T t{"t_cloud", "#5E6B78"};
   if (known.contains(type)) {
     t = known.value(type);
-  } else if (folderLike.contains(type)) {
-    t = {"t_folder", "#C98B1E"};
   } else {
     // unknown types: stable colour derived from the name
     static const char *palette[] = {"#2B6CD8", "#108A48", "#8E44C9", "#D0522B",

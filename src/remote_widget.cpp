@@ -54,7 +54,7 @@ QString root = isLocal ? "/" : QString();
   QTimer::singleShot(0, ui.tree, SLOT(setFocus()));
   buildFluentUi(model, remote);
 
-  QObject::connect(model, &QAbstractItemModel::layoutChanged, this, [=]() {
+  QObject::connect(model, &QAbstractItemModel::layoutChanged, this, [=, this]() {
     ui.tree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     ui.tree->resizeColumnToContents(1);
     ui.tree->resizeColumnToContents(2);
@@ -62,7 +62,7 @@ QString root = isLocal ? "/" : QString();
 
   QObject::connect(
       ui.tree->selectionModel(), &QItemSelectionModel::selectionChanged, this,
-      [=](const QItemSelection &selection) {
+      [=, this](const QItemSelection &selection) {
         // only this widget's own actions, not those inside child widgets
         // (e.g. the filter box's clear button)
         for (auto child :
@@ -131,7 +131,7 @@ QString root = isLocal ? "/" : QString();
                                  : path.path());
       });
 
-  QObject::connect(ui.refresh, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.refresh, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -141,7 +141,7 @@ QString root = isLocal ? "/" : QString();
     model->refresh(index);
   });
 
-  QObject::connect(ui.mkdir, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.mkdir, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -178,7 +178,7 @@ QString root = isLocal ? "/" : QString();
     }
   });
 
-  QObject::connect(ui.rename, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.rename, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -211,7 +211,7 @@ QString root = isLocal ? "/" : QString();
     }
   });
 
-  QObject::connect(ui.move, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.move, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -243,7 +243,7 @@ QString root = isLocal ? "/" : QString();
     }
   });
 
-  QObject::connect(ui.purge, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.purge, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -280,7 +280,7 @@ QString root = isLocal ? "/" : QString();
     }
   });
 
-  QObject::connect(ui.mount, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.mount, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -307,7 +307,7 @@ QString root = isLocal ? "/" : QString();
     }
   });
 
-  QObject::connect(ui.stream, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.stream, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -340,7 +340,7 @@ QString root = isLocal ? "/" : QString();
   QObject::connect(ui.checkBoxShared, &QCheckBox::toggled, ui.shared,
                    &QAction::toggled);
 
-  QObject::connect(ui.shared, &QAction::toggled, this, [=](const bool checked) {
+  QObject::connect(ui.shared, &QAction::toggled, this, [=, this](const bool checked) {
     auto settings = GetSettings();
     settings->setValue("Settings/driveShared", checked);
     ui.checkBoxShared->setChecked(checked);
@@ -356,7 +356,7 @@ QString root = isLocal ? "/" : QString();
     model->refresh(top);
   });
 
-  QObject::connect(ui.link, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.link, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -381,7 +381,7 @@ QString root = isLocal ? "/" : QString();
     progress.exec();
   });
 
-  QObject::connect(ui.upload, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.upload, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -405,7 +405,7 @@ QString root = isLocal ? "/" : QString();
     }
   });
 
-  QObject::connect(ui.download, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.download, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -425,7 +425,7 @@ QString root = isLocal ? "/" : QString();
     }
   });
 
-  QObject::connect(ui.getTree, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.getTree, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -451,7 +451,7 @@ QString root = isLocal ? "/" : QString();
     progress.exec();
   });
 
-  QObject::connect(ui.getSize, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.getSize, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -475,7 +475,7 @@ QString root = isLocal ? "/" : QString();
     progress.exec();
   });
 
-  QObject::connect(ui.export_, &QAction::triggered, this, [=]() {
+  QObject::connect(ui.export_, &QAction::triggered, this, [=, this]() {
     auto settings = GetSettings();
     bool driveShared = ui.checkBoxShared->checkState();
     (driveShared ? settings->setValue("Settings/driveShared", Qt::Checked)
@@ -551,7 +551,7 @@ QString root = isLocal ? "/" : QString();
 
   QObject::connect(
       model, &ItemModel::drop, this,
-      [=](const QDir &path, const QModelIndex &parent) {
+      [=, this](const QDir &path, const QModelIndex &parent) {
         auto settings = GetSettings();
         bool driveShared = ui.checkBoxShared->checkState();
         (driveShared
@@ -579,7 +579,7 @@ QString root = isLocal ? "/" : QString();
 
   QObject::connect(
       ui.tree, &QWidget::customContextMenuRequested, this,
-      [=](const QPoint &pos) {
+      [=, this](const QPoint &pos) {
         auto settings = GetSettings();
         bool driveShared = ui.checkBoxShared->checkState();
         (driveShared
@@ -622,7 +622,7 @@ QString root = isLocal ? "/" : QString();
     QObject *worker = new QObject();
     worker->moveToThread(thread);
 
-    QTimer::singleShot(0, worker, [=]() {
+    QTimer::singleShot(0, worker, [=, this]() {
       QStorageInfo info;
       info.refresh();
 
@@ -756,6 +756,10 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   };
   auto primary = [&](QToolButton *b) {
     b->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    // never squeeze below the natural width (that elides the labels)
+    b->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    b->setMinimumWidth(b->fontMetrics().horizontalAdvance(b->text()) +
+                       b->iconSize().width() + 40);
     b->setIconSize(QSize(18, 18));
     bar->addWidget(b);
   };
@@ -843,6 +847,84 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   lc->addWidget(ui.tree);
   v->insertWidget(treePos, listCard, 1);
 
+  // ---- Icons view (large icons, open folders by double-click)
+  mGrid = new QListView;
+  mGrid->setObjectName("IconGrid");
+  mGrid->setModel(model);
+  mGrid->setViewMode(QListView::IconMode);
+  mGrid->setIconSize(QSize(56, 56));
+  mGrid->setGridSize(QSize(118, 112));
+  mGrid->setSpacing(4);
+  mGrid->setResizeMode(QListView::Adjust);
+  mGrid->setMovement(QListView::Static);
+  mGrid->setWordWrap(true);
+  mGrid->setTextElideMode(Qt::ElideRight);
+  // names may wrap onto two lines, so items are not uniform in height
+  mGrid->setUniformItemSizes(false);
+  mGrid->setLayoutMode(QListView::Batched); // stays responsive in huge folders
+  mGrid->setBatchSize(200);
+  mGrid->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  mGrid->setFrameShape(QFrame::NoFrame);
+  mGrid->setContextMenuPolicy(Qt::ActionsContextMenu);
+  mGrid->addActions(ui.tree->actions());
+  mGrid->setMouseTracking(true);
+  // drag files from File Explorer onto the grid to upload (as in Details)
+  mGrid->setAcceptDrops(true);
+  mGrid->setDragDropMode(QAbstractItemView::DropOnly);
+  mGrid->setDropIndicatorShown(true);
+  lc->addWidget(mGrid);
+
+  // mirror the grid selection into the tree: all actions read the tree's
+  // selection, so they work the same in both views
+  QObject::connect(mGrid->selectionModel(), &QItemSelectionModel::selectionChanged,
+                   this, [this, model]() {
+                     QItemSelection sel;
+                     for (const QModelIndex &i : mGrid->selectionModel()->selectedIndexes()) {
+                       sel.select(i, i.siblingAtColumn(model->columnCount(i.parent()) - 1));
+                     }
+                     mSyncingFromGrid = true;
+                     const QModelIndex cur = mGrid->currentIndex();
+                     if (cur.isValid()) {
+                       ui.tree->selectionModel()->setCurrentIndex(
+                           cur, QItemSelectionModel::NoUpdate);
+                     }
+                     ui.tree->selectionModel()->select(
+                         sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                     mSyncingFromGrid = false;
+                   });
+  QObject::connect(mGrid, &QListView::activated, this,
+                   [this, model](const QModelIndex &index) {
+                     if (model->isFolder(index)) {
+                       // open the folder: show its contents and keep the
+                       // (hidden) tree, breadcrumb and filter in step
+                       ui.tree->expand(index);
+                       showFolderInGrid(index, model);
+                       mSyncingFromGrid = true;
+                       ui.tree->setCurrentIndex(index);
+                       mSyncingFromGrid = false;
+                     }
+                   });
+
+  auto viewButton = [&](const char *icon, const QString &tip) {
+    auto *b = new QToolButton;
+    b->setIcon(Theme::icon(icon));
+    b->setIconSize(QSize(18, 18));
+    b->setCheckable(true);
+    b->setAutoExclusive(true);
+    b->setToolTip(tip);
+    bar->insertWidget(bar->indexOf(ui.buttonRefresh), b);
+    return b;
+  };
+  mViewIcons = viewButton("view_grid", tr("Icons (Ctrl+Shift+1)"));
+  mViewDetails = viewButton("view_list", tr("Details (Ctrl+Shift+2)"));
+  mViewIcons->setShortcut(QKeySequence(tr("Ctrl+Shift+1")));
+  mViewDetails->setShortcut(QKeySequence(tr("Ctrl+Shift+2")));
+  QObject::connect(mViewIcons, &QToolButton::clicked, this,
+                   [this, model]() { setIconView(true, model); });
+  QObject::connect(mViewDetails, &QToolButton::clicked, this,
+                   [this, model]() { setIconView(false, model); });
+
+  ui.tree->setUniformRowHeights(true); // much faster with large folders
   ui.tree->setAnimated(true);
   ui.tree->setIconSize(QSize(22, 22));
   ui.tree->setFrameShape(QFrame::NoFrame);
@@ -864,7 +946,16 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
 
   QObject::connect(ui.tree->selectionModel(),
                    &QItemSelectionModel::currentChanged, this,
-                   [this, model, remote]() {
+                   [this, model, remote](const QModelIndex &current) {
+                     if (!mSyncingFromGrid && mGrid->isVisible() && current.isValid()) {
+                       QModelIndex folder = current.siblingAtColumn(0);
+                       if (!model->isFolder(folder)) {
+                         folder = folder.parent();
+                       }
+                       if (folder.isValid() && folder != mGrid->rootIndex()) {
+                         showFolderInGrid(folder, model);
+                       }
+                     }
                      updateBreadcrumbs(model, remote);
                      applyFilter(model);
                    });
@@ -896,6 +987,44 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   });
 
   updateBreadcrumbs(model, remote);
+
+  // Icons view is the default; the choice is remembered
+  const bool icons =
+      GetSettings()->value("Settings/remoteView", "icons").toString() == "icons";
+  QTimer::singleShot(0, this, [this, model, icons]() { setIconView(icons, model); });
+}
+
+void RemoteWidget::showFolderInGrid(const QModelIndex &folder, ItemModel *model) {
+  mGrid->setRootIndex(folder);
+  for (int r = 0; r < model->rowCount(folder); ++r) {
+    mGrid->setRowHidden(r, false);
+  }
+  mGrid->scrollToTop();
+  mFilterFolder = QPersistentModelIndex();
+  applyFilter(model);
+}
+
+void RemoteWidget::setIconView(bool icons, ItemModel *model) {
+  mViewIcons->setChecked(icons);
+  mViewDetails->setChecked(!icons);
+  ui.tree->setVisible(!icons);
+  mGrid->setVisible(icons);
+  GetSettings()->setValue("Settings/remoteView", icons ? "icons" : "details");
+  if (icons) {
+    QModelIndex folder = ui.tree->currentIndex().siblingAtColumn(0);
+    if (folder.isValid() && !model->isFolder(folder)) {
+      folder = folder.parent();
+    }
+    if (!folder.isValid()) {
+      folder = model->index(0, 0, QModelIndex()); // the remote's root
+      ui.tree->setCurrentIndex(folder);
+      ui.tree->expand(folder);
+    }
+    showFolderInGrid(folder, model);
+    mGrid->setFocus();
+  } else {
+    ui.tree->setFocus();
+  }
 }
 
 void RemoteWidget::updateBreadcrumbs(ItemModel *model, const QString &remote) {
@@ -965,6 +1094,9 @@ void RemoteWidget::applyFilter(ItemModel *model) {
   if (mFilterFolder.isValid() && mFilterFolder != folder) {
     for (int r = 0; r < model->rowCount(mFilterFolder); ++r) {
       ui.tree->setRowHidden(r, mFilterFolder, false);
+      if (mGrid && mGrid->rootIndex() == mFilterFolder) {
+        mGrid->setRowHidden(r, false);
+      }
     }
   }
   mFilterFolder = folder;
@@ -981,6 +1113,9 @@ void RemoteWidget::applyFilter(ItemModel *model) {
                       !name.contains(text, Qt::CaseInsensitive) &&
                       !model->isLoading(child);
     ui.tree->setRowHidden(r, folder, hide);
+    if (mGrid && mGrid->rootIndex() == folder) {
+      mGrid->setRowHidden(r, hide);
+    }
   }
   if (!text.isEmpty()) {
     ui.tree->expand(folder);

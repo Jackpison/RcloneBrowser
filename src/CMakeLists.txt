@@ -46,6 +46,13 @@ endif()
 
 target_precompile_headers(${TARGET_NAME} PRIVATE pch.h)
 
+# Every SVG in icons/fluent is compiled in automatically as :/fluent/<name>.svg
+file(GLOB FLUENT_ICONS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/icons/fluent/*.svg")
+qt_add_resources(${TARGET_NAME} "fluent_icons"
+  PREFIX "/fluent"
+  BASE "${CMAKE_CURRENT_SOURCE_DIR}/icons/fluent"
+  FILES ${FLUENT_ICONS})
+
 # Warnings are on, but never fatal by default: -Werror turned every new
 # compiler release into a build break for packagers. Opt in with RB_WERROR=ON.
 option(RB_WERROR "Treat compiler warnings as errors" OFF)
