@@ -36,7 +36,10 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
-          version: "6.11.*"
+          # Exact version for reproducible builds. 6.10.3 is the newest Qt the
+          # installer (aqtinstall 3.3) can read; 6.11+ metadata is not
+          # supported by it yet.
+          version: "6.10.3"
           arch: win64_msvc2022_64
           setup-python: false
           cache: true

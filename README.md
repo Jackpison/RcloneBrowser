@@ -78,10 +78,10 @@ The app is built by GitHub Actions on every push; pushing a tag such as `v3.0.0`
 To build locally you need Visual Studio 2022 or newer (C++ desktop development), CMake 3.21+, Ninja and Qt 6.10+ for MSVC 64-bit (including Qt SVG). From a *x64 Native Tools Command Prompt*:
 
 ```
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=C:\Qt\6.11.0\msvc2022_64
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=C:\Qt\6.10.3\msvc2022_64
 cmake --build build
 ctest --test-dir build
-C:\Qt\6.11.0\msvc2022_64\bin\windeployqt.exe --release build\build\RcloneBrowser.exe
+C:\Qt\6.10.3\msvc2022_64\bin\windeployqt.exe --release build\build\RcloneBrowser.exe
 ```
 
 The user guide is generated with `python docs/guide/build_guide.py` (needs `pip install reportlab`).

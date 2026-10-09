@@ -32,7 +32,7 @@
 -   Removed the "Remotes icons size" setting, which no longer had any effect
 
 ### Changed
--   C++20, Qt 6.11, modern Qt CMake setup; GitHub Actions updated to current versions (Node 24)
+-   C++20, Qt 6.10, modern Qt CMake setup; GitHub Actions updated to current versions (Node 24)
 
 ## [2.0.0] - 2026-10-08
 First release of the revived, Windows-focused Rclone Browser.
