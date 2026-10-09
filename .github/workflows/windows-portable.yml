@@ -91,7 +91,9 @@ jobs:
             "checkRcloneUpdates=true"
           ) | Set-Content -Encoding ascii "$dir\RcloneBrowser.ini"
 
+          # remote logos shipped by default (users can add or replace files)
           New-Item -ItemType Directory -Force "$dir\icons\remotes" | Out-Null
+          Copy-Item icons\remotes\*.png "$dir\icons\remotes\"
           Copy-Item docs\remote-icons.md "$dir\icons\remotes\README.md"
           Copy-Item README.md, LICENSE, CHANGELOG.md, docs\Rclone-Browser-Guide.pdf $dir
           Compress-Archive "$dir" "dist\RcloneBrowser-$ver-windows-x64-portable.zip"

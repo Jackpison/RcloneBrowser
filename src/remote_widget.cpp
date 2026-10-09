@@ -758,9 +758,8 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
     b->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     // never squeeze below the natural width (that elides the labels)
     b->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
-    b->setMinimumWidth(b->fontMetrics().horizontalAdvance(b->text()) +
-                       b->iconSize().width() + 40);
     b->setIconSize(QSize(18, 18));
+    mPrimaryButtons.append(b); // labels or icons only: see updateCommandBar()
     bar->addWidget(b);
   };
   primary(ui.buttonMkdir);
@@ -773,8 +772,9 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   separator();
   primary(ui.buttonMount);
   bar->addStretch(1);
-  bar->addWidget(ui.checkBoxShared);
-  ui.checkBoxShared->setText(tr("Shared with me"));
+  // "Shared with me" (Google Drive only) lives in the More menu
+  const bool sharedAvailable = !ui.checkBoxShared->isHidden();
+  ui.checkBoxShared->hide();
 
   ui.buttonRefresh->setToolButtonStyle(Qt::ToolButtonIconOnly);
   ui.buttonRefresh->setIconSize(QSize(18, 18));
@@ -793,6 +793,14 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   moreMenu->addAction(ui.export_);
   moreMenu->addSeparator();
   moreMenu->addAction(ui.link);
+  if (sharedAvailable) {
+    moreMenu->addSeparator();
+    auto *shared = moreMenu->addAction(tr("Show files shared with me"));
+    shared->setCheckable(true);
+    shared->setChecked(ui.checkBoxShared->isChecked());
+    QObject::connect(shared, &QAction::toggled, ui.checkBoxShared,
+                     &QCheckBox::setChecked);
+  }
   more->setMenu(moreMenu);
   bar->addWidget(more);
 
@@ -924,6 +932,9 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   QObject::connect(mViewDetails, &QToolButton::clicked, this,
                    [this, model]() { setIconView(false, model); });
 
+  ui.buttons->installEventFilter(this);
+  QTimer::singleShot(0, this, [this]() { updateCommandBar(); });
+
   ui.tree->setUniformRowHeights(true); // much faster with large folders
   ui.tree->setFont(Theme::uiFont());
   ui.tree->header()->setFont(Theme::uiFont());
@@ -995,6 +1006,38 @@ void RemoteWidget::buildFluentUi(ItemModel *model, const QString &remote) {
   const bool icons =
       GetSettings()->value("Settings/remoteView", "icons").toString() == "icons";
   QTimer::singleShot(0, this, [this, model, icons]() { setIconView(icons, model); });
+}
+
+bool RemoteWidget::eventFilter(QObject *o, QEvent *e) {
+  if (o == ui.buttons && (e->type() == QEvent::Resize || e->type() == QEvent::Show)) {
+    updateCommandBar();
+  }
+  return QWidget::eventFilter(o, e);
+}
+
+void RemoteWidget::updateCommandBar() {
+  // Step down gracefully as the window gets narrower so buttons never
+  // overlap: all labels -> labels on the main three -> icons only.
+  // Labels that are hidden stay available as tooltips.
+  auto labelWidth = [](QToolButton *b) {
+    return b->fontMetrics().horizontalAdvance(b->text()) + b->iconSize().width() + 32;
+  };
+  auto iconWidth = [](QToolButton *b) { return b->iconSize().width() + 22; };
+  const int fixed = 4 * 44 + 2 * 12 + 16; // view toggles, refresh, more, separators
+  const int avail = ui.buttons->width();
+  int full = fixed, partial = fixed;
+  for (int i = 0; i < mPrimaryButtons.size(); ++i) {
+    full += labelWidth(mPrimaryButtons[i]);
+    partial += i < 3 ? labelWidth(mPrimaryButtons[i]) : iconWidth(mPrimaryButtons[i]);
+  }
+  const int labelled = avail >= full ? int(mPrimaryButtons.size()) : avail >= partial ? 3 : 0;
+  for (int i = 0; i < mPrimaryButtons.size(); ++i) {
+    QToolButton *b = mPrimaryButtons[i];
+    const bool text = i < labelled;
+    b->setToolButtonStyle(text ? Qt::ToolButtonTextBesideIcon : Qt::ToolButtonIconOnly);
+    b->setMinimumWidth(text ? labelWidth(b) : 0);
+  }
+  mCompactBar = labelled == 0;
 }
 
 void RemoteWidget::showFolderInGrid(const QModelIndex &folder, ItemModel *model) {

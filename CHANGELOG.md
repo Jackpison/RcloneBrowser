@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.5.0] - 2026-10-09
+
+### New
+-   Logos for Box, Drime, Dropbox, Filen, Google Drive, Koofr, Mega, OneDrive, pCloud, Proton Drive and S3 are included (in `icons\remotes`)
+-   Light / dark switch is now an icon next to the app name
+-   Command bar adapts to the window width: all labels, labels on the main three buttons, or icons only (names as tooltips), so buttons never overlap
+
+### Changed
+-   The app is called "Rclone Browser" everywhere (no "Portable" suffix)
+-   About box: updated copyright, maintainer and links
+-   Sidebar: brighter text, filled icon for the selected item, footer styled like the menu, "Saved tasks" and "Help & about" wording
+-   "Shared with me" for Google Drive moved into the More menu
+-   Larger default window size on first start
+
+### Fixed
+-   Command bar labels overlapped on narrower windows ("New folder" / "Upload")
+-   "Shared with me" crowded the view buttons
+-   Tab close button was oddly placed and sized
+-   Remote logos that are not square are no longer stretched
+
 ## [3.1.0] - 2026-10-09
 
 ### Fixed

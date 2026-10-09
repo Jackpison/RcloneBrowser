@@ -18,7 +18,7 @@ MainWindow::MainWindow() {
   ui.setupUi(this);
 
   if (IsPortableMode()) {
-    this->setWindowTitle("Rclone Browser - portable mode");
+    // (portable mode is indicated in About and Settings, not the title)
   } else {
     this->setWindowTitle("Rclone Browser");
   }
@@ -158,17 +158,18 @@ MainWindow::MainWindow() {
   });
 
   QObject::connect(ui.about, &QAction::triggered, this, [=, this]() {
-    QMessageBox::about(
-        this, "Rclone Browser",
-        QString(
-            R"(<h3>GUI for rclone, v)" RCLONE_BROWSER_VERSION "</h3>"
-            R"(<p>Copyright &copy; 2019</p>)"
-
-            R"(<p>Current development and maintenance<br /><a href="https://github.com/kapitainsky/RcloneBrowser">kapitainsky</a></p>)"
-
-            R"(<p>New features and fixes<br /><a href="https://github.com/kapitainsky/RcloneBrowser/graphs/contributors">contributors</a></p>)"
-
-            R"(<p>Original version<br /><a href="https://mmozeiko.github.io/RcloneBrowser">Martins Mozeiko</a></p>)"));
+    QMessageBox box(this);
+    box.setWindowTitle(tr("About Rclone Browser"));
+    box.setIconPixmap(qApp->windowIcon().pixmap(64, 64));
+    box.setTextFormat(Qt::RichText);
+    box.setText(QString(
+        R"(<h3>Rclone Browser )" RCLONE_BROWSER_VERSION "</h3>"
+        R"(<p>Browse, transfer and sync your cloud storage with rclone.</p>)"
+        R"(<p>Copyright &copy; 2026 <a href="https://github.com/Jackpison">Jackpison</a></p>)"
+        R"(<p>Development and maintenance<br /><a href="https://github.com/Jackpison/RcloneBrowser">github.com/Jackpison/RcloneBrowser</a></p>)"
+        R"(<p>Based on the original version by<br /><a href="https://mmozeiko.github.io/RcloneBrowser">Martins Mozeiko</a></p>)"
+        R"(<p>Released under the MIT License.</p>)"));
+    box.exec();
   });
   QObject::connect(ui.aboutQt, &QAction::triggered, qApp,
                    &QApplication::aboutQt);

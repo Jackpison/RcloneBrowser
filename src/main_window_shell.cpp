@@ -13,7 +13,8 @@ enum NavRole {
   KindRole = Qt::UserRole + 1, // "page" or "remote"
   TargetRole,                  // page index or remote name
   TypeRole,                    // remote type
-  BadgeRole                    // number shown on the right (0 = none)
+  BadgeRole,                   // number shown on the right (0 = none)
+  FilledIconRole               // icon used while selected (Windows 11 style)
 };
 
 // Sidebar entry: rounded highlight, gold text and icon when selected,
@@ -38,7 +39,10 @@ public:
       p->setBrush(selected ? Theme::color("navSel") : Theme::color("subtleHover"));
       p->drawRoundedRect(r, 10, 10);
     }
-    const QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
+    QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
+    if (selected && index.data(FilledIconRole).isValid()) {
+      icon = index.data(FilledIconRole).value<QIcon>();
+    }
     const QRect iconRect(int(r.left()) + 14, int(r.center().y()) - 11, 22, 22);
     icon.paint(p, iconRect, Qt::AlignCenter, selected ? QIcon::Selected : QIcon::Normal);
 
@@ -158,11 +162,15 @@ void setPageMargins(QLayout *l) {
 } // namespace
 
 void MainWindow::buildShell() {
-  setWindowTitle(IsPortableMode() ? tr("Rclone Browser Portable")
-                                  : tr("Rclone Browser"));
-  setMinimumSize(900, 580);
+  setWindowTitle(tr("Rclone Browser"));
+  setMinimumSize(960, 600);
   if (!GetSettings()->contains("MainWindow/geometry")) {
-    resize(1180, 760);
+    // roomy first-start size, but never larger than the screen
+    QSize size(1360, 860);
+    if (const QScreen *sc = screen()) {
+      size = size.boundedTo(sc->availableGeometry().size() * 0.9);
+    }
+    resize(size);
   }
 
   // The classic menu bar is replaced by the navigation pane footer.
@@ -171,7 +179,7 @@ void MainWindow::buildShell() {
   // ---------------------------------------------------- navigation pane --
   auto *nav = new QWidget;
   nav->setObjectName("NavPane");
-  nav->setFixedWidth(280);
+  nav->setFixedWidth(292);
   auto *navLayout = new QVBoxLayout(nav);
   navLayout->setContentsMargins(10, 18, 10, 14);
   navLayout->setSpacing(2);
@@ -179,14 +187,23 @@ void MainWindow::buildShell() {
   // brand
   auto *brand = new QWidget;
   auto *bl = new QHBoxLayout(brand);
-  bl->setContentsMargins(14, 0, 8, 14);
-  bl->setSpacing(12);
+  bl->setContentsMargins(12, 0, 2, 14);
+  bl->setSpacing(10);
   auto *logo = new QLabel;
   logo->setPixmap(qApp->windowIcon().pixmap(32, 32));
   bl->addWidget(logo);
   auto *appName = new QLabel(tr("Rclone Browser"));
   appName->setObjectName("AppTitle");
   bl->addWidget(appName, 1);
+  mThemeButton = new QToolButton;
+  mThemeButton->setObjectName("ThemeSwitch");
+  mThemeButton->setIconSize(QSize(20, 20));
+  mThemeButton->setCursor(Qt::PointingHandCursor);
+  QObject::connect(mThemeButton, &QToolButton::clicked, this, [this]() {
+    Theme::toggle();
+    updateThemeButton();
+  });
+  bl->addWidget(mThemeButton);
   navLayout->addWidget(brand);
 
   auto setupList = [&](QListWidget *list, const char *name) {
@@ -208,11 +225,12 @@ void MainWindow::buildShell() {
     auto *it = new QListWidgetItem(Theme::icon(icon), text, mNav);
     it->setData(KindRole, "page");
     it->setData(TargetRole, page);
+    it->setData(FilledIconRole, Theme::icon(icon + "_filled"));
     return it;
   };
   addPage("home", tr("Home"), HomePage);
   mNavTransfers = addPage("transfers", tr("Transfers"), TransfersPage);
-  addPage("tasks", tr("Tasks"), TasksPage);
+  addPage("tasks", tr("Saved tasks"), TasksPage);
   mNav->setFixedHeight(3 * 42 + 4);
   mNav->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   navLayout->addWidget(mNav);
@@ -249,43 +267,43 @@ void MainWindow::buildShell() {
   navLayout->addWidget(divider);
   navLayout->addSpacing(6);
 
-  auto footerButton = [&](const QString &icon, const QString &text) {
-    auto *b = new QToolButton;
-    b->setObjectName("NavFooter");
-    b->setIcon(Theme::icon(icon));
-    b->setIconSize(QSize(20, 20));
-    b->setText(text);
-    b->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    b->setCursor(Qt::PointingHandCursor);
-    navLayout->addWidget(b);
-    return b;
+  // footer: same look as the menu above, but items run commands
+  auto *footer = new QListWidget;
+  setupList(footer, "NavFooter");
+  footer->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  auto addAction = [&](const QString &icon, const QString &text, const char *id) {
+    auto *it = new QListWidgetItem(Theme::icon(icon), text, footer);
+    it->setData(KindRole, "action");
+    it->setData(TargetRole, id);
+    it->setData(FilledIconRole, Theme::icon(icon + "_filled"));
   };
+  addAction("settings", tr("Settings"), "settings");
+  addAction("help", tr("Help & about"), "help");
+  footer->setFixedHeight(2 * 42 + 4);
+  navLayout->addWidget(footer);
 
-  auto *settingsBtn = footerButton("settings", tr("Settings"));
-  QObject::connect(settingsBtn, &QToolButton::clicked, ui.preferences,
-                   &QAction::trigger);
-
-  mThemeButton = footerButton(Theme::isDark() ? "sun" : "moon",
-                              Theme::isDark() ? tr("Light mode") : tr("Dark mode"));
-  mThemeButton->setToolTip(tr("Switch between light and dark"));
-  QObject::connect(mThemeButton, &QToolButton::clicked, this, [this]() {
-    Theme::toggle();
-    updateThemeButton();
-  });
-
-  auto *more = footerButton("more", tr("More"));
-  auto *moreMenu = new QMenu(more);
-  QObject::connect(moreMenu, &QMenu::aboutToShow, this, [=, this]() {
-    moreMenu->clear();
+  auto *helpMenu = new QMenu(this);
+  QObject::connect(helpMenu, &QMenu::aboutToShow, this, [=, this]() {
+    helpMenu->clear();
     for (QAction *a : ui.menuHelp->actions()) {
-      moreMenu->addAction(a);
+      helpMenu->addAction(a);
     }
-    moreMenu->addSeparator();
-    moreMenu->addAction(ui.quit);
+    helpMenu->addSeparator();
+    helpMenu->addAction(ui.quit);
   });
-  more->setMenu(moreMenu);
-  more->setPopupMode(QToolButton::InstantPopup);
+  QObject::connect(footer, &QListWidget::itemClicked, this,
+                   [=, this](QListWidgetItem *item) {
+                     const QString id = item->data(TargetRole).toString();
+                     const QRect r = footer->visualItemRect(item);
+                     footer->clearSelection();
+                     footer->setCurrentItem(nullptr);
+                     if (id == "settings") {
+                       ui.preferences->trigger();
+                     } else {
+                       helpMenu->exec(footer->viewport()->mapToGlobal(r.topRight()));
+                     }
+                   });
+  updateThemeButton();
 
   ui.about->setIcon(Theme::icon("info"));
   ui.quit->setIcon(Theme::icon("quit"));
@@ -414,7 +432,7 @@ void MainWindow::buildShell() {
     QWidget *page = mPages->widget(TasksPage);
     auto *v = qobject_cast<QVBoxLayout *>(page->layout());
     setPageMargins(v);
-    v->insertWidget(0, makePageHeader(tr("Tasks"),
+    v->insertWidget(0, makePageHeader(tr("Saved tasks"),
                                       tr("Saved transfers you can run again "
                                          "with one click."),
                                       nullptr, {}));
@@ -619,7 +637,8 @@ void MainWindow::rebuildNavRemotes() {
 void MainWindow::updateThemeButton() {
   if (mThemeButton) {
     mThemeButton->setIcon(Theme::icon(Theme::isDark() ? "sun" : "moon"));
-    mThemeButton->setText(Theme::isDark() ? tr("Light mode") : tr("Dark mode"));
+    mThemeButton->setToolTip(Theme::isDark() ? tr("Switch to light mode")
+                                             : tr("Switch to dark mode"));
   }
   if (mNav) {
     mNav->viewport()->update();

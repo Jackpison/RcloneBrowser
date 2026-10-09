@@ -10,8 +10,8 @@
 
 ## Features
 
-- **Modern design** in black and gold or warm light, with a one-click **Light / Dark** switch in the sidebar
-- **All your clouds in one place**: Google Drive, OneDrive, Dropbox, pCloud, S3, SFTP, encrypted remotes and every other rclone storage type, using your existing rclone configuration. Each service gets its own colour-coded tile, or [your own icon](docs/remote-icons.md).
+- **Modern design** in black and gold or warm light, with a one-click **light / dark** switch next to the app name
+- **All your clouds in one place**: Google Drive, OneDrive, Dropbox, pCloud, S3, SFTP, encrypted remotes and every other rclone storage type, using your existing rclone configuration. Logos for popular services are included; every other service gets a colour-coded tile, or [your own icon](docs/remote-icons.md).
 - **Tabs**: open several remotes, or the same remote several times (Ctrl+T)
 - **Icons and Details views**: large icons like File Explorer, or a sortable list with sizes and dates
 - Upload, download, create folders, rename, move and delete; drag and drop files from File Explorer to upload
@@ -48,7 +48,7 @@ Requires Windows 10 (1809 or newer) or Windows 11, 64-bit. The **[user guide](do
 | rclone configuration | `%APPDATA%\rclone\rclone.conf` by default; copy it to `rclone\rclone.conf` to take your remotes with you |
 | Settings | `RcloneBrowser.ini` |
 | Saved tasks | `tasks.bin` |
-| Custom remote icons | `icons\remotes\<type>.png` (see [remote-icons.md](docs/remote-icons.md)) |
+| Remote logos | `icons\remotes\<type>.png`: included logos plus your own (see [remote-icons.md](docs/remote-icons.md)) |
 
 Delete `RcloneBrowser.ini` to use non-portable mode (settings in the registry under `HKEY_CURRENT_USER\Software\rclone-browser`, tasks in `%LOCALAPPDATA%\rclone-browser`).
 

@@ -2,6 +2,10 @@
 
 Rclone Browser shows every remote with a colour-coded tile for its storage type. You can replace any tile with your own picture.
 
+## Included logos
+
+The download already contains logos for: `box`, `drime`, `drive`, `dropbox`, `filen`, `koofr`, `mega`, `onedrive`, `pcloud`, `protondrive`, `s3`. They are ordinary files in `icons\remotes` and can be replaced or deleted like your own.
+
 ## How to add your own icon
 
 1. Next to `RcloneBrowser.exe`, open (or create) the folder `icons\remotes`.

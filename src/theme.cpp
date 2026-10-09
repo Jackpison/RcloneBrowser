@@ -154,7 +154,7 @@ QMap<QString, QString> buildTokens() {
   set("tile", d ? QColor("#1D1D1D") : QColor("#F5F2EB"));
   set("headerBg", d ? QColor("#191919") : QColor("#F7F4EE"));
   set("divider", d ? QColor("#232323") : QColor("#E7E2D8"));
-  set("text", d ? QColor("#F5F3EE") : QColor("#1C1917"));
+  set("text", d ? QColor("#FFFFFF") : QColor("#141210"));
   set("text2", d ? QColor("#B5AFA8") : QColor("#57534E"));
   set("text3", d ? QColor("#78716C") : QColor("#A8A29E"));
   set("ctrl", d ? QColor("#171717") : QColor("#FFFFFF"));
@@ -217,7 +217,7 @@ QScrollArea { background: transparent; border: none; }
 QScrollArea > QWidget > QWidget { background: @layer; border: none; }
 
 QLabel#PageTitle { font-size: 28pt; font-weight: 700; padding: 0; }
-QLabel#AppTitle { color: @accentText; font-size: 15pt; font-weight: 700; letter-spacing: 0.5px; }
+QLabel#AppTitle { color: @accentText; font-size: 14.5pt; font-weight: 700; }
 QLabel#NavSection { color: @text2; font-size: 10.5pt; font-weight: 700; padding: 0 0 0 14px; }
 QLabel#NavCount { color: @text2; background: @tile; border-radius: 10px; padding: 1px 8px; font-size: 10pt; font-weight: 600; }
 QFrame#NavDivider { background: @divider; max-height: 1px; min-height: 1px; border: none; }
@@ -253,16 +253,20 @@ QWidget[card="true"] QHeaderView::section:last { border-top-right-radius: 11px; 
 QTabWidget#tabs > QTabBar { background: transparent; }
 QTabWidget#tabs > QTabBar::tab {
   background: @card; color: @text2; border: 1px solid @cardStroke; border-radius: 18px;
-  padding: 7px 10px 7px 14px; margin: 12px 0 4px 8px; min-width: 120px; max-width: 240px;
+  padding: 7px 6px 7px 14px; margin: 12px 0 4px 8px; min-width: 120px; max-width: 240px;
 }
 QTabWidget#tabs > QTabBar::tab:hover { background: @cardHover; color: @text; }
 QTabWidget#tabs > QTabBar::tab:selected { background: @navSel; color: @accentText; border: 1px solid @accentText; font-weight: 600; }
-QTabWidget#tabs > QTabBar::close-button { image: url(@imgClose); subcontrol-position: right; margin: 2px; }
-QTabWidget#tabs > QTabBar::close-button:hover { background: @subtleHover; border-radius: 8px; }
+QTabWidget#tabs > QTabBar::close-button {
+  image: url(@imgClose); subcontrol-position: right;
+  width: 14px; height: 14px; margin-left: 6px; margin-right: 4px; border-radius: 4px;
+}
+QTabWidget#tabs > QTabBar::close-button:hover { background: @subtleHover; }
 QWidget#jobsArea QFrame[frameShape="4"] { border: none; background: transparent; max-height: 2px; }
 
 /* ---------- navigation pane ---------- */
-QListWidget#NavList, QListWidget#NavRemotes { background: transparent; border: none; }
+QListWidget#NavList, QListWidget#NavRemotes, QListWidget#NavFooter { background: transparent; border: none; }
+QToolButton#ThemeSwitch { padding: 6px; border-radius: 10px; }
 QToolButton#NavFooter {
   text-align: left; padding: 10px 12px; margin: 0 6px; border-radius: 10px; color: @text2;
 }

@@ -35,6 +35,10 @@ private:
   QToolButton *mViewIcons = nullptr;
   QToolButton *mViewDetails = nullptr;
   bool mSyncingFromGrid = false;
+  QList<QToolButton *> mPrimaryButtons;
+  bool mCompactBar = false;
+  void updateCommandBar();
+  bool eventFilter(QObject *o, QEvent *e) override;
   void setIconView(bool icons, class ItemModel *model);
   void showFolderInGrid(const QModelIndex &folder, class ItemModel *model);
 
