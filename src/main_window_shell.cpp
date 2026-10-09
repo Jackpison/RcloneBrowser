@@ -339,6 +339,7 @@ void MainWindow::buildShell() {
   ui.tabs->setUsesScrollButtons(true);
   ui.tabs->tabBar()->setExpanding(false);
   ui.tabs->tabBar()->setIconSize(QSize(18, 18));
+  ui.tabs->tabBar()->setFont(Theme::uiFont()); // never inherit a stale font
 
   auto *newTab = new QToolButton;
   newTab->setIcon(Theme::icon("add"));

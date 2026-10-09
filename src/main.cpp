@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include "theme.h"
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
@@ -211,6 +212,10 @@ int main(int argc, char *argv[]) {
     return static_cast<int>(
         0x80004004); // exit immediately if another instance is running
   }
+
+  // Apply fonts, colours and the style sheet before any widget exists, so
+  // nothing is created with Windows' default font and styled from it.
+  Theme::apply();
 
   MainWindow w;
   w.show();

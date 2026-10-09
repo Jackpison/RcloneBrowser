@@ -367,6 +367,7 @@ QHeaderView::up-arrow { image: url(@imgUp); width: 10px; height: 10px; }
 QHeaderView::down-arrow { image: url(@imgDown); width: 10px; height: 10px; }
 
 QListWidget#remotes { background: transparent; border: none; }
+QListView#IconGrid { padding: 14px 10px 10px 12px; }
 QListWidget#remotes::item {
   background: @card; border: 1px solid @cardStroke; border-radius: 8px;
   margin: 6px; padding: 10px 6px 8px 6px; color: @text;

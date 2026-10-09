@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.6.2] - 2026-10-09
+
+### Fixed
+-   Tab titles (and possibly other text) started too small until the theme was switched once; the theme is now applied before any window is created
+-   File icons in the Icons view sat too close to the panel edge
+
+### Changed
+-   About box links to the original project at github.com/mmozeiko/RcloneBrowser
+-   Release pages now show the changelog for that version
+
 ## [3.6.0] - 2026-10-09
 
 ### New

@@ -98,6 +98,12 @@ jobs:
           Copy-Item README.md, LICENSE, CHANGELOG.md, docs\Rclone-Browser-Guide.pdf $dir
           Compress-Archive "$dir" "dist\RcloneBrowser-$ver-windows-x64.zip"
           (Get-FileHash "dist\RcloneBrowser-$ver-windows-x64.zip" -Algorithm SHA256).Hash.ToLower() + "  RcloneBrowser-$ver-windows-x64.zip" | Set-Content -Encoding ascii "dist\SHA256SUMS.txt"
+          # Release notes: this version's section of CHANGELOG.md
+          $log = Get-Content CHANGELOG.md -Raw
+          $m = [regex]::Match($log, "(?ms)^## \[$([regex]::Escape($ver))\][^\n]*\n(.*?)(?=^## |\z)")
+          $notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "See CHANGELOG.md for details." }
+          $notes += "`n`n---`n**Download** ``RcloneBrowser-$ver-windows-x64.zip``, extract it anywhere and run ``RcloneBrowser.exe``. SHA-256 checksums are in ``SHA256SUMS.txt``."
+          Set-Content -Encoding utf8 dist\release-notes.md $notes
           "VERSION=$ver" | Out-File -Append $env:GITHUB_ENV
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -110,6 +116,7 @@ jobs:
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: Rclone Browser ${{ env.VERSION }}
+          body_path: dist/release-notes.md
           files: |
             dist/*.zip
             dist/SHA256SUMS.txt

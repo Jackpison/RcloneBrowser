@@ -28,8 +28,7 @@ MainWindow::MainWindow() {
   QApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 #endif
 
-  Theme::apply();
-  buildShell();
+  buildShell(); // theme already applied in main()
 
   mSystemTray.setIcon(qApp->windowIcon());
   {
@@ -167,7 +166,7 @@ MainWindow::MainWindow() {
         R"(<p>Browse, transfer and sync your cloud storage with rclone.</p>)"
         R"(<p>Copyright &copy; 2026 <a href="https://github.com/Jackpison">Jackpison</a></p>)"
         R"(<p>Development and maintenance<br /><a href="https://github.com/Jackpison/RcloneBrowser">github.com/Jackpison/RcloneBrowser</a></p>)"
-        R"(<p>Based on the original version by<br /><a href="https://mmozeiko.github.io/RcloneBrowser">Martins Mozeiko</a></p>)"
+        R"(<p>Based on the original version by<br /><a href="https://github.com/mmozeiko/RcloneBrowser">Martins Mozeiko</a></p>)"
         R"(<p>Released under the MIT License.</p>)"));
     box.exec();
   });
