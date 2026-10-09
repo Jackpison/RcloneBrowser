@@ -311,9 +311,9 @@ void MainWindow::buildShell() {
     it->setData(TargetRole, id);
     it->setData(FilledIconRole, Theme::icon(icon + "_filled"));
   };
-  addAction("github", tr("GitHub"), "github");
   addAction("settings", tr("Settings"), "settings");
-  addAction("update", tr("Update & About"), "help");
+  addAction("github", tr("GitHub"), "github");
+  addAction("update", tr("Help & Update"), "help");
   footer->setFixedHeight(3 * 42 + 4);
   navLayout->addWidget(footer);
 

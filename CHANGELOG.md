@@ -5,6 +5,7 @@
 ### New
 -   Linux: native Wayland support (X11 is still used automatically when there is no Wayland session), with sharper scaling on high-DPI screens
 -   Linux: file dialogs and the light/dark setting now come from the desktop portal, so the GNOME or KDE dialog opens and the app follows the system theme
+-   Sidebar footer order is now Settings, GitHub, Help & Update ("Update & About" was renamed)
 -   Flatpak manifest (`packaging/flatpak/`) for publishing on Flathub
 
 ## [4.0.1] - 2026-10-09
