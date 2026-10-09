@@ -27,11 +27,18 @@ jobs:
         with:
           persist-credentials: false
 
+      # aqtinstall (used to install Qt) needs compression libraries that may not
+      # have packages for the very newest Python yet, so pin a known-good one.
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
       - name: Install Qt
         uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4.4.1
         with:
           version: "6.11.*"
           arch: win64_msvc2022_64
+          setup-python: false
           cache: true
 
       - name: Configure, build and test
