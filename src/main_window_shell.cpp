@@ -509,7 +509,27 @@ void MainWindow::buildShell() {
     ui.tasksListWidget->setSpacing(0);
     ui.tasksListWidget->setIconSize(QSize(20, 20));
 
+    // Action bar sits right under the title, above the list. It used to be
+    // inside the scroll area with a 32 px height cap from the .ui file,
+    // which cut the buttons off at the bottom of the page.
+    v->insertWidget(1, ui.tasksActionBar);
+    ui.tasksActionBar->setMinimumSize(0, 0);
+    ui.tasksActionBar->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    ui.tasksActionBar->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    if (auto *bar = qobject_cast<QHBoxLayout *>(ui.tasksActionBar->layout())) {
+      bar->setContentsMargins(0, 0, 0, 8);
+      bar->setSpacing(8);
+      // Run is the main action, so it goes first.
+      bar->removeWidget(ui.buttonRunTask);
+      bar->insertWidget(0, ui.buttonRunTask);
+      bar->addStretch(1);
+    }
+    ui.buttonDryrunTask->setText(tr("Dry run"));
+
     ui.buttonRunTask->setProperty("accent", true);
+    // already polished by the time we get here, so restyle it
+    ui.buttonRunTask->style()->unpolish(ui.buttonRunTask);
+    ui.buttonRunTask->style()->polish(ui.buttonRunTask);
     ui.buttonDryrunTask->setIcon(Theme::icon("dryrun"));
     ui.buttonEditTask->setIcon(Theme::icon("edit"));
     ui.buttonDeleteTask->setIcon(Theme::icon("delete"));

@@ -1053,15 +1053,15 @@ void MainWindow::addStream(const QString &remote, const QString &stream) {
 void MainWindow::setupRcloneUpdater() {
   mUpdater = new RcloneUpdater(this);
 
-  // Permanent status-bar indicator: "rclone v1.75.1" or an update link.
+  // Permanent status-bar indicator (right side): "rclone v1.75.1" or an update link.
   mRcloneStatus = new QLabel(this);
   mRcloneStatus->setTextFormat(Qt::RichText);
   mRcloneStatus->setContentsMargins(6, 0, 6, 0);
-  ui.statusBar->insertWidget(0, mRcloneStatus); // left side, before messages
-  // App version on the right, mirroring the rclone version on the left.
+  // App version on the left (before messages), rclone version on the right.
   auto *appVersion = new QLabel(QString("Rclone Explorer %1").arg(RCLONE_BROWSER_VERSION), this);
   appVersion->setContentsMargins(6, 0, 6, 0);
-  ui.statusBar->addPermanentWidget(appVersion);
+  ui.statusBar->insertWidget(0, appVersion);
+  ui.statusBar->addPermanentWidget(mRcloneStatus);
   QObject::connect(mRcloneStatus, &QLabel::linkActivated, this,
                    [this](const QString &link) {
                      if (link == "update" && !mLatestRclone.isEmpty()) {

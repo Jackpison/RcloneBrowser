@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.2.1] - 2026-10-10
+
+### Fixed
+-   The Run, Dry run, Edit and Delete buttons on the Saved tasks page sat at the very bottom of the window and were cut off. They are now a bar right under the page title, above the list, with Run first
+-   The Run button on the Saved tasks page now shows in the accent colour when a task is selected, like other main buttons
+
+### Changed
+-   The status bar now shows the app version on the left and the rclone version on the right
+
 ## [5.2.0] - 2026-10-10
 
 ### Added
