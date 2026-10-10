@@ -78,4 +78,10 @@ void clearRemoteIconCache();
 // Status text styling for job cards: "running", "done" or "error".
 void setStatus(QWidget *w, const char *status);
 
+// Question box with a short bold question, an optional second line and
+// named buttons. Returns true when the accept button was pressed.
+bool confirm(QWidget *parent, const QString &title, const QString &question,
+             const QString &detail, const QString &acceptText,
+             const QString &rejectText);
+
 } // namespace Theme

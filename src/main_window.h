@@ -78,6 +78,7 @@ private:
   QToolButton *mNewTab = nullptr;
   void updateNewTabButton();
   void updateThemeButton();
+  QComboBox *mTasksSort = nullptr;
   QLabel *mHomeSubtitle = nullptr;
   QLabel *mHomeEmpty = nullptr;
   bool mSyncingNav = false;

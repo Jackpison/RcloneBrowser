@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include <algorithm>
 #include "theme.h"
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -157,19 +158,59 @@ MainWindow::MainWindow() {
   });
 
   QObject::connect(ui.about, &QAction::triggered, this, [=, this]() {
-    QMessageBox box(this);
-    box.setWindowTitle(tr("About Rclone Explorer"));
-    box.setIconPixmap(qApp->windowIcon().pixmap(64, 64));
-    box.setTextFormat(Qt::RichText);
-    box.setText(QString(
-        R"(<h3>Rclone Explorer )" RCLONE_BROWSER_VERSION "</h3>"
-        R"(<p>Browse, transfer and sync your cloud storage with rclone.</p>)"
-        R"(<p>Copyright &copy; 2026 <a href="https://github.com/Jackpison">Jackpison</a></p>)"
-        R"(<p>Development and maintenance<br /><a href="https://github.com/Jackpison/RcloneExplorer">github.com/Jackpison/RcloneExplorer</a></p>)"
-        R"(<p>Based on Rclone Browser, originally by<br /><a href="https://github.com/mmozeiko/RcloneBrowser">Martins Mozeiko</a></p>)"
-        R"(<p>Released under the MIT License.</p>)"
-        R"(<p><b>Feedback and bug reports are welcome!</b><br /><a href="https://github.com/Jackpison/RcloneExplorer/issues">Open an issue on GitHub</a></p>)"));
-    box.exec();
+    QDialog dlg(this);
+    dlg.setObjectName("AboutDialog");
+    dlg.setWindowTitle(tr("About Rclone Explorer"));
+    auto *grid = new QHBoxLayout(&dlg);
+    grid->setContentsMargins(24, 24, 24, 20);
+    grid->setSpacing(20);
+
+    auto *logo = new QLabel;
+    logo->setPixmap(qApp->windowIcon().pixmap(64, 64));
+    logo->setAlignment(Qt::AlignTop);
+    grid->addWidget(logo, 0, Qt::AlignTop);
+
+    auto *col = new QVBoxLayout;
+    col->setSpacing(4);
+    grid->addLayout(col, 1);
+
+    auto *title = new QLabel(tr("Rclone Explorer"));
+    title->setObjectName("AboutTitle");
+    col->addWidget(title);
+    auto *version = new QLabel(tr("Version %1").arg(RCLONE_BROWSER_VERSION));
+    version->setProperty("secondary", true);
+    col->addWidget(version);
+    col->addSpacing(12);
+
+    auto addText = [col](const QString &html) {
+      auto *l = new QLabel(html);
+      l->setTextFormat(Qt::RichText);
+      l->setWordWrap(true);
+      l->setOpenExternalLinks(true);
+      l->setTextInteractionFlags(Qt::TextBrowserInteraction);
+      col->addWidget(l);
+      return l;
+    };
+    addText(tr("Browse, transfer and sync your cloud storage with rclone."));
+    col->addSpacing(12);
+    addText(tr("Website: <a href=\"https://jackpison.github.io/RcloneExplorer/\">"
+               "jackpison.github.io/RcloneExplorer</a><br>"
+               "Source: <a href=\"https://github.com/Jackpison/RcloneExplorer\">"
+               "github.com/Jackpison/RcloneExplorer</a>"));
+    col->addSpacing(12);
+    addText(tr("Based on Rclone Browser, originally by "
+               "<a href=\"https://github.com/mmozeiko/RcloneBrowser\">Martins Mozeiko</a>."));
+    auto *legal = addText(tr("Copyright &copy; 2026 Jackpison. Released under the MIT License."));
+    legal->setProperty("secondary", true);
+
+    col->addSpacing(16);
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
+    buttons->button(QDialogButtonBox::Ok)->setProperty("accent", true);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    col->addWidget(buttons);
+
+    dlg.setMinimumWidth(500);
+    dlg.exec();
   });
   QObject::connect(ui.aboutQt, &QAction::triggered, qApp,
                    &QApplication::aboutQt);
@@ -649,18 +690,19 @@ bool MainWindow::canClose() {
   showPage(1);
   showNormal();
 
-  int button =
-      QMessageBox::question(this, "Rclone Explorer",
-                            QString("There are %1 job(s) running.\n"
-                                    "Do you want to stop them and quit?")
-                                .arg(mJobCount),
-                            QMessageBox::Yes | QMessageBox::No);
+  const bool stop = Theme::confirm(
+      this, tr("Rclone Explorer"),
+      mJobCount == 1 ? tr("Stop the running job and quit?")
+                     : tr("Stop %1 running jobs and quit?").arg(mJobCount),
+      tr("Transfers, mounts and streams that are still running will be "
+         "stopped."),
+      tr("Stop and quit"), tr("Keep running"));
 
   if (!wasVisible) {
     hide();
   }
 
-  if (button == QMessageBox::Yes) {
+  if (stop) {
     for (int i = 0; i < ui.jobs->count(); i++) {
       QWidget *widget = ui.jobs->itemAt(i)->widget();
       if (auto mount = qobject_cast<MountWidget *>(widget)) {
@@ -692,18 +734,88 @@ void MainWindow::closeEvent(QCloseEvent *ev) {
   }
 }
 
+// Case-insensitive "natural" order: "Task 2" sorts before "Task 10".
+// Own implementation so the order is the same on every platform and locale.
+static int naturalCompare(const QString &a, const QString &b) {
+  const QString x = a.toCaseFolded(), y = b.toCaseFolded();
+  int i = 0, j = 0;
+  while (i < x.size() && j < y.size()) {
+    if (x[i].isDigit() && y[j].isDigit()) {
+      int si = i, sj = j;
+      while (si < x.size() && x[si] == QLatin1Char('0')) ++si;
+      while (sj < y.size() && y[sj] == QLatin1Char('0')) ++sj;
+      int ei = si, ej = sj;
+      while (ei < x.size() && x[ei].isDigit()) ++ei;
+      while (ej < y.size() && y[ej].isDigit()) ++ej;
+      if (ei - si != ej - sj) {
+        return (ei - si) < (ej - sj) ? -1 : 1; // fewer digits = smaller
+      }
+      const int c = x.mid(si, ei - si).compare(y.mid(sj, ej - sj));
+      if (c != 0) {
+        return c < 0 ? -1 : 1;
+      }
+      i = ei;
+      j = ej;
+    } else {
+      if (x[i] != y[j]) {
+        return x[i] < y[j] ? -1 : 1;
+      }
+      ++i;
+      ++j;
+    }
+  }
+  if (i < x.size()) return 1;
+  if (j < y.size()) return -1;
+  return 0;
+}
+
 void MainWindow::listTasks() {
+  // keep the selection across a re-sort
+  QUuid selected;
+  if (auto *cur = static_cast<JobOptionsListWidgetItem *>(
+          ui.tasksListWidget->currentItem())) {
+    selected = cur->GetData()->uniqueId;
+  }
+
   ui.tasksListWidget->clear();
 
   ListOfJobOptions *ljo = ListOfJobOptions::getInstance();
+  QList<JobOptions *> tasks = ljo->getTasks();
 
-  for (JobOptions *jo : ljo->getTasks()) {
+  const QString mode =
+      mTasksSort ? mTasksSort->currentData().toString() : QString("saved");
+  if (mode != "saved") {
+    auto byName = [](const JobOptions *a, const JobOptions *b) {
+      return naturalCompare(a->description, b->description) < 0;
+    };
+    if (mode == "name_asc") {
+      std::stable_sort(tasks.begin(), tasks.end(), byName);
+    } else if (mode == "name_desc") {
+      std::stable_sort(tasks.begin(), tasks.end(),
+                       [&](const JobOptions *a, const JobOptions *b) {
+                         return byName(b, a);
+                       });
+    } else if (mode == "type") {
+      std::stable_sort(tasks.begin(), tasks.end(),
+                       [&](const JobOptions *a, const JobOptions *b) {
+                         if (a->jobType != b->jobType) {
+                           return a->jobType == JobOptions::JobType::Download;
+                         }
+                         return byName(a, b);
+                       });
+    }
+  }
+
+  for (JobOptions *jo : tasks) {
     JobOptionsListWidgetItem *item = new JobOptionsListWidgetItem(
         jo,
         jo->jobType == JobOptions::JobType::Download ? mDownloadIcon
                                                      : mUploadIcon,
         jo->description);
     ui.tasksListWidget->addItem(item);
+    if (!selected.isNull() && jo->uniqueId == selected) {
+      ui.tasksListWidget->setCurrentItem(item);
+    }
   }
 }
 
@@ -713,7 +825,11 @@ void MainWindow::runItem(JobOptionsListWidgetItem *item, bool dryrun) {
   JobOptions *jo = item->GetData();
   jo->dryRun = dryrun;
   QStringList args = jo->getOptions();
-  addTransfer(QString("%1 %2").arg(jo->operation).arg(jo->source), jo->source,
+  // same wording as transfers started from the browser ("Copy /path")
+  const QString mode = jo->operation == JobOptions::Move   ? QString("Move")
+                       : jo->operation == JobOptions::Sync ? QString("Sync")
+                                                           : QString("Copy");
+  addTransfer(QString("%1 %2").arg(mode).arg(jo->source), jo->source,
               jo->dest, args);
 }
 
@@ -942,6 +1058,10 @@ void MainWindow::setupRcloneUpdater() {
   mRcloneStatus->setTextFormat(Qt::RichText);
   mRcloneStatus->setContentsMargins(6, 0, 6, 0);
   ui.statusBar->insertWidget(0, mRcloneStatus); // left side, before messages
+  // App version on the right, mirroring the rclone version on the left.
+  auto *appVersion = new QLabel(QString("Rclone Explorer %1").arg(RCLONE_BROWSER_VERSION), this);
+  appVersion->setContentsMargins(6, 0, 6, 0);
+  ui.statusBar->addPermanentWidget(appVersion);
   QObject::connect(mRcloneStatus, &QLabel::linkActivated, this,
                    [this](const QString &link) {
                      if (link == "update" && !mLatestRclone.isEmpty()) {

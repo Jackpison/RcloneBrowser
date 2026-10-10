@@ -22,6 +22,7 @@ Rclone Explorer gives rclone a full graphical interface, so you can manage cloud
 - **Transfers you can pause and resume**, with live progress, speed and time left
 - Saved **tasks**: store a transfer once, run it again with one click (or as a dry run)
 - Sidebar remotes sortable by name, type or your own order (drag and drop)
+- Saved tasks sortable by name or type
 - Breadcrumb address bar, filter the current folder (Ctrl+F)
 - Mount remotes as drives and stream media to a player such as [VLC](https://www.videolan.org/)
 - **Built-in rclone updater**: rclone is bundled and kept up to date, every download checksum-verified

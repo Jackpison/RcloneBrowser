@@ -103,11 +103,10 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
 
   QObject::connect(ui.cancel, &QToolButton::clicked, this, [=, this]() {
     if (mRunning) {
-      int button = QMessageBox::question(
-          this, "Transfer",
-          QString("rclone process is still running. Do you want to cancel it?"),
-          QMessageBox::Yes | QMessageBox::No);
-      if (button == QMessageBox::Yes) {
+      if (Theme::confirm(this, tr("Transfer"), tr("Cancel this transfer?"),
+                         tr("rclone is still running. Cancelling stops the "
+                            "transfer now."),
+                         tr("Cancel transfer"), tr("Keep running"))) {
         cancel();
       }
     } else {

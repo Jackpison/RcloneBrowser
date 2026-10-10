@@ -34,15 +34,14 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
 
   QObject::connect(ui.cancel, &QToolButton::clicked, this, [=, this]() {
     if (mRunning) {
-      int button = QMessageBox::question(
-          this, "Unmount",
+      if (Theme::confirm(this, tr("Unmount"),
 #if defined(Q_OS_WIN)
-          QString("Do you want to unmount %1 drive?").arg(folder),
+                         tr("Unmount drive %1?").arg(folder),
 #else
-          QString("Do you want to unmount %1 folder?").arg(folder),
+                         tr("Unmount %1?").arg(folder),
 #endif
-          QMessageBox::Yes | QMessageBox::No);
-      if (button == QMessageBox::Yes) {
+                         tr("Programs using it will lose access to its files."),
+                         tr("Unmount"), tr("Keep mounted"))) {
         cancel();
       }
     } else {

@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.2.0] - 2026-10-10
+
+### Added
+-   **Saved tasks can be sorted.** A "Sort by" menu on the Saved tasks page offers Order saved (the default, as before), Name (A to Z), Name (Z to A) and Type (downloads first). Names are sorted ignoring case and with numbers in natural order, so "Task 2" comes before "Task 10". The choice is remembered, and the selected task stays selected when you change the sort. Sorting only changes how the list is shown; the saved tasks file is not touched
+-   The status bar shows the app version on the right, opposite the rclone version on the left
+
+### Changed
+-   Redesigned About dialog: version on its own line, website and source links, and text that wraps instead of being cut off
+-   Clearer confirmation prompts when cancelling a transfer, unmounting, stopping a stream or quitting with jobs running: a short question, an explanation on a second line, buttons that say what they do (for example "Cancel transfer" and "Keep running") and more space around the icon. Escape always keeps things running
+
+### Fixed
+-   A saved task that was run showed a number instead of Copy, Move or Sync in its transfer card title
+
 ## [5.1.0] - 2026-10-10
 
 ### Changed

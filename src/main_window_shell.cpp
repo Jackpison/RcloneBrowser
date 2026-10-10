@@ -475,10 +475,35 @@ void MainWindow::buildShell() {
     QWidget *page = mPages->widget(TasksPage);
     auto *v = qobject_cast<QVBoxLayout *>(page->layout());
     setPageMargins(v);
+    // Sort control (view only: tasks.bin keeps the order tasks were saved in)
+    auto *sortBox = new QWidget;
+    auto *sortLayout = new QHBoxLayout(sortBox);
+    sortLayout->setContentsMargins(0, 0, 0, 0);
+    sortLayout->setSpacing(8);
+    auto *sortLabel = new QLabel(tr("Sort by"));
+    sortLabel->setProperty("secondary", true);
+    sortLayout->addWidget(sortLabel);
+    mTasksSort = new QComboBox;
+    mTasksSort->addItem(tr("Order saved"), "saved");
+    mTasksSort->addItem(tr("Name (A to Z)"), "name_asc");
+    mTasksSort->addItem(tr("Name (Z to A)"), "name_desc");
+    mTasksSort->addItem(tr("Type (downloads first)"), "type");
+    {
+      const int ix = mTasksSort->findData(
+          GetSettings()->value("Settings/tasksSort", "saved").toString());
+      mTasksSort->setCurrentIndex(ix >= 0 ? ix : 0);
+    }
+    sortLayout->addWidget(mTasksSort);
+    QObject::connect(mTasksSort, &QComboBox::currentIndexChanged, this,
+                     [this](int) {
+                       GetSettings()->setValue("Settings/tasksSort",
+                                               mTasksSort->currentData());
+                       listTasks();
+                     });
     v->insertWidget(0, makePageHeader(tr("Saved tasks"),
                                       tr("Saved transfers you can run again "
                                          "with one click."),
-                                      nullptr, {}));
+                                      nullptr, {sortBox}));
     ui.tasksArea->setFrameShape(QFrame::NoFrame);
     ui.tasksListWidget->setFrameShape(QFrame::NoFrame);
     ui.tasksListWidget->setSpacing(0);

@@ -29,6 +29,7 @@ const QStringList kMonoFamilies = {"Cascadia Mono", "Cascadia Code", "Consolas",
 constexpr qreal kBasePt = 12.0;
 constexpr qreal kListPt = 12.5;  // file names, sizes and dates
 constexpr qreal kMonoPt = 10.5;  // log output
+constexpr qreal kAboutTitlePt = 18.0; // About dialog heading
 
 QString quoted(const QStringList &families) {
   QStringList q;
@@ -292,6 +293,10 @@ QFrame#NavDivider { background: @divider; max-height: 1px; min-height: 1px; bord
 QLabel#PageSubtitle, QLabel[secondary="true"] { color: @text2; }
 QDialogButtonBox { dialogbuttonbox-buttons-have-icons: 0; }
 QMessageBox QLabel#qt_msgbox_label, QMessageBox QLabel#qt_msgbox_informativelabel { min-width: 380px; }
+QMessageBox#ConfirmBox QLabel#qt_msgboxex_icon_label { padding: 2px 14px 0 4px; }
+QMessageBox#ConfirmBox QLabel#qt_msgbox_label { padding-top: 2px; }
+QMessageBox#ConfirmBox QLabel#qt_msgbox_informativelabel { color: @text2; padding: 2px 0 10px 0; }
+QLabel#AboutTitle { font-size: 18pt; font-weight: 700; }
 QPushButton[destructive="true"] { color: @critical; border-color: @critical; }
 QPushButton[destructive="true"]:hover { background: @criticalTint; }
 QLabel#noJobsAvailable { color: @text2; }
@@ -1034,6 +1039,26 @@ QColor color(const char *token) {
   return c;
 }
 
+bool confirm(QWidget *parent, const QString &title, const QString &question,
+             const QString &detail, const QString &acceptText,
+             const QString &rejectText) {
+  QMessageBox box(parent);
+  box.setObjectName("ConfirmBox");
+  box.setWindowTitle(title);
+  box.setIcon(QMessageBox::Question);
+  box.setTextFormat(Qt::RichText);
+  box.setText(QString("<b>%1</b>").arg(question.toHtmlEscaped()));
+  if (!detail.isEmpty()) {
+    box.setInformativeText(detail);
+  }
+  QPushButton *accept = box.addButton(acceptText, QMessageBox::AcceptRole);
+  QPushButton *reject = box.addButton(rejectText, QMessageBox::RejectRole);
+  box.setDefaultButton(accept);
+  box.setEscapeButton(reject);
+  box.exec();
+  return box.clickedButton() == accept;
+}
+
 void setStatus(QWidget *w, const char *status) {
   w->setProperty("status", status);
   w->style()->unpolish(w);
@@ -1111,6 +1136,11 @@ QList<Probe> probes() {
                m->setInformativeText("y");
                return m;
              }, kBasePt};
+  p << Probe{"QLabel#AboutTitle", [] {
+               auto *l = new QLabel("x");
+               l->setObjectName("AboutTitle");
+               return l;
+             }, kAboutTitlePt};
   p << Probe{"QTreeView (file list)", [] { return new QTreeView; }, kListPt};
   p << Probe{"QListView#IconGrid", [] {
                auto *v = new QListView;
