@@ -333,7 +333,7 @@ footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space
       if (!rel) return;
       var assets = rel.assets || [];
       var win = assets.find(function (a) { return /windows.*\.zip$/i.test(a.name); });
-      var lin = assets.find(function (a) { return /linux.*\.AppImage$/i.test(a.name); });
+      var lin = assets.find(function (a) { return /\.AppImage$/i.test(a.name); });
       function mb(a) { return (a.size / 1048576).toFixed(0) + " MB"; }
       if (win) document.getElementById("dl-win").href = win.browser_download_url;
       if (lin) document.getElementById("dl-linux").href = lin.browser_download_url;
