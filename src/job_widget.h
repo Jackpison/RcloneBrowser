@@ -3,6 +3,8 @@
 #include "pch.h"
 #include "ui_job_widget.h"
 
+class FileProgressRow;
+
 class JobWidget : public QWidget {
   Q_OBJECT
 
@@ -26,11 +28,10 @@ private:
 
   bool mRunning = true;
   QProcess *mProcess;
-  int mLines = 0;
 
   QStringList mArgs;
-  QHash<QString, QLabel *> mActive;
-  QSet<QLabel *> mUpdated;
+  QHash<QString, FileProgressRow *> mActive;
+  QSet<FileProgressRow *> mUpdated;
 
   QToolButton *mPause = nullptr;
   QLabel *mSummary = nullptr;

@@ -1,5 +1,6 @@
 #include "theme.h"
 #include "utils.h"
+#include "file_names.h"
 
 #include <QSvgRenderer>
 #include <functional>
@@ -19,11 +20,10 @@ QColor gAccentBtn;  // filled accent controls
 QColor gAccentText; // accent used for text, indicators, focus
 
 // One definition of the app's text, used for the application font, the
-// style sheet, and anything painted by hand. Trebuchet MS ships with Windows
-// but its licence does not allow bundling it, so on Linux it is used when
-// installed and otherwise a similar humanist sans is picked.
-const QStringList kFamilies = {"Trebuchet MS", "Ubuntu", "Fira Sans", "Noto Sans",
-                               "DejaVu Sans", "Segoe UI", "Sans Serif"};
+// style sheet, and anything painted by hand: Segoe UI Variable / Segoe UI on
+// Windows 10 and 11, with similar sans fonts as fallback elsewhere.
+const QStringList kFamilies = {"Segoe UI Variable Text", "Segoe UI", "Selawik", "Noto Sans",
+                               "Ubuntu", "DejaVu Sans", "Sans Serif"};
 const QStringList kMonoFamilies = {"Cascadia Mono", "Cascadia Code", "Consolas",
                                    "DejaVu Sans Mono", "Liberation Mono", "Monospace"};
 constexpr qreal kBasePt = 12.0;
@@ -85,6 +85,40 @@ void renderSvg(QPainter *p, const QRectF &rect, const QString &name,
   p->restore();
 }
 
+// A glyph is rendered once per (name, colour, pixel size) and then served from
+// Qt's pixmap cache. Before, every paint of every icon created a new SVG
+// renderer, so large file lists were slow to scroll.
+QPixmap glyphPixmap(const QString &name, const QColor &color, const QSize &px) {
+  const QString key = QStringLiteral("rbglyph|") + name + QLatin1Char('|') +
+                      color.name(QColor::HexArgb) + QLatin1Char('|') +
+                      QString::number(px.width()) + QLatin1Char('x') + QString::number(px.height());
+  QPixmap pm;
+  if (!QPixmapCache::find(key, &pm)) {
+    pm = QPixmap(px);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setOpacity(color.alphaF());
+    QByteArray svg = svgSource(name);
+    svg.replace("currentColor", color.name(QColor::HexRgb).toLatin1());
+    QSvgRenderer r(svg);
+    r.render(&p, QRectF(QPointF(0, 0), QSizeF(px)));
+    p.end();
+    QPixmapCache::insert(key, pm);
+  }
+  return pm;
+}
+
+void drawGlyph(QPainter *p, const QRectF &rect, const QString &name, const QColor &color) {
+  const qreal dpr = p->device() ? p->device()->devicePixelRatioF() : 1.0;
+  const QRect target = rect.toRect();
+  QPixmap pm = glyphPixmap(name, color,
+                           QSize(qMax(1, qRound(target.width() * dpr)),
+                                 qMax(1, qRound(target.height() * dpr))));
+  pm.setDevicePixelRatio(dpr);
+  p->drawPixmap(target.topLeft(), pm);
+}
+
 class FluentIconEngine : public QIconEngine {
 public:
   FluentIconEngine(const QString &name, const QColor &color,
@@ -98,7 +132,7 @@ public:
 
   void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode,
              QIcon::State) override {
-    renderSvg(painter, rect, mName, colorFor(mode));
+    drawGlyph(painter, rect, mName, colorFor(mode));
   }
 
   QPixmap pixmap(const QSize &size, QIcon::Mode mode,
@@ -108,12 +142,8 @@ public:
 
   QPixmap scaledPixmap(const QSize &size, QIcon::Mode mode, QIcon::State,
                        qreal scale) override {
-    QPixmap pm(size * scale);
-    pm.fill(Qt::transparent);
+    QPixmap pm = glyphPixmap(mName, colorFor(mode), size * scale);
     pm.setDevicePixelRatio(scale);
-    QPainter p(&pm);
-    p.setRenderHint(QPainter::Antialiasing);
-    renderSvg(&p, QRectF(QPointF(0, 0), QSizeF(size)), mName, colorFor(mode));
     return pm;
   }
 
@@ -631,11 +661,15 @@ void applyChromeToAllWindows() {
 }
 
 QFont fluentFont() {
-  QFont f(kFamilies.first());
-  f.setFamilies(kFamilies);
-  f.setStyleHint(QFont::SansSerif);
-  f.setPointSizeF(kBasePt);
-  f.setHintingPreference(QFont::PreferNoHinting);
+  // Built once: it is requested for every item painted by the sidebar.
+  static const QFont f = [] {
+    QFont font(kFamilies.first());
+    font.setFamilies(kFamilies);
+    font.setStyleHint(QFont::SansSerif);
+    font.setPointSizeF(kBasePt);
+    font.setHintingPreference(QFont::PreferNoHinting);
+    return font;
+  }();
   return f;
 }
 
@@ -691,7 +725,15 @@ void save(Mode mode) {
   settings->setValue("Settings/darkMode", mode == Dark);
 }
 
+// Colour tokens are looked up on every paint of the sidebar and the home cards.
+// Keys are string literals, so a view of the literal is a stable, allocation-free key.
+static QHash<QLatin1StringView, QColor> &colorCache() {
+  static QHash<QLatin1StringView, QColor> cache;
+  return cache;
+}
+
 static void applyMode(Mode mode) {
+  colorCache().clear();
   gApplying = true;
   gDark = mode == Dark || (mode == System && systemIsDark());
   computeAccent();
@@ -702,6 +744,11 @@ static void applyMode(Mode mode) {
   if (!styleSet) {
     styleSet = true;
     qApp->setStyle(QStyleFactory::create("Fusion"));
+  }
+  static bool cacheSized = false;
+  if (!cacheSized) {
+    cacheSized = true;
+    QPixmapCache::setCacheLimit(32 * 1024); // KiB: file icons at several sizes and colours
   }
   pinClassFonts(fluentFont());
   qApp->setPalette(buildPalette());
@@ -800,7 +847,7 @@ QIcon fileIcon(const QString &fileName, bool isFolder) {
   }();
 
   const QString key = isFolder ? QString("/folder")
-                               : QFileInfo(fileName).suffix().toLower();
+                               : fileExtension(fileName).toLower();
   auto it = cache.find(key);
   if (it != cache.end()) {
     return it.value();
@@ -835,7 +882,7 @@ public:
     const qreal radius = rf.width() * 0.24;
     p->drawRoundedRect(rf, radius, radius);
     const qreal inset = rf.width() * 0.2;
-    renderSvg(p, rf.adjusted(inset, inset, -inset, -inset), mGlyph, Qt::white);
+    drawGlyph(p, rf.adjusted(inset, inset, -inset, -inset), mGlyph, Qt::white);
     p->restore();
   }
   QPixmap pixmap(const QSize &s, QIcon::Mode m, QIcon::State st) override {
@@ -857,7 +904,7 @@ private:
 };
 } // namespace
 
-QIcon remoteIcon(const QString &type) {
+static QIcon buildRemoteIcon(const QString &type) {
   // Logos: the user's own folder first, then the logos shipped with the app.
   QStringList dirs;
 #ifdef Q_OS_WIN
@@ -969,12 +1016,22 @@ QIcon remoteIcon(const QString &type) {
 }
 
 QColor color(const char *token) {
-  const QString v = tokens().value(token);
+  // `token` must be a string literal (see colorCache()).
+  auto &cache = colorCache();
+  const QLatin1StringView key(token);
+  if (auto it = cache.constFind(key); it != cache.constEnd()) {
+    return it.value();
+  }
+  const QString v = tokens().value(QString::fromLatin1(token));
+  QColor c;
   if (v.startsWith("rgba(")) {
     const auto p = v.mid(5, v.size() - 6).split(',');
-    return QColor(p[0].toInt(), p[1].toInt(), p[2].toInt(), p[3].toInt());
+    c = QColor(p[0].toInt(), p[1].toInt(), p[2].toInt(), p[3].toInt());
+  } else {
+    c = QColor(v);
   }
-  return QColor(v);
+  cache.insert(key, c);
+  return c;
 }
 
 void setStatus(QWidget *w, const char *status) {
@@ -983,6 +1040,22 @@ void setStatus(QWidget *w, const char *status) {
   w->style()->polish(w);
   w->update();
 }
+
+static QHash<QString, QIcon> &remoteIconCache() {
+  static QHash<QString, QIcon> cache;
+  return cache;
+}
+
+QIcon remoteIcon(const QString &type) {
+  auto &cache = remoteIconCache();
+  auto it = cache.find(type);
+  if (it == cache.end()) {
+    it = cache.insert(type, buildRemoteIcon(type)); // looks for logo files on disk once
+  }
+  return it.value();
+}
+
+void clearRemoteIconCache() { remoteIconCache().clear(); }
 
 QString displayName(Mode mode) {
   switch (mode) {

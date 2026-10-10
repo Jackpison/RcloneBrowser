@@ -37,7 +37,7 @@ Rclone Explorer gives rclone a full graphical interface, so you can manage cloud
 ### Windows 10 / 11
 
 1. Download `RcloneExplorer-<version>-windows-x64.zip` from the [latest release](../../releases/latest).
-2. Extract it to any folder and run `RcloneExplorer.exe`.
+2. Extract it to any folder and run `Rclone Explorer.exe`.
 3. Windows may show "Windows protected your PC" because the app is not code-signed: click **More info**, then **Run anyway**.
 
 Mounting remotes as drive letters needs [WinFsp](https://winfsp.dev/).
@@ -54,19 +54,19 @@ Your existing rclone remotes appear automatically on both systems. If you have n
 
 ## Upgrading from Rclone Browser (4.x and older)
 
-- **Windows, portable:** extract the new zip to a new folder, then copy your old `RcloneBrowser.ini` (and `tasks.bin`) next to `RcloneExplorer.exe`. The settings are picked up automatically on the first start; the old file stays untouched as a backup.
+- **Windows, portable:** extract the new zip to a new folder, then copy your old `RcloneBrowser.ini` (4.x) or `RcloneExplorer.ini` (5.0), and `tasks.bin`, next to `Rclone Explorer.exe`. The settings are picked up automatically on the first start; the old file stays untouched as a backup.
 - **Windows, not portable (no ini file):** nothing to do, settings are kept.
 - **Linux:** nothing to do. Settings stay in `~/.config/rclone-browser/` on purpose.
 
 ## Where things are stored
 
-**Windows (portable):** `RcloneExplorer.ini` next to the exe switches portable mode on, and everything stays in the app folder:
+**Windows (portable):** `Rclone Explorer.ini` next to the exe switches portable mode on, and everything stays in the app folder:
 
 | What | Where |
 |---|---|
 | rclone | `rclone\rclone.exe` (updated from inside the app) |
 | rclone configuration | `%APPDATA%\rclone\rclone.conf` by default; copy it to `rclone\rclone.conf` to take your remotes with you |
-| Settings / saved tasks | `RcloneExplorer.ini` / `tasks.bin` |
+| Settings / saved tasks | `Rclone Explorer.ini` / `tasks.bin` |
 | Remote logos | `icons\remotes\<type>.png` (see [remote-icons.md](docs/remote-icons.md)) |
 | Documentation | `docs\` |
 | Qt plugins | `qt\plugins` (located via `qt.conf`) |

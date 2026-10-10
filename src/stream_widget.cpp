@@ -6,6 +6,7 @@ StreamWidget::StreamWidget(QProcess *rclone, QProcess *player,
                            QWidget *parent)
     : QWidget(parent), mRclone(rclone), mPlayer(player) {
   ui.setupUi(this);
+  ui.output->setMaximumBlockCount(5000);
   setAttribute(Qt::WA_StyledBackground);
 
   ui.remote->setText(remote);

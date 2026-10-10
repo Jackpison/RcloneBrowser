@@ -57,9 +57,9 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $ver = (Get-Content VERSION -First 1).Trim()
-          $dir = "dist\RcloneExplorer"
+          $dir = "dist\Rclone Explorer"
           New-Item -ItemType Directory -Force $dir | Out-Null
-          Copy-Item build\build\RcloneExplorer.exe $dir
+          Copy-Item build\build\RcloneExplorer.exe "$dir\Rclone Explorer.exe"
 
           # Qt plugins go into qt\plugins (found via qt.conf) instead of seven
           # folders next to the exe; plugin types the app does not use are
@@ -68,7 +68,7 @@ jobs:
           windeployqt --release --no-translations --no-system-d3d-compiler `
                       --no-opengl-sw --no-compiler-runtime `
                       --skip-plugin-types styles,generic,networkinformation `
-                      --plugindir "$dir\qt\plugins" "$dir\RcloneExplorer.exe"
+                      --plugindir "$dir\qt\plugins" "$dir\Rclone Explorer.exe"
           @(
             "[Paths]"
             "Plugins = qt/plugins"
@@ -92,13 +92,13 @@ jobs:
           New-Item -ItemType Directory -Force "$dir\rclone" | Out-Null
           Copy-Item (Get-ChildItem rclone-x -Recurse -Filter rclone.exe).FullName "$dir\rclone\"
 
-          # Presence of RcloneExplorer.ini switches on portable mode. Paths are
+          # Presence of "Rclone Explorer.ini" switches on portable mode. Paths are
           # relative to the exe, so the folder can live anywhere (USB stick...).
           @(
             "[Settings]"
             "rclone=rclone/rclone.exe"
             "checkRcloneUpdates=true"
-          ) | Set-Content -Encoding ascii "$dir\RcloneExplorer.ini"
+          ) | Set-Content -Encoding ascii "$dir\Rclone Explorer.ini"
 
           # remote logos shipped by default (users can add or replace files)
           New-Item -ItemType Directory -Force "$dir\icons\remotes" | Out-Null
@@ -109,7 +109,7 @@ jobs:
 
           # Smoke test of the packaged folder: the app must start with this
           # layout (platform plugin via qt.conf, image formats, TLS).
-          $p = Start-Process -FilePath "$dir\RcloneExplorer.exe" -ArgumentList "--selftest" `
+          $p = Start-Process -FilePath "$dir\Rclone Explorer.exe" -ArgumentList "--selftest" `
                  -PassThru -NoNewWindow -RedirectStandardOutput selftest.txt
           if (-not $p.WaitForExit(90000)) { $p.Kill(); throw "self-test timed out" }
           $out = (Get-Content selftest.txt -Raw)
@@ -121,7 +121,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: RcloneExplorer-${{ env.VERSION }}-windows-x64
-          path: dist/RcloneExplorer
+          path: dist/Rclone Explorer
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -254,7 +254,7 @@ jobs:
           notes = m.group(1).strip() if m else "See CHANGELOG.md for details."
           notes += (
               "\n\n---\n**Downloads**\n\n"
-              f"- **Windows 10/11:** `RcloneExplorer-{ver}-windows-x64.zip`, extract anywhere and run `RcloneExplorer.exe`.\n"
+              f"- **Windows 10/11:** `RcloneExplorer-{ver}-windows-x64.zip`, extract anywhere and run `Rclone Explorer.exe`.\n"
               f"- **Linux (x86_64):** `RcloneExplorer-{ver}-linux-x86_64.AppImage`, make it executable (`chmod +x`) and run it.\n\n"
               "SHA-256 checksums are in `SHA256SUMS.txt`. Feedback and bug reports are welcome!"
           )

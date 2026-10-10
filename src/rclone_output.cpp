@@ -57,6 +57,18 @@ StatsLine parseStatsLine(const QString &rawLine) {
   if (line.isEmpty()) {
     return r;
   }
+  // Early exit: stats lines start with "Transferred:", "Checks:", "Errors:",
+  // "Elapsed time:" or "* name". The many log lines that start with a
+  // timestamp skip all the regular expressions below.
+  switch (line.at(0).unicode()) {
+  case 'T':
+  case 'C':
+  case 'E':
+  case '*':
+    break;
+  default:
+    return r;
+  }
 
   QRegularExpressionMatch m;
 

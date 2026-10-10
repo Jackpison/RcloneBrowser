@@ -14,7 +14,6 @@ set(SOURCES
   mount_widget.cpp mount_widget.h mount_widget.ui
   stream_widget.cpp stream_widget.h stream_widget.ui
   preferences_dialog.cpp preferences_dialog.h preferences_dialog.ui
-  icon_cache.cpp icon_cache.h
   item_model.cpp item_model.h
   rclone_output.cpp rclone_output.h
   legacy_ini.cpp legacy_ini.h

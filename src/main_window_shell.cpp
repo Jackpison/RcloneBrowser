@@ -561,7 +561,7 @@ void MainWindow::openRemote(const QString &name, const QString &type,
   if (index < 0) {
     const bool isLocal = type == "local";
     const bool isGoogle = type == "drive";
-    auto *remote = new RemoteWidget(&mIcons, name, isLocal, isGoogle, ui.tabs);
+    auto *remote = new RemoteWidget(name, isLocal, isGoogle, ui.tabs);
     remote->setProperty("remoteName", name);
     remote->setProperty("remoteType", type);
     remote->setRemoteType(type);

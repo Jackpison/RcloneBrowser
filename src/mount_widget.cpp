@@ -6,6 +6,7 @@ MountWidget::MountWidget(QProcess *process, const QString &remote,
                          const QString &folder, QWidget *parent)
     : QWidget(parent), mProcess(process) {
   ui.setupUi(this);
+  ui.output->setMaximumBlockCount(5000);
   setAttribute(Qt::WA_StyledBackground);
 
   ui.remote->setText(remote);

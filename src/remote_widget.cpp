@@ -2,14 +2,13 @@
 #include "theme.h"
 #include "rclone_output.h"
 #include "export_dialog.h"
-#include "icon_cache.h"
 #include "item_model.h"
 #include "list_of_job_options.h"
 #include "progress_dialog.h"
 #include "transfer_dialog.h"
 #include "utils.h"
 
-RemoteWidget::RemoteWidget(IconCache *iconCache, const QString &remote,
+RemoteWidget::RemoteWidget(const QString &remote,
                            bool isLocal, bool isGoogle, QWidget *parent)
     : QWidget(parent) {
   ui.setupUi(this);
@@ -49,7 +48,7 @@ QString root = isLocal ? "/" : QString();
   ui.tree->sortByColumn(0, Qt::AscendingOrder);
   ui.tree->header()->setSectionsMovable(false);
 
-  ItemModel *model = new ItemModel(iconCache, remote, this);
+  ItemModel *model = new ItemModel(remote, this);
   ui.tree->setModel(model);
   QTimer::singleShot(0, ui.tree, SLOT(setFocus()));
   buildFluentUi(model, remote);

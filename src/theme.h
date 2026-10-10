@@ -72,6 +72,8 @@ QIcon fileIcon(const QString &fileName, bool isFolder);
 // Colour-coded tile identifying a remote's storage service. Users can
 // override any type with icons\remotes\<type>.png|svg|ico next to the exe.
 QIcon remoteIcon(const QString &type);
+// Forget which logo files were found (call when the remote list is reloaded).
+void clearRemoteIconCache();
 
 // Status text styling for job cards: "running", "done" or "error".
 void setStatus(QWidget *w, const char *status);

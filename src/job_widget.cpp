@@ -3,11 +3,74 @@
 #include "theme.h"
 #include "utils.h"
 
+
+// ---------------------------------------------------------------------------
+// One running file: name | progress bar | percent. A plain horizontal layout
+// with explicit vertical centring, so the thin bar sits on the text's middle
+// line (in a form layout it was pinned to the top of the row).
+// ---------------------------------------------------------------------------
+
+namespace {
+// Label that shortens its text in the middle to whatever width it gets, so long
+// file names never push the bar around.
+class ElidedLabel : public QLabel {
+public:
+  using QLabel::QLabel;
+  QSize minimumSizeHint() const override { return QSize(0, QLabel::minimumSizeHint().height()); }
+
+protected:
+  void paintEvent(QPaintEvent *) override {
+    QPainter p(this);
+    p.setPen(palette().color(foregroundRole()));
+    p.setFont(font());
+    p.drawText(rect(), Qt::AlignVCenter | Qt::AlignLeft,
+               fontMetrics().elidedText(text(), Qt::ElideMiddle, width()));
+  }
+};
+} // namespace
+
+class FileProgressRow : public QWidget {
+public:
+  explicit FileProgressRow(const QString &name, QWidget *parent = nullptr)
+      : QWidget(parent), mName(name) {
+    auto *h = new QHBoxLayout(this);
+    h->setContentsMargins(0, 3, 0, 3);
+    h->setSpacing(12);
+
+    auto *label = new ElidedLabel(name);
+    label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    h->addWidget(label, 5, Qt::AlignVCenter);
+
+    mBar = new QProgressBar;
+    mBar->setRange(0, 100);
+    mBar->setTextVisible(false);
+    mBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    h->addWidget(mBar, 4, Qt::AlignVCenter);
+
+    mPercent = new QLabel("0%");
+    mPercent->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    mPercent->setFixedWidth(mPercent->fontMetrics().horizontalAdvance("100%") + 6);
+    h->addWidget(mPercent, 0, Qt::AlignVCenter);
+  }
+
+  void setProgress(int percent, const QString &detail) {
+    mBar->setValue(percent);
+    mPercent->setText(QString::number(percent) + "%");
+    setToolTip(mName + "\n" + detail);
+  }
+
+private:
+  QString mName;
+  QProgressBar *mBar;
+  QLabel *mPercent;
+};
+
 JobWidget::JobWidget(QProcess *process, const QString &info,
                      const QStringList &args, const QString &source,
                      const QString &dest, QWidget *parent)
     : QWidget(parent), mProcess(process) {
   ui.setupUi(this);
+  ui.output->setMaximumBlockCount(5000); // the log keeps its newest lines instead of growing forever
   setAttribute(Qt::WA_StyledBackground);
   buildFluentLayout();
 
@@ -65,25 +128,18 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
 
     while (mProcess->canReadLine()) {
       QString line = QString::fromUtf8(mProcess->readLine()).trimmed();
-      if (++mLines == 10000) {
-        ui.output->clear();
-        mLines = 1;
-      }
       ui.output->appendPlainText(line);
 
       if (line.isEmpty()) {
         // end of a stats block: drop progress bars of files that finished
         for (auto it = mActive.begin(), eit = mActive.end(); it != eit;
              /* empty */) {
-          auto label = it.value();
-          if (mUpdated.contains(label)) {
+          FileProgressRow *row = it.value();
+          if (mUpdated.contains(row)) {
             ++it;
           } else {
             it = mActive.erase(it);
-            ui.progress->removeWidget(label->buddy());
-            ui.progress->removeWidget(label);
-            delete label->buddy();
-            delete label;
+            ui.progress->removeRow(row); // also deletes it
           }
         }
         mUpdated.clear();
@@ -119,31 +175,17 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
         ui.elapsed->setText(s.text);
         break;
       case StatsLine::FileProgress: {
-        QLabel *label;
-        QProgressBar *bar;
+        FileProgressRow *row;
         auto it = mActive.find(s.name);
         if (it == mActive.end()) {
-          label = new QLabel();
-          label->setProperty("shortName",
-                             s.name.length() > 47
-                                 ? s.name.left(25) + "..." + s.name.right(19)
-                                 : s.name);
-          bar = new QProgressBar();
-          bar->setMinimum(0);
-          bar->setMaximum(100);
-          bar->setTextVisible(true);
-          label->setBuddy(bar);
-          ui.progress->addRow(label, bar);
-          mActive.insert(s.name, label);
+          row = new FileProgressRow(s.name);
+          ui.progress->addRow(row);
+          mActive.insert(s.name, row);
         } else {
-          label = it.value();
-          bar = static_cast<QProgressBar *>(label->buddy());
+          row = it.value();
         }
-        bar->setValue(s.filePercent);
-        label->setText(QString("%1  ·  %2%").arg(label->property("shortName").toString())
-                           .arg(s.filePercent));
-        bar->setToolTip("File name: " + s.name + "\n" + s.detail);
-        mUpdated.insert(label);
+        row->setProgress(s.filePercent, s.detail);
+        mUpdated.insert(row);
         break;
       }
       case StatsLine::None:
@@ -157,12 +199,11 @@ JobWidget::JobWidget(QProcess *process, const QString &info,
                        &QProcess::finished),
                    this, [=, this](int status, QProcess::ExitStatus) {
                      mProcess->deleteLater();
-                     for (auto label : mActive) {
-                       ui.progress->removeWidget(label->buddy());
-                       ui.progress->removeWidget(label);
-                       delete label->buddy();
-                       delete label;
+                     for (FileProgressRow *row : std::as_const(mActive)) {
+                       ui.progress->removeRow(row);
                      }
+                     mActive.clear();
+                     mUpdated.clear();
 
                      mRunning = false;
                      mPaused = false;
@@ -232,6 +273,8 @@ void JobWidget::cancel() {
 void JobWidget::buildFluentLayout() {
   auto *grid = qobject_cast<QGridLayout *>(ui.details->layout());
   QLayout *progress = ui.progress;
+  ui.progress->setContentsMargins(0, 0, 0, 0);
+  ui.progress->setVerticalSpacing(0);
 
   // empty the old 8-column grid (widgets stay alive, only re-parented)
   while (QLayoutItem *it = grid->takeAt(0)) {

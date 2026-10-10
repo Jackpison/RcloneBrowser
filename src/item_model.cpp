@@ -1,7 +1,7 @@
 #include "item_model.h"
+#include "file_names.h"
 #include "theme.h"
 #include "rclone_output.h"
-#include "icon_cache.h"
 #include "utils.h"
 #include <algorithm>
 
@@ -29,6 +29,9 @@ QString typeName(const Item *item) {
   if (item->isFolder) {
     return QObject::tr("Folder");
   }
+  if (!item->typeCache.isEmpty()) {
+    return item->typeCache;
+  }
   static const QHash<QString, const char *> names = [] {
     QHash<QString, const char *> m;
     auto add = [&](std::initializer_list<const char *> exts, const char *name) {
@@ -54,17 +57,21 @@ QString typeName(const Item *item) {
     add({"ttf", "otf", "woff", "woff2"}, "Font");
     return m;
   }();
-  const QString ext = QFileInfo(item->name).suffix().toLower();
+  const QString ext = fileExtension(item->name).toLower();
+  QString result;
   if (ext.isEmpty()) {
-    return QObject::tr("File");
+    result = QObject::tr("File");
+  } else {
+    auto it = names.find(ext);
+    result = it != names.end() ? QObject::tr(it.value())
+                               : QObject::tr("%1 file").arg(ext.toUpper());
   }
-  auto it = names.find(ext);
-  return it != names.end() ? QObject::tr(it.value())
-                           : QObject::tr("%1 file").arg(ext.toUpper());
+  item->typeCache = result;
+  return result;
 }
 
 QString extensionOf(const Item *item) {
-  return item->isFolder ? QString() : QFileInfo(item->name).suffix().toLower();
+  return item->isFolder ? QString() : fileExtension(item->name).toLower();
 }
 
 class ItemSorter {
@@ -133,15 +140,12 @@ private:
   Qt::SortOrder mOrder;
 };
 
-ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
+ItemModel::ItemModel(const QString &remote, QObject *parent)
     : QAbstractItemModel(parent), mRemote(remote) {
-  QStyle *style = qApp->style();
-  Q_UNUSED(style);
   for (int px : {16, 20, 24, 32, 40, 48, 64, 96, 128, 256}) {
     mDriveIcon.addFile(QString(":/drive/drive-%1.png").arg(px), QSize(px, px));
   }
   mFolderIcon = Theme::fileIcon(QString(), true);
-  mFileIcon = Theme::fileIcon(QString(), false);
 
   auto settings = GetSettings();
   mFolderIcons = settings->value("Settings/showFolderIcons", true).toBool();
@@ -150,27 +154,6 @@ ItemModel::ItemModel(IconCache *icons, const QString &remote, QObject *parent)
   mRoot = new Item();
   mRoot->isFolder = true;
   mRoot->state = Item::Ready;
-
-  // Queued: the icon must arrive after the new rows have been inserted.
-  QObject::connect(this, &ItemModel::getIcon, icons, &IconCache::getIcon,
-                   Qt::QueuedConnection);
-  QObject::connect(
-      icons, &IconCache::iconReady, this,
-      [=, this](Item *item, const QPersistentModelIndex &parent, const QIcon &icon) {
-        item->state = Item::Ready;
-        QString ext = QFileInfo(item->name).suffix();
-        if (!mLoadedIcons.contains(ext)) {
-          mLoadedIcons.insert(ext, icon);
-        }
-
-        if (item->isDeleted) {
-          delete item;
-          return;
-        }
-
-        QModelIndex idx = index(item->num(), 0, parent);
-        emit dataChanged(idx, idx, QVector<int>{Qt::DecorationRole});
-      });
 }
 
 ItemModel::~ItemModel() { delete mRoot; }
@@ -195,6 +178,7 @@ void ItemModel::refresh(const QModelIndex &index) {
 void ItemModel::rename(const QModelIndex &index, const QString &name) {
   Item *item = get(index);
   item->name = name;
+  item->typeCache.clear();
   item->path.setPath(item->parent->path.filePath(item->name));
   emit dataChanged(index, index, QVector<int>{Qt::DisplayRole});
 }
@@ -297,13 +281,9 @@ QVariant ItemModel::data(const QModelIndex &index, int role) const {
     }
 
     if (mFileIcons) {
-      QString ext = QFileInfo(item->name).suffix();
-      auto it = mLoadedIcons.find(ext);
-      if (it == mLoadedIcons.end()) {
-        return mFileIcon;
-      }
-
-      return it.value();
+      // Icons are drawn from bundled SVGs and cached per file type, so they
+      // are available immediately: no background loading needed.
+      return Theme::fileIcon(item->name, false);
     }
 
     return QIcon();
@@ -380,7 +360,7 @@ bool ItemModel::removeRows(int row, int count, const QModelIndex &parent) {
 
   for (int i = row; i < row + count; i++) {
     Item *node = item->childs.at(i);
-    if (node->isLoading() || node->state == Item::LoadingIcon) {
+    if (node->isLoading()) {
       node->isDeleted = true;
     } else {
       delete node;
@@ -503,13 +483,6 @@ void ItemModel::load(const QPersistentModelIndex &parentIndex, Item *parent) {
       auto it = existing.find(item->name);
       if (it == existing.end()) {
         item->path.setPath(parent->path.filePath(item->name));
-        if (!item->isFolder && mFileIcons) {
-          QString ext = QFileInfo(item->name).suffix();
-          if (!mLoadedIcons.contains(ext)) {
-            item->state = Item::LoadingIcon;
-            emit getIcon(item, parentIndex);
-          }
-        }
         todo.append(item);
         item = nullptr;
       } else {

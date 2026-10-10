@@ -1,3 +1,4 @@
+#include "file_names.h"
 #include "rclone_output.h"
 
 #include <QtTest>
@@ -185,6 +186,16 @@ private slots:
     QVERIFY(ok);
     QVERIFY(parseLsJson("garbage", &ok).isEmpty());
     QVERIFY(!ok);
+  }
+
+  // ---- file_names.h must behave exactly like QFileInfo::suffix()
+  void fileExtensionMatchesQFileInfo() {
+    const QStringList names = {"report.pdf", "archive.tar.gz", ".bashrc", "name.", "name", "a.b.c.d",
+                               "UPPER.JPG", "with space.txt", " lead.md", "trail.md ", "x.y/z", "dir.d/file",
+                               "dir.d/file.txt", "..", ".", "", "日本語.png", "a.b c", "no_ext_but.dot.in.middle/x"};
+    for (const QString &n : names) {
+      QCOMPARE(fileExtension(n), QFileInfo(n).suffix());
+    }
   }
 
   // ---- line buffering for chunked process output ----

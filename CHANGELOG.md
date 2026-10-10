@@ -1,5 +1,24 @@
 # Changelog
 
+## [5.1.0] - 2026-10-10
+
+### Changed
+-   **Windows: the program and its folder are now called `Rclone Explorer.exe` in `Rclone Explorer`** (with a space). The download is still `RcloneExplorer-<version>-windows-x64.zip`, so existing links keep working. The portable settings file is now `Rclone Explorer.ini`; an existing `RcloneExplorer.ini` (5.0) or `RcloneBrowser.ini` (4.x) next to the program is copied automatically (the newest one wins, and a settings file that is already in use is never overwritten)
+-   The interface font is back to Segoe UI Variable / Segoe UI (Windows), with Selawik, Noto Sans and similar fonts as fallbacks elsewhere, instead of Trebuchet MS
+
+### Fixed
+-   Per-file progress bars sat at the top of their row instead of lining up with the file name. Each row is now name, bar and percentage, vertically centred; long file names are shortened in the middle
+
+### Faster
+-   Icons are rendered once and cached. Before, every repaint re-parsed an SVG: in a benchmark, painting 40,000 icons went from 1.65 s to 0.03 s (about 48 times faster), so the sidebar and long file lists repaint and scroll more smoothly
+-   Colour lookups (1.8x faster) and the interface font (4.6x faster) are cached; both are used on every repaint
+-   File types and extensions are worked out once per file and without building a `QFileInfo`, row lookups no longer search linearly, and rclone log lines that are not progress lines skip all pattern matching
+
+### Improved
+-   Removed the background thread that loaded file icons: less code and no cross-thread sharing
+-   Log windows keep their newest 5000 lines instead of clearing completely at 10000
+-   Tests: the file-extension logic is checked against Qt's own for 19 tricky names, and the settings migration has 12 tests
+
 ## [5.0.0] - 2026-10-10
 
 ### Changed

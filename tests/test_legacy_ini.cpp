@@ -62,6 +62,27 @@ private slots:
     QVERIFY(MigrateLegacyIni(d.filePath("MyCloud.exe")));
     QCOMPARE(read(d.filePath("MyCloud.ini")), legacyText);
   }
+  void spaceInProgramName() {
+    QTemporaryDir d;
+    write(d.filePath("RcloneBrowser.ini"), legacyText);
+    QVERIFY(MigrateLegacyIni(d.filePath("Rclone Explorer.exe")));
+    QCOMPARE(read(d.filePath("Rclone Explorer.ini")), legacyText);
+  }
+  void fromVersionFiveZero() {
+    QTemporaryDir d;
+    write(d.filePath("RcloneExplorer.ini"), legacyText);
+    write(d.filePath("Rclone Explorer.ini"), shippedText); // unused, shipped in the new zip
+    QVERIFY(MigrateLegacyIni(d.filePath("Rclone Explorer.exe")));
+    QCOMPARE(read(d.filePath("Rclone Explorer.ini")), legacyText);
+  }
+  void newestLegacyWins() {
+    QTemporaryDir d;
+    const QString newer = "[Settings]\nrclone=D:/newer/rclone.exe\n";
+    write(d.filePath("RcloneBrowser.ini"), legacyText);
+    write(d.filePath("RcloneExplorer.ini"), newer);
+    QVERIFY(MigrateLegacyIni(d.filePath("Rclone Explorer.exe")));
+    QCOMPARE(read(d.filePath("Rclone Explorer.ini")), newer);
+  }
   void migratedFileIsReadableAsSettings() {
     QTemporaryDir d;
     write(d.filePath("RcloneBrowser.ini"), legacyText);

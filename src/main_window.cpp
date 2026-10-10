@@ -565,6 +565,7 @@ void MainWindow::rcloneConfig() {
 }
 
 void MainWindow::rcloneListRemotes() {
+  Theme::clearRemoteIconCache(); // pick up logos added to the folder
   ui.remotes->clear();
 
   QProcess *p = new QProcess();

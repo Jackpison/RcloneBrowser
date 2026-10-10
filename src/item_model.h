@@ -7,7 +7,7 @@ struct Item {
 
   ~Item() {
     for (auto child : childs) {
-      if (child->isLoading() || state == LoadingIcon) {
+      if (child->isLoading()) {
         child->isDeleted = true;
       } else {
         delete child;
@@ -17,14 +17,22 @@ struct Item {
 
   bool isLoading() const { return state == Loading1 || state == Loading2; }
 
+  // Row of this item in its parent. The last known row is remembered and
+  // verified, so repeated lookups are O(1) instead of a linear search (which
+  // made big folders quadratic).
   int num() const {
     Q_ASSERT(parent);
-    return parent->childs.indexOf(const_cast<Item *>(this));
+    const auto &siblings = parent->childs;
+    if (rowHint >= 0 && rowHint < siblings.size() && siblings[rowHint] == this) {
+      return rowHint;
+    }
+    rowHint = int(siblings.indexOf(const_cast<Item *>(this)));
+    return rowHint;
   }
 
   Item *parent = nullptr;
 
-  enum State { Unknown, Loading1, Loading2, Ready, Special, LoadingIcon };
+  enum State { Unknown, Loading1, Loading2, Ready, Special };
 
   State state = Unknown;
   bool isFolder = false;
@@ -35,15 +43,17 @@ struct Item {
   quint64 size = 0;
 
   QVector<Item *> childs;
+
+  mutable int rowHint = -1;
+  mutable QString typeCache; // "Image", "PDF document", ... filled on first use
 };
 
-class IconCache;
 class ItemSorter;
 
 class ItemModel : public QAbstractItemModel {
   Q_OBJECT
 public:
-  ItemModel(IconCache *icons, const QString &remote, QObject *parent);
+  ItemModel(const QString &remote, QObject *parent);
   ~ItemModel();
 
   const QDir &path(const QModelIndex &index) const;
@@ -76,7 +86,6 @@ public:
                     int column, const QModelIndex &parent) override;
 
 signals:
-  void getIcon(Item *item, const QPersistentModelIndex &index);
   void drop(const QDir &path, const QModelIndex &parent);
 
 private:
@@ -84,14 +93,12 @@ private:
 
   QString mRemote;
 
-  QHash<QString, QIcon> mLoadedIcons;
 
   bool mFolderIcons;
   bool mFileIcons;
 
   QIcon mDriveIcon;
   QIcon mFolderIcon;
-  QIcon mFileIcon;
 
 
   int mSortColumn;

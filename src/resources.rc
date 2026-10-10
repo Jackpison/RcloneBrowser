@@ -4,10 +4,10 @@
 
 // Keep in sync with the VERSION file in the repository root.
 #ifndef RB_VERSION_COMMA
-#define RB_VERSION_COMMA 5,0,0,0
+#define RB_VERSION_COMMA 5,1,0,0
 #endif
 #ifndef RB_VERSION_STR
-#define RB_VERSION_STR "5.0.0"
+#define RB_VERSION_STR "5.1.0"
 #endif
 
 VS_VERSION_INFO VERSIONINFO
@@ -28,7 +28,7 @@ BEGIN
       VALUE "FileVersion", RB_VERSION_STR
       VALUE "InternalName", "RcloneExplorer"
       VALUE "LegalCopyright", "MIT License"
-      VALUE "OriginalFilename", "RcloneExplorer.exe"
+      VALUE "OriginalFilename", "Rclone Explorer.exe"
       VALUE "ProductName", "Rclone Explorer"
       VALUE "ProductVersion", RB_VERSION_STR
     END

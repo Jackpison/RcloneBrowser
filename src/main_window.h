@@ -1,6 +1,5 @@
 #pragma once
 
-#include "icon_cache.h"
 #include "job_options.h"
 #include "pch.h"
 
@@ -39,7 +38,6 @@ private:
 
   QLabel *mStatusMessage;
 
-  IconCache mIcons;
 
   bool mFirstTime = true;
 

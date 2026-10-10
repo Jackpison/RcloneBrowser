@@ -9,11 +9,21 @@
 bool MigrateLegacyIni(const QString &exeFilePath) {
   const QFileInfo exe(exeFilePath);
   const QString name = exe.completeBaseName();
-  const QString legacy = exe.dir().filePath("RcloneBrowser.ini");
+  if (name.isEmpty() || name == "RcloneBrowser") {
+    return false; // a program with an old name keeps using its own ini
+  }
   const QString current = exe.dir().filePath(name + ".ini");
 
-  if (name.isEmpty() || name == "RcloneBrowser" || !QFileInfo::exists(legacy) ||
-      QFileInfo(current) == QFileInfo(legacy)) {
+  // newest first
+  QString legacy;
+  for (const char *old : {"RcloneExplorer.ini", "RcloneBrowser.ini"}) {
+    const QString candidate = exe.dir().filePath(QString::fromLatin1(old));
+    if (QFileInfo::exists(candidate) && QFileInfo(candidate) != QFileInfo(current)) {
+      legacy = candidate;
+      break;
+    }
+  }
+  if (legacy.isEmpty()) {
     return false;
   }
 
