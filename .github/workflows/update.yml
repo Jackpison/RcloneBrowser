@@ -131,7 +131,9 @@ jobs:
 
   linux:
     name: Linux
-    runs-on: ubuntu-24.04
+    # oldest supported Ubuntu LTS: the AppImage bundles libraries from the
+    # build system, so it only runs where glibc is at least this new (2.35)
+    runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -205,11 +207,20 @@ jobs:
           QMAKE="$QT_ROOT_DIR/bin/qmake" LINUXDEPLOY_OUTPUT_VERSION="$ver" \
             ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
           mkdir -p dist
-          mv Rclone_*-x86_64.AppImage "dist/RcloneExplorer-$ver-linux-x86_64.AppImage"
+          mv Rclone_*-x86_64.AppImage "dist/RcloneExplorer-$ver-x86_64.AppImage"
           chmod +x dist/*.AppImage
 
+          # compatibility guard: nothing bundled may need a newer glibc than 2.35
+          max=$(find AppDir -type f -exec sh -c 'file -b "$1" | grep -q ELF && objdump -T "$1" 2>/dev/null' _ {} \; \
+                | grep -o 'GLIBC_[0-9][0-9.]*' | sed 's/GLIBC_//' | sort -uV | tail -1)
+          echo "highest glibc symbol version used: $max"
+          if [ "$(printf '%s\n2.35\n' "$max" | sort -V | tail -1)" != "2.35" ]; then
+            echo "::error::AppImage needs glibc $max, more than 2.35 (Ubuntu 22.04)"
+            exit 1
+          fi
+
           # smoke test of the finished AppImage on an X11 display
-          if ! out=$(xvfb-run -a "dist/RcloneExplorer-$ver-linux-x86_64.AppImage" --selftest 2>&1); then
+          if ! out=$(xvfb-run -a "dist/RcloneExplorer-$ver-x86_64.AppImage" --selftest 2>&1); then
             echo "::error::self-test failed: $(echo "$out" | tr '\n' ' ')"
             exit 1
           fi
@@ -255,7 +266,7 @@ jobs:
           notes += (
               "\n\n---\n**Downloads**\n\n"
               f"- **Windows 10/11:** `RcloneExplorer-{ver}-windows-x64.zip`, extract anywhere and run `Rclone Explorer.exe`.\n"
-              f"- **Linux (x86_64):** `RcloneExplorer-{ver}-linux-x86_64.AppImage`, make it executable (`chmod +x`) and run it.\n\n"
+              f"- **Linux (x86_64):** `RcloneExplorer-{ver}-x86_64.AppImage`, make it executable (`chmod +x`) and run it.\n\n"
               "SHA-256 checksums are in `SHA256SUMS.txt`. Feedback and bug reports are welcome!"
           )
           open("dist/release-notes.md", "w", encoding="utf-8").write(notes)

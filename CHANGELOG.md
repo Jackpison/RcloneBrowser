@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.3.0] - 2026-10-10
+
+### Fixed
+-   **Linux: the AppImage runs on older distributions again.** 5.2.1 and earlier were built on Ubuntu 24.04 and needed glibc 2.38, so they quit right away on Ubuntu 22.04, Debian 12 and similar systems. The AppImage is now built on Ubuntu 22.04 (glibc 2.35), and the build fails if anything inside it needs a newer glibc
+
+### Changed
+-   **Linux: the AppImage file name no longer contains "linux"**: `RcloneExplorer-<version>-x86_64.AppImage`, as the AppImage catalog expects. Settings are not affected. If you use portable mode, rename the `.config` folder next to the AppImage to match the new file name
+
 ## [5.2.1] - 2026-10-10
 
 ### Fixed

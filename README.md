@@ -45,7 +45,7 @@ Mounting remotes as drive letters needs [WinFsp](https://winfsp.dev/).
 
 ### Linux (x86_64)
 
-1. Download `RcloneExplorer-<version>-linux-x86_64.AppImage` from the [latest release](../../releases/latest).
+1. Download `RcloneExplorer-<version>-x86_64.AppImage` from the [latest release](../../releases/latest).
 2. Make it executable: `chmod +x RcloneExplorer-*.AppImage` (or *Properties → Allow executing as program*).
 3. Run it.
 
@@ -72,7 +72,7 @@ Your existing rclone remotes appear automatically on both systems. If you have n
 | Documentation | `docs\` |
 | Qt plugins | `qt\plugins` (located via `qt.conf`) |
 
-**Linux:** settings in `~/.config/rclone-browser/`, the rclone updated by the app in `~/.local/share/rclone-browser/rclone-browser/`, your rclone configuration in its usual place (`~/.config/rclone/rclone.conf`). To make the AppImage portable, create a folder named like the AppImage plus `.config` next to it (for example `RcloneExplorer-<version>-linux-x86_64.AppImage.config`); settings and an updated rclone then stay beside the AppImage. Your own remote logos go in `~/.local/share/rclone-browser/rclone-browser/icons/remotes/` (or `icons/remotes/` next to the AppImage in portable mode).
+**Linux:** settings in `~/.config/rclone-browser/`, the rclone updated by the app in `~/.local/share/rclone-browser/rclone-browser/`, your rclone configuration in its usual place (`~/.config/rclone/rclone.conf`). To make the AppImage portable, create a folder named like the AppImage plus `.config` next to it (for example `RcloneExplorer-<version>-x86_64.AppImage.config`); settings and an updated rclone then stay beside the AppImage. Your own remote logos go in `~/.local/share/rclone-browser/rclone-browser/icons/remotes/` (or `icons/remotes/` next to the AppImage in portable mode).
 
 ## Keyboard shortcuts
 
