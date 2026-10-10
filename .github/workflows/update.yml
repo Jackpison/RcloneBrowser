@@ -204,11 +204,27 @@ jobs:
           python3 -m zipfile -e "$zip" rclone-x
           install -m 755 "$(find rclone-x -name rclone -type f | head -1)" AppDir/usr/bin/rclone
 
+          # Final file name set here (not renamed afterwards) so the .zsync file
+          # refers to the right AppImage. The update information lets
+          # AppImageUpdate and similar tools fetch new releases.
+          app="RcloneExplorer-$ver-x86_64.AppImage"
           QMAKE="$QT_ROOT_DIR/bin/qmake" LINUXDEPLOY_OUTPUT_VERSION="$ver" \
+          LDAI_OUTPUT="$app" \
+          LDAI_UPDATE_INFORMATION="gh-releases-zsync|Jackpison|RcloneExplorer|latest|RcloneExplorer-*-x86_64.AppImage.zsync" \
             ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage
           mkdir -p dist
-          mv Rclone_*-x86_64.AppImage "dist/RcloneExplorer-$ver-x86_64.AppImage"
-          chmod +x dist/*.AppImage
+          mv "$app" "$app.zsync" dist/
+          chmod +x "dist/$app"
+
+          # update information must be embedded and the .zsync must match
+          if ! grep -aq 'gh-releases-zsync|Jackpison|RcloneExplorer|latest|' "dist/$app"; then
+            echo "::error::update information missing from the AppImage"
+            exit 1
+          fi
+          if ! head -c 512 "dist/$app.zsync" | grep -aq "^URL: $app\$"; then
+            echo "::error::.zsync file does not refer to $app"
+            exit 1
+          fi
 
           # compatibility guard: nothing bundled may need a newer glibc than 2.35
           max=$(find AppDir -type f -exec sh -c 'file -b "$1" | grep -q ELF && objdump -T "$1" 2>/dev/null' _ {} \; \
@@ -229,7 +245,9 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-linux
-          path: dist/*.AppImage
+          path: |
+            dist/*.AppImage
+            dist/*.AppImage.zsync
           if-no-files-found: error
 
   release:
@@ -256,7 +274,7 @@ jobs:
           set -euo pipefail
           ver=$(head -1 VERSION | tr -d '[:space:]')
           echo "VERSION=$ver" >> "$GITHUB_ENV"
-          (cd dist && sha256sum *.zip *.AppImage > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          (cd dist && sha256sum *.zip *.AppImage *.zsync > SHA256SUMS.txt && cat SHA256SUMS.txt)
           python3 - "$ver" <<'PY'
           import re, sys
           ver = sys.argv[1]
@@ -267,7 +285,7 @@ jobs:
               "\n\n---\n**Downloads**\n\n"
               f"- **Windows 10/11:** `RcloneExplorer-{ver}-windows-x64.zip`, extract anywhere and run `Rclone Explorer.exe`.\n"
               f"- **Linux (x86_64):** `RcloneExplorer-{ver}-x86_64.AppImage`, make it executable (`chmod +x`) and run it.\n\n"
-              "SHA-256 checksums are in `SHA256SUMS.txt`. Feedback and bug reports are welcome!"
+              "SHA-256 checksums are in `SHA256SUMS.txt`."
           )
           open("dist/release-notes.md", "w", encoding="utf-8").write(notes)
           PY
@@ -279,4 +297,5 @@ jobs:
           files: |
             dist/*.zip
             dist/*.AppImage
+            dist/*.zsync
             dist/SHA256SUMS.txt

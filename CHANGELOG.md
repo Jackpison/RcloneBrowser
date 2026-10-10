@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+-   **Linux: the AppImage can update itself with AppImageUpdate** and similar tools. It now carries update information, and each release includes a matching `.zsync` file
+
+### Changed
+-   Release notes no longer end with an invitation to send feedback
+
 ## [5.3.0] - 2026-10-10
 
 ### Fixed
